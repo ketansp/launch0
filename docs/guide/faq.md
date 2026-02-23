@@ -34,4 +34,4 @@ No. System apps cannot be uninstalled. Launch0 will show a message if you try to
 
 ## Is this the same as Olauncher?
 
-Launch0 is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher). It shares the same foundation but is developed independently with a focus on productivity. If you want extra features like weather, widgets, fonts, and folders, check out [Olauncher Pro](https://play.google.com/store/apps/details?id=app.prolauncher).
+Launch0 is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher). It shares the same foundation but is developed independently with a focus on minimalism and productivity. If you want extra features like weather, widgets, fonts, and folders, check out [Olauncher Pro](https://play.google.com/store/apps/details?id=app.prolauncher).

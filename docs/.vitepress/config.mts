@@ -2,14 +2,14 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Launch0',
-  description: 'The Productivity Launcher for Android',
+  description: 'Minimal & Productive Android Launcher',
 
   head: [
     ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
     ['meta', { name: 'theme-color', content: '#1a1a2e' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'Launch0 - The Productivity Launcher for Android' }],
-    ['meta', { property: 'og:description', content: 'A fast, open-source Android launcher. Instant app access, powerful gestures, no ads, no data collection.' }],
+    ['meta', { property: 'og:title', content: 'Launch0 - Minimal & Productive Android Launcher' }],
+    ['meta', { property: 'og:description', content: 'A minimal, open-source Android launcher built for productivity. No icons, no ads, no data collection.' }],
     ['meta', { property: 'og:url', content: 'https://launch0.app' }],
   ],
 

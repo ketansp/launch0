@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Launch0 is a productivity-focused, open-source Android launcher (home screen replacement) forked from [Olauncher](https://github.com/tanujnotes/Olauncher). It provides a fast, streamlined text-only home screen with instant app access, powerful gestures, no ads, and no data collection. Licensed under GPLv3.
+Launch0 is a minimal, open-source Android launcher (home screen replacement) built for productivity, forked from [Olauncher](https://github.com/tanujnotes/Olauncher). It provides a clean, text-only home screen with instant app access, powerful gestures, no icons, no ads, and no data collection. Licensed under GPLv3.
 
 - **Package**: `app.launch0`
 - **Min SDK**: 24 (Android 7.0)
@@ -175,7 +175,7 @@ The project intentionally keeps dependencies minimal. Do not add unnecessary dep
 
 2. **Privacy is paramount** — the app collects zero data. Never introduce analytics, tracking, or network calls beyond the existing wallpaper feature. The only internet usage is downloading daily wallpapers from Unsplash.
 
-3. **Productivity is the design philosophy** — the app is built around speed and efficiency. The text-only aesthetic exists to enable fast app access, not as a minimalist statement. Resist adding unnecessary UI elements or dependencies that don't serve the productivity goal.
+3. **Minimal design + productivity is the philosophy** — the app pairs a clean, distraction-free interface with productivity features (instant search, gestures, screen time tracking). The text-only aesthetic keeps things minimal; the features make you faster. Resist adding unnecessary UI elements or dependencies.
 
 4. **ProGuard/R8** is enabled for release builds with minification. Check `proguard-rules.pro` if adding reflection-dependent code.
 
