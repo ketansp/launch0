@@ -1,34 +1,28 @@
-![Olauncher](https://repository-images.githubusercontent.com/278638069/db0acb80-661b-11eb-803e-926cae5dccb4)
+# Launch0 | Minimal AF Launcher
 
+AF stands for Ad-Free.
 
-# Olauncher | Minimal AF Launcher
-AF stands for Ad-Free
+> **This project is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher) by [tanujnotes](https://github.com/tanujnotes).** All credit for the original design and implementation goes to the Olauncher team. Launch0 builds on top of that foundation.
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-    alt="Get it on F-Droid"
-    height="80">](https://f-droid.org/packages/app.olauncher)
-[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-    alt="Get it on Play Store"
-    height="80">](https://play.google.com/store/apps/details?id=app.olauncher)
+## About
 
-### Install using [F-Droid](https://f-droid.org/packages/app.olauncher), [Play Store](https://play.google.com/store/apps/details?id=app.olauncher) or the [latest APK](https://github.com/tanujnotes/Olauncher/releases/).
+Launch0 is a minimal, open-source Android launcher. It provides a clean, distraction-free home screen experience with no icons, no ads, and no data collection.
 
-- To maintain the simplicity of the launcher, a few niche features are available but hidden.
+- Website: [launch0.app](https://launch0.app)
 
-- Please check out the **[About](https://tanujnotes.substack.com/p/olauncher-minimal-af-launcher?utm_source=github)** page in the Olauncher settings for a complete list of features and **FAQs**.
+## Features
 
-##
+- Minimalist homescreen with no icons or distractions
+- Customizations: resize text, rename apps, hide unused apps, status bar toggle, text alignment
+- Gestures: double tap to lock, swipe left/right for apps, swipe down for notifications
+- Daily wallpaper updates
+- Dark & light themes, dual apps support, work profile support
+- Privacy-first: no data collection, open source under GPLv3
 
-License: [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
+## License
 
-Dev: [X/twitter](https://x.com/tanujnotes) • [Bluesky](https://bsky.app/profile/tanujnotes.bsky.social)
+[GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-##
+## Acknowledgments
 
-### My other apps:
-
-- [Pro Launcher](https://play.google.com/store/apps/details?id=app.prolauncher) - Pro version of Olauncher with extra features like widgets, weather, folders, etc.
-
-- [Note to Self](https://play.google.com/store/apps/details?id=com.makenotetoself) - Free and [open source](https://github.com/jeerovan/ntsapp) notes app with chat like interface and end-to-end encryption.
-
-- [Pentastic](https://play.google.com/store/apps/details?id=app.pentastic) - Minimal todo lists. Free and [open source](https://github.com/tanujnotes/Pentastic).
+This project is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher), originally created by [tanujnotes](https://x.com/tanujnotes). Thank you for building and open-sourcing such a great minimal launcher.
