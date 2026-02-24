@@ -1,12 +1,19 @@
 package app.launch0.helper
 
+import android.app.WallpaperManager
 import android.content.Context
+import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
 
@@ -17,13 +24,14 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) : Cor
             if (isLaunch0Default(applicationContext).not())
                 true
             else if (prefs.dailyWallpaper) {
-                val wallType = checkWallpaperType()
-                val wallpaperUrl = getTodaysWallpaper(wallType, prefs.firstOpenTime)
-                if (prefs.dailyWallpaperUrl == wallpaperUrl)
+                val todaySeed = getTodaySeed()
+                if (prefs.dailyWallpaperUrl == todaySeed)
                     true
                 else {
-                    prefs.dailyWallpaperUrl = wallpaperUrl
-                    setWallpaper(applicationContext, wallpaperUrl)
+                    val isDark = checkIsDarkTheme()
+                    val generated = generateAndSetWallpaper(isDark, todaySeed)
+                    if (generated) prefs.dailyWallpaperUrl = todaySeed
+                    generated
                 }
             } else
                 true
@@ -34,14 +42,36 @@ class WallpaperWorker(appContext: Context, workerParams: WorkerParameters) : Cor
             Result.retry()
     }
 
-    private fun checkWallpaperType(): String {
+    private suspend fun generateAndSetWallpaper(isDark: Boolean, seed: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val (width, height) = getScreenDimensions(applicationContext)
+                val bitmap = WallpaperGenerator.generate(width, height, isDark, seed.hashCode().toLong())
+                val wallpaperManager = WallpaperManager.getInstance(applicationContext)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    wallpaperManager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_SYSTEM)
+                    wallpaperManager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_LOCK)
+                } else {
+                    wallpaperManager.setBitmap(bitmap)
+                }
+                bitmap.recycle()
+                true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
+        }
+    }
+
+    private fun getTodaySeed(): String {
+        return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+    }
+
+    private fun checkIsDarkTheme(): Boolean {
         return when (prefs.appTheme) {
-            AppCompatDelegate.MODE_NIGHT_YES -> Constants.WALL_TYPE_DARK
-            AppCompatDelegate.MODE_NIGHT_NO -> Constants.WALL_TYPE_LIGHT
-            else -> if (applicationContext.isDarkThemeOn())
-                Constants.WALL_TYPE_DARK
-            else
-                Constants.WALL_TYPE_LIGHT
+            AppCompatDelegate.MODE_NIGHT_YES -> true
+            AppCompatDelegate.MODE_NIGHT_NO -> false
+            else -> applicationContext.isDarkThemeOn()
         }
     }
 }

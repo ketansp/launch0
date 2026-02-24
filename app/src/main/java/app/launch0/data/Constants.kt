@@ -58,8 +58,6 @@ object Constants {
         "com.miui.clock", //Xiaomi Clock
     )
 
-    const val WALL_TYPE_LIGHT = "light"
-    const val WALL_TYPE_DARK = "dark"
 
 //    const val THEME_MODE_DARK = 0
 //    const val THEME_MODE_LIGHT = 1
@@ -102,10 +100,7 @@ object Constants {
     const val URL_OLAUNCHER_PRO = "https://play.google.com/store/apps/details?id=app.prolauncher"
     const val URL_PLAY_STORE_DEV = "https://play.google.com/store/apps/dev?id=7198807840081074933"
     const val URL_TWITTER = "https://x.com/tanujnotes"
-    const val URL_WALLPAPERS = "https://gist.githubusercontent.com/tanujnotes/85e2d0343ace71e76615ac346fbff82b/raw"
     const val URL_NTS = "https://play.google.com/store/apps/details?id=com.makenotetoself"
-    const val URL_DEFAULT_DARK_WALLPAPER = "https://images.unsplash.com/photo-1512551980832-13df02babc9e"
-    const val URL_DEFAULT_LIGHT_WALLPAPER = "https://images.unsplash.com/photo-1515549832467-8783363e19b6"
     const val URL_DUCK_SEARCH = "https://duck.co/?q="
     const val URL_DIGITAL_WELLBEING_LEARN_MORE = "https://tanujnotes.substack.com/p/digital-wellbeing-app-on-android"
 
