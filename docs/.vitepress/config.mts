@@ -6,7 +6,7 @@ export default defineConfig({
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
-    ['meta', { name: 'theme-color', content: '#2563eb' }],
+    ['meta', { name: 'theme-color', content: '#f97316' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'Launch0 - Minimal & Productive Android Launcher' }],
     ['meta', { property: 'og:description', content: 'A minimal, open-source Android launcher built for productivity. No icons, no ads, no data collection.' }],

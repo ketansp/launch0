@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="32" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#d4d4d8"/>
@@ -42,7 +42,7 @@
   <path d="M174 326 L138 404 L194 370 Z" fill="#d4d4d8"/>
   <path d="M338 326 L374 404 L318 370 Z" fill="#d4d4d8"/>
 
-  <!-- Zero body -->
+  <!-- Zero body: BIGGER, thinner walls -->
   <ellipse cx="256" cy="215" rx="100" ry="160" fill="url(#bodyGrad)"/>
   <ellipse cx="256" cy="215" rx="66" ry="120" fill="#000"/>
 

@@ -3,25 +3,25 @@
  * Inspired by node-llama-cpp's VitePress customizations
  */
 
-/* ─── Brand colors ─── */
+/* ─── Brand colors (from icon flame palette) ─── */
 :root {
-  --vp-c-brand-1: #2563eb;
-  --vp-c-brand-2: #3b82f6;
-  --vp-c-brand-3: #60a5fa;
-  --vp-c-brand-soft: rgb(37 99 235 / 14%);
+  --vp-c-brand-1: #ea580c;
+  --vp-c-brand-2: #f97316;
+  --vp-c-brand-3: #fb923c;
+  --vp-c-brand-soft: rgb(234 88 12 / 14%);
 
-  --theme-color-1: #60a5fa;
-  --theme-color-2: #a78bfa;
+  --theme-color-1: #f97316;
+  --theme-color-2: #ef4444;
 }
 
 .dark {
-  --vp-c-brand-1: #93c5fd;
-  --vp-c-brand-2: #60a5fa;
-  --vp-c-brand-3: #3b82f6;
-  --vp-c-brand-soft: rgb(96 165 250 / 16%);
+  --vp-c-brand-1: #fb923c;
+  --vp-c-brand-2: #f97316;
+  --vp-c-brand-3: #ea580c;
+  --vp-c-brand-soft: rgb(249 115 22 / 16%);
 
-  --theme-color-1: #93c5fd;
-  --theme-color-2: #c4b5fd;
+  --theme-color-1: #fb923c;
+  --theme-color-2: #fca5a5;
 }
 
 /* ─── Hero gradient text ─── */
@@ -51,8 +51,8 @@
 
 /* ─── Hero image ─── */
 .VPHero .VPImage {
-  border-radius: 0;
-  background-color: transparent;
+  border-radius: 21%;
+  background-color: #000;
 }
 
 /* ─── Hide logo on home page ─── */
