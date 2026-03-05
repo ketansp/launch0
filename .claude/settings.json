@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew assembleRelease)",
+      "Bash(./gradlew clean)",
+      "Bash(./gradlew lint)",
+      "Bash(./gradlew test)",
+      "Bash(./gradlew connectedAndroidTest)"
+    ],
+    "deny": []
+  }
+}
