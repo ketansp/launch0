@@ -224,11 +224,12 @@ class AppDrawerFragment : Fragment() {
         }
         binding.alphabetIndex.layoutParams = layoutParams
 
-        binding.alphabetIndex.onLetterSelected = { letter ->
+        binding.alphabetIndex.onLetterSelected = { letter, letterY ->
             binding.search.hideKeyboard()
             val position = adapter.getPositionForLetter(letter)
             if (position >= 0) {
-                linearLayoutManager.scrollToPositionWithOffset(position, 0)
+                // Scroll so the first matching app aligns with the letter's Y position on the strip
+                linearLayoutManager.scrollToPositionWithOffset(position, letterY.toInt())
             }
             adapter.setHighlightLetter(letter)
         }

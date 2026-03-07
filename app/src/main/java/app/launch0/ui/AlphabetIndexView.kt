@@ -58,7 +58,7 @@ class AlphabetIndexView @JvmOverloads constructor(
     private var bubbleAnimator: ValueAnimator? = null
     private var isTouching = false
 
-    var onLetterSelected: ((String) -> Unit)? = null
+    var onLetterSelected: ((String, Float) -> Unit)? = null
     var onLetterDeselected: (() -> Unit)? = null
     var isRightAligned: Boolean = false
         set(value) {
@@ -206,7 +206,7 @@ class AlphabetIndexView @JvmOverloads constructor(
                 activeLetter = letter
                 animateLetterPop()
                 animateBubbleIn()
-                onLetterSelected?.invoke(letter)
+                onLetterSelected?.invoke(letter, activeLetterY)
             }
         }
     }
