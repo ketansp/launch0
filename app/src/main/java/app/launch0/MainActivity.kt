@@ -32,7 +32,6 @@ import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isLaunch0Default
 import app.launch0.helper.isTablet
 import app.launch0.helper.openUrl
-import app.launch0.helper.rateApp
 import app.launch0.helper.resetLauncherViaFakeActivity
 import app.launch0.helper.setPlainWallpaper
 import app.launch0.helper.shareApp
@@ -173,24 +172,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                Constants.Dialog.REVIEW -> {
-                    prefs.userState = Constants.UserState.RATE
-                    showMessageDialog(R.string.hey, R.string.review_message, R.string.leave_a_review) {
-                        prefs.rateClicked = true
-                        showToast("😇❤️")
-                        rateApp()
-                    }
-                }
-
-                Constants.Dialog.RATE -> {
-                    prefs.userState = Constants.UserState.SHARE
-                    showMessageDialog(R.string.app_name, R.string.rate_us_message, R.string.rate_now) {
-                        prefs.rateClicked = true
-                        showToast("🤩❤️")
-                        rateApp()
-                    }
-                }
-
                 Constants.Dialog.SHARE -> {
                     prefs.shareShownTime = System.currentTimeMillis()
                     showMessageDialog(R.string.hey, R.string.share_message, R.string.share_now) {
@@ -259,25 +240,14 @@ class MainActivity : AppCompatActivity() {
 
             Constants.UserState.WALLPAPER -> {
                 if (prefs.wallpaperMsgShown || prefs.hourlyWallpaper)
-                    prefs.userState = Constants.UserState.REVIEW
+                    prefs.userState = Constants.UserState.SHARE
                 else if (isLaunch0Default(this))
                     viewModel.showDialog.postValue(Constants.Dialog.WALLPAPER)
             }
 
-            Constants.UserState.REVIEW -> {
-                if (prefs.rateClicked)
-                    prefs.userState = Constants.UserState.SHARE
-                else if (isLaunch0Default(this) && prefs.firstOpenTime.hasBeenHours(1))
-                    viewModel.showDialog.postValue(Constants.Dialog.REVIEW)
-            }
-
+            Constants.UserState.REVIEW,
             Constants.UserState.RATE -> {
-                if (prefs.rateClicked)
-                    prefs.userState = Constants.UserState.SHARE
-                else if (isLaunch0Default(this)
-                    && prefs.firstOpenTime.isDaySince() >= 7
-                    && calendar.get(Calendar.HOUR_OF_DAY) >= 16
-                ) viewModel.showDialog.postValue(Constants.Dialog.RATE)
+                prefs.userState = Constants.UserState.SHARE
             }
 
             Constants.UserState.SHARE -> {
