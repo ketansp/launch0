@@ -194,6 +194,9 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         viewModel.toggleDateTime.observe(viewLifecycleOwner) {
             populateDateTime()
         }
+        viewModel.toggleWidget.observe(viewLifecycleOwner) {
+            populateWidget()
+        }
         viewModel.screenTimeValue.observe(viewLifecycleOwner) {
             it?.let { binding.tvScreenTime.text = it }
         }
@@ -227,6 +230,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
+        binding.tvWidgetCaption.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity
         binding.homeApp2.gravity = horizontalGravity
         binding.homeApp3.gravity = horizontalGravity
@@ -282,9 +286,19 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.tvScreenTime.setPadding(10.dpToPx())
     }
 
+    private fun populateWidget() {
+        val show = prefs.showYearWidget
+        binding.widgetLayout.isVisible = show
+        if (!show) return
+        binding.yearWidget.refresh()
+        binding.tvWidgetCaption.text =
+            getString(R.string.widget_percent_over, binding.yearWidget.percentOver())
+    }
+
     private fun populateHomeScreen(appCountUpdated: Boolean) {
         if (appCountUpdated) hideHomeApps()
         populateDateTime()
+        populateWidget()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             populateScreenTime()

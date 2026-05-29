@@ -77,6 +77,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateAlignment()
         populateStatusBar()
         populateDateTime()
+        populateYearWidget()
         populateSwipeApps()
         populateSwipeDownAction()
         populateActionHints()
@@ -115,6 +116,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.alignmentBottom -> updateHomeBottomAlignment()
             R.id.statusBar -> toggleStatusBar()
             R.id.dateTime -> binding.dateTimeSelectLayout.visibility = View.VISIBLE
+            R.id.daysLeftWidget -> toggleYearWidget()
             R.id.dateTimeOn -> toggleDateTime(Constants.DateTime.ON)
             R.id.dateTimeOff -> toggleDateTime(Constants.DateTime.OFF)
             R.id.dateOnly -> toggleDateTime(Constants.DateTime.DATE_ONLY)
@@ -195,6 +197,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.alignmentBottom.setOnClickListener(this)
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
+        binding.daysLeftWidget.setOnClickListener(this)
         binding.dateTimeOn.setOnClickListener(this)
         binding.dateTimeOff.setOnClickListener(this)
         binding.dateOnly.setOnClickListener(this)
@@ -294,6 +297,18 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         prefs.dateTimeVisibility = selected
         populateDateTime()
         viewModel.toggleDateTime()
+    }
+
+    private fun toggleYearWidget() {
+        prefs.showYearWidget = !prefs.showYearWidget
+        populateYearWidget()
+        viewModel.toggleWidget()
+    }
+
+    private fun populateYearWidget() {
+        binding.daysLeftWidget.text = getString(
+            if (prefs.showYearWidget) R.string.on else R.string.off
+        )
     }
 
     private fun populateDateTime() {
