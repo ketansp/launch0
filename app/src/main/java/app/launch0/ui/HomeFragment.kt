@@ -485,13 +485,13 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     private fun swipeLeftAction() {
         when (prefs.swipeLeftAction) {
             Constants.SwipeLeftAction.APP -> openSwipeLeftApp()
-            else -> openDumpPage()
+            else -> openNotesPage()
         }
     }
 
-    private fun openDumpPage() {
+    private fun openNotesPage() {
         try {
-            findNavController().navigate(R.id.action_mainFragment_to_dumpFragment)
+            findNavController().navigate(R.id.action_mainFragment_to_notesFragment)
         } catch (e: Exception) {
             e.printStackTrace()
         }

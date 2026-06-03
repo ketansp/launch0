@@ -151,7 +151,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.notifications -> updateSwipeDownAction(Constants.SwipeDownAction.NOTIFICATIONS)
             R.id.search -> updateSwipeDownAction(Constants.SwipeDownAction.SEARCH)
             R.id.swipeLeftAction -> binding.swipeLeftSelectLayout.visibility = View.VISIBLE
-            R.id.swipeLeftDump -> updateSwipeLeftAction(Constants.SwipeLeftAction.DUMP)
+            R.id.swipeLeftNotes -> updateSwipeLeftAction(Constants.SwipeLeftAction.NOTES)
             R.id.swipeLeftAppOption -> updateSwipeLeftAction(Constants.SwipeLeftAction.APP)
 
             R.id.aboutLaunch0 -> {
@@ -210,7 +210,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.search.setOnClickListener(this)
         binding.notifications.setOnClickListener(this)
         binding.swipeLeftAction.setOnClickListener(this)
-        binding.swipeLeftDump.setOnClickListener(this)
+        binding.swipeLeftNotes.setOnClickListener(this)
         binding.swipeLeftAppOption.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
         binding.themeLight.setOnClickListener(this)
@@ -590,7 +590,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     private fun populateSwipeLeftAction() {
         binding.swipeLeftAction.text = when (prefs.swipeLeftAction) {
             Constants.SwipeLeftAction.APP -> getString(R.string.app)
-            else -> getString(R.string.dump_title)
+            else -> getString(R.string.notes_title)
         }
         // The "Swipe left app" picker only matters when swipe-left launches an app.
         binding.swipeLeftAppRow.isVisible = prefs.swipeLeftAction == Constants.SwipeLeftAction.APP

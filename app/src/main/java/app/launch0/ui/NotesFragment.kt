@@ -15,26 +15,26 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import app.launch0.MainViewModel
 import app.launch0.R
-import app.launch0.data.DumpEntry
-import app.launch0.data.DumpStore
-import app.launch0.databinding.FragmentDumpBinding
+import app.launch0.data.NotesEntry
+import app.launch0.data.NotesStore
+import app.launch0.databinding.FragmentNotesBinding
 import app.launch0.helper.showToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The personal "dump" page — a chat-with-yourself screen reached by swiping left on the home
+ * The personal "notes" page — a chat-with-yourself screen reached by swiping left on the home
  * screen. It holds quick text notes and images (typed here or received via Android's share sheet,
  * see [app.launch0.MainActivity]).
  */
-class DumpFragment : androidx.fragment.app.Fragment() {
+class NotesFragment : androidx.fragment.app.Fragment() {
 
     private val viewModel: MainViewModel by activityViewModels()
-    private lateinit var dumpStore: DumpStore
-    private lateinit var adapter: DumpAdapter
+    private lateinit var notesStore: NotesStore
+    private lateinit var adapter: NotesAdapter
 
-    private var _binding: FragmentDumpBinding? = null
+    private var _binding: FragmentNotesBinding? = null
     private val binding get() = _binding!!
 
     private val pickImage =
@@ -47,13 +47,13 @@ class DumpFragment : androidx.fragment.app.Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        _binding = FragmentDumpBinding.inflate(inflater, container, false)
+        _binding = FragmentNotesBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        dumpStore = DumpStore(requireContext())
+        notesStore = NotesStore(requireContext())
 
         applyWindowInsets()
         initRecyclerView()
@@ -69,7 +69,7 @@ class DumpFragment : androidx.fragment.app.Fragment() {
     }
 
     private fun applyWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.dumpRoot) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.notesRoot) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
             v.updatePadding(
@@ -81,36 +81,36 @@ class DumpFragment : androidx.fragment.app.Fragment() {
     }
 
     private fun initRecyclerView() {
-        adapter = DumpAdapter(onItemLongClick = { confirmDelete(it) })
+        adapter = NotesAdapter(onItemLongClick = { confirmDelete(it) })
         binding.recyclerView.layoutManager =
             LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
         binding.recyclerView.adapter = adapter
     }
 
     private fun initInput() {
-        binding.dumpSend.setOnClickListener { sendText() }
-        binding.dumpAttach.setOnClickListener { pickImage.launch("image/*") }
+        binding.notesSend.setOnClickListener { sendText() }
+        binding.notesAttach.setOnClickListener { pickImage.launch("image/*") }
     }
 
     private fun initObservers() {
-        viewModel.dumpUpdated.observe(viewLifecycleOwner) {
+        viewModel.notesUpdated.observe(viewLifecycleOwner) {
             loadEntries(scrollToBottom = true)
         }
     }
 
     private fun sendText() {
-        val text = binding.dumpInput.text?.toString().orEmpty()
+        val text = binding.notesInput.text?.toString().orEmpty()
         if (text.isBlank()) return
-        binding.dumpInput.setText("")
+        binding.notesInput.setText("")
         viewLifecycleOwner.lifecycleScope.launch {
-            withContext(Dispatchers.IO) { dumpStore.addText(text) }
+            withContext(Dispatchers.IO) { notesStore.addText(text) }
             loadEntries(scrollToBottom = true)
         }
     }
 
     private fun addImage(uri: android.net.Uri) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val entry = withContext(Dispatchers.IO) { dumpStore.addImageFromUri(uri) }
+            val entry = withContext(Dispatchers.IO) { notesStore.addImageFromUri(uri) }
             if (entry == null) {
                 requireContext().showToast(getString(R.string.couldnt_add_image))
             } else {
@@ -121,9 +121,9 @@ class DumpFragment : androidx.fragment.app.Fragment() {
 
     private fun loadEntries(scrollToBottom: Boolean) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val entries = withContext(Dispatchers.IO) { dumpStore.getEntries() }
+            val entries = withContext(Dispatchers.IO) { notesStore.getEntries() }
             if (_binding == null) return@launch
-            binding.dumpEmpty.isVisible = entries.isEmpty()
+            binding.notesEmpty.isVisible = entries.isEmpty()
             adapter.submitList(entries) {
                 if (scrollToBottom && entries.isNotEmpty())
                     binding.recyclerView.scrollToPosition(entries.size - 1)
@@ -131,12 +131,12 @@ class DumpFragment : androidx.fragment.app.Fragment() {
         }
     }
 
-    private fun confirmDelete(entry: DumpEntry) {
+    private fun confirmDelete(entry: NotesEntry) {
         AlertDialog.Builder(requireContext())
-            .setMessage(R.string.dump_delete_confirm)
-            .setPositiveButton(R.string.dump_delete) { _, _ ->
+            .setMessage(R.string.notes_delete_confirm)
+            .setPositiveButton(R.string.notes_delete) { _, _ ->
                 viewLifecycleOwner.lifecycleScope.launch {
-                    withContext(Dispatchers.IO) { dumpStore.delete(entry) }
+                    withContext(Dispatchers.IO) { notesStore.delete(entry) }
                     loadEntries(scrollToBottom = false)
                 }
             }

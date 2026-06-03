@@ -47,7 +47,7 @@ object Constants {
     }
 
     object SwipeLeftAction {
-        const val DUMP = 1
+        const val NOTES = 1
         const val APP = 2
     }
 

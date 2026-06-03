@@ -7,7 +7,7 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Persistence for the personal dump page.
+ * Persistence for the personal notes page.
  *
  * Following the project convention of "no database", entries are stored as a JSON array string in
  * a dedicated [SharedPreferences] file. Shared/added images are copied into an app-private
@@ -15,7 +15,7 @@ import java.io.File
  *
  * All mutating calls do disk + IO work and should be invoked off the main thread.
  */
-class DumpStore(context: Context) {
+class NotesStore(context: Context) {
 
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
@@ -23,18 +23,18 @@ class DumpStore(context: Context) {
     private val imagesDir: File
         get() = File(appContext.filesDir, IMAGES_DIR_NAME).apply { if (!exists()) mkdirs() }
 
-    fun getEntries(): List<DumpEntry> {
+    fun getEntries(): List<NotesEntry> {
         val raw = prefs.getString(KEY_ENTRIES, null) ?: return emptyList()
         return try {
             val array = JSONArray(raw)
-            val list = ArrayList<DumpEntry>(array.length())
+            val list = ArrayList<NotesEntry>(array.length())
             for (i in 0 until array.length()) {
                 val obj = array.getJSONObject(i)
                 val imagePath = obj.optString(KEY_IMAGE_PATH, "")
                 list.add(
-                    DumpEntry(
+                    NotesEntry(
                         id = obj.getLong(KEY_ID),
-                        type = obj.optString(KEY_TYPE, DumpEntry.TYPE_TEXT),
+                        type = obj.optString(KEY_TYPE, NotesEntry.TYPE_TEXT),
                         text = obj.optString(KEY_TEXT, ""),
                         imagePath = imagePath.ifEmpty { null },
                         timestamp = obj.optLong(KEY_TIMESTAMP, obj.getLong(KEY_ID)),
@@ -49,17 +49,17 @@ class DumpStore(context: Context) {
     }
 
     @Synchronized
-    fun addText(text: String): DumpEntry? {
+    fun addText(text: String): NotesEntry? {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return null
         val now = System.currentTimeMillis()
-        val entry = DumpEntry(now, DumpEntry.TYPE_TEXT, trimmed, null, now)
+        val entry = NotesEntry(now, NotesEntry.TYPE_TEXT, trimmed, null, now)
         persist(getEntries() + entry)
         return entry
     }
 
     @Synchronized
-    fun addImageFromUri(uri: Uri): DumpEntry? {
+    fun addImageFromUri(uri: Uri): NotesEntry? {
         val now = uniqueTimestamp()
         val file = File(imagesDir, "img_$now.${guessExtension(uri)}")
         return try {
@@ -71,7 +71,7 @@ class DumpStore(context: Context) {
                 if (file.exists()) file.delete()
                 return null
             }
-            val entry = DumpEntry(now, DumpEntry.TYPE_IMAGE, "", file.absolutePath, now)
+            val entry = NotesEntry(now, NotesEntry.TYPE_IMAGE, "", file.absolutePath, now)
             persist(getEntries() + entry)
             entry
         } catch (e: Exception) {
@@ -82,15 +82,15 @@ class DumpStore(context: Context) {
     }
 
     @Synchronized
-    fun delete(entry: DumpEntry) {
+    fun delete(entry: NotesEntry) {
         persist(getEntries().filterNot { it.id == entry.id })
         val path = entry.imagePath ?: return
         val file = File(path)
-        // Only ever delete files we own inside the dump images directory.
+        // Only ever delete files we own inside the notes images directory.
         if (file.exists() && file.parentFile?.absolutePath == imagesDir.absolutePath) file.delete()
     }
 
-    private fun persist(entries: List<DumpEntry>) {
+    private fun persist(entries: List<NotesEntry>) {
         val array = JSONArray()
         entries.forEach { entry ->
             val obj = JSONObject()
@@ -123,9 +123,9 @@ class DumpStore(context: Context) {
     }
 
     companion object {
-        private const val PREFS_FILENAME = "app.launch0.dump"
-        private const val IMAGES_DIR_NAME = "dump_images"
-        private const val KEY_ENTRIES = "DUMP_ENTRIES"
+        private const val PREFS_FILENAME = "app.launch0.notes"
+        private const val IMAGES_DIR_NAME = "notes_images"
+        private const val KEY_ENTRIES = "NOTES_ENTRIES"
         private const val KEY_ID = "id"
         private const val KEY_TYPE = "type"
         private const val KEY_TEXT = "text"

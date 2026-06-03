@@ -7,19 +7,19 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import app.launch0.data.DumpEntry
-import app.launch0.databinding.AdapterDumpItemBinding
+import app.launch0.data.NotesEntry
+import app.launch0.databinding.AdapterNotesItemBinding
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class DumpAdapter(
-    private val onItemLongClick: (DumpEntry) -> Unit,
-) : ListAdapter<DumpEntry, DumpAdapter.ViewHolder>(DIFF_CALLBACK) {
+class NotesAdapter(
+    private val onItemLongClick: (NotesEntry) -> Unit,
+) : ListAdapter<NotesEntry, NotesAdapter.ViewHolder>(DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = AdapterDumpItemBinding.inflate(
+        val binding = AdapterNotesItemBinding.inflate(
             LayoutInflater.from(parent.context), parent, false
         )
         return ViewHolder(binding)
@@ -29,21 +29,21 @@ class DumpAdapter(
         holder.bind(getItem(position), onItemLongClick)
     }
 
-    class ViewHolder(private val binding: AdapterDumpItemBinding) :
+    class ViewHolder(private val binding: AdapterNotesItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(entry: DumpEntry, onItemLongClick: (DumpEntry) -> Unit) = with(binding) {
-            dumpTime.text = timeFormat.format(Date(entry.timestamp))
+        fun bind(entry: NotesEntry, onItemLongClick: (NotesEntry) -> Unit) = with(binding) {
+            notesTime.text = timeFormat.format(Date(entry.timestamp))
 
             if (entry.isImage && !entry.imagePath.isNullOrEmpty()) {
-                dumpText.isVisible = false
-                dumpImage.isVisible = true
+                notesText.isVisible = false
+                notesImage.isVisible = true
                 loadImage(entry.imagePath)
             } else {
-                dumpImage.isVisible = false
-                dumpImage.setImageDrawable(null)
-                dumpText.isVisible = true
-                dumpText.text = entry.text
+                notesImage.isVisible = false
+                notesImage.setImageDrawable(null)
+                notesText.isVisible = true
+                notesText.text = entry.text
             }
 
             root.setOnLongClickListener {
@@ -54,13 +54,13 @@ class DumpAdapter(
 
         private fun loadImage(path: String) {
             // Tag guards against a recycled view showing the wrong image.
-            binding.dumpImage.tag = path
-            binding.dumpImage.setImageDrawable(null)
+            binding.notesImage.tag = path
+            binding.notesImage.setImageDrawable(null)
             val file = File(path)
             if (!file.exists()) return
             val bitmap = decodeSampledBitmap(path, MAX_IMAGE_DIMEN, MAX_IMAGE_DIMEN)
-            if (bitmap != null && binding.dumpImage.tag == path) {
-                binding.dumpImage.setImageBitmap(bitmap)
+            if (bitmap != null && binding.notesImage.tag == path) {
+                binding.notesImage.setImageBitmap(bitmap)
             }
         }
 
@@ -100,11 +100,11 @@ class DumpAdapter(
         private const val MAX_IMAGE_DIMEN = 1080
         private val timeFormat = SimpleDateFormat("d MMM, h:mm a", Locale.getDefault())
 
-        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<DumpEntry>() {
-            override fun areItemsTheSame(oldItem: DumpEntry, newItem: DumpEntry) =
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<NotesEntry>() {
+            override fun areItemsTheSame(oldItem: NotesEntry, newItem: NotesEntry) =
                 oldItem.id == newItem.id
 
-            override fun areContentsTheSame(oldItem: DumpEntry, newItem: DumpEntry) =
+            override fun areContentsTheSame(oldItem: NotesEntry, newItem: NotesEntry) =
                 oldItem == newItem
         }
     }

@@ -249,7 +249,7 @@ class Prefs(context: Context) {
         set(value) = prefs.edit { putInt(SWIPE_DOWN_ACTION, value).apply() }
 
     var swipeLeftAction: Int
-        get() = prefs.getInt(SWIPE_LEFT_ACTION, Constants.SwipeLeftAction.DUMP)
+        get() = prefs.getInt(SWIPE_LEFT_ACTION, Constants.SwipeLeftAction.NOTES)
         set(value) = prefs.edit { putInt(SWIPE_LEFT_ACTION, value).apply() }
 
     var appName1: String

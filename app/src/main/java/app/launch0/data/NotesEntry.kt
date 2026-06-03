@@ -1,13 +1,13 @@
 package app.launch0.data
 
 /**
- * A single item on the personal dump page.
+ * A single item on the personal notes page.
  *
- * The dump is a "chat with yourself" — every note or shared image becomes one [DumpEntry].
- * Entries are persisted as JSON via [DumpStore]; images are copied into app-internal storage
+ * The notes is a "chat with yourself" — every note or shared image becomes one [NotesEntry].
+ * Entries are persisted as JSON via [NotesStore]; images are copied into app-internal storage
  * and referenced here by their absolute file path.
  */
-data class DumpEntry(
+data class NotesEntry(
     val id: Long,
     val type: String,
     val text: String,

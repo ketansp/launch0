@@ -769,7 +769,7 @@
                         android:layout_marginEnd="4dp"
                         android:lines="1"
                         android:padding="8dp"
-                        tools:text="@string/dump_title" />
+                        tools:text="@string/notes_title" />
 
                     <LinearLayout
                         android:id="@+id/swipeLeftSelectLayout"
@@ -792,14 +792,14 @@
                             android:layout_weight="1" />
 
                         <TextView
-                            android:id="@+id/swipeLeftDump"
+                            android:id="@+id/swipeLeftNotes"
                             style="@style/TextSmallBold"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="24dp"
                             android:gravity="center"
                             android:paddingVertical="6dp"
-                            android:text="@string/dump_title" />
+                            android:text="@string/notes_title" />
 
                         <TextView
                             android:id="@+id/swipeLeftAppOption"

@@ -42,7 +42,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Receive content shared from other apps into the personal dump page -->
+            <!-- Receive content shared from other apps into the personal notes page -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 

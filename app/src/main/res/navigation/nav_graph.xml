@@ -25,8 +25,8 @@
             app:popEnterAnim="@anim/fade_enter"
             app:popExitAnim="@anim/fade_exit" />
         <action
-            android:id="@+id/action_mainFragment_to_dumpFragment"
-            app:destination="@id/dumpFragment"
+            android:id="@+id/action_mainFragment_to_notesFragment"
+            app:destination="@id/notesFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -34,10 +34,10 @@
     </fragment>
 
     <fragment
-        android:id="@+id/dumpFragment"
-        android:name="app.launch0.ui.DumpFragment"
-        android:label="dump_fragment"
-        tools:layout="@layout/fragment_dump" />
+        android:id="@+id/notesFragment"
+        android:name="app.launch0.ui.NotesFragment"
+        android:label="notes_fragment"
+        tools:layout="@layout/fragment_notes" />
 
     <fragment
         android:id="@+id/appListFragment"

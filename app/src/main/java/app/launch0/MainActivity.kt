@@ -21,7 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import app.launch0.data.Constants
-import app.launch0.data.DumpStore
+import app.launch0.data.NotesStore
 import app.launch0.data.Prefs
 import app.launch0.databinding.ActivityMainBinding
 import app.launch0.helper.getColorFromAttr
@@ -143,8 +143,8 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Captures content shared into Launch0 via Android's share sheet and drops it onto the personal
-     * dump page. Supports plain text and one or more images. Runs the copy/persist work off the main
-     * thread, then surfaces the dump page so the user sees what landed.
+     * notes page. Supports plain text and one or more images. Runs the copy/persist work off the main
+     * thread, then surfaces the notes page so the user sees what landed.
      */
     private fun handleShareIntent(intent: Intent?) {
         if (!isShareIntent(intent) || intent == null) return
@@ -157,7 +157,7 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val added = withContext(Dispatchers.IO) {
-                val store = DumpStore(this@MainActivity)
+                val store = NotesStore(this@MainActivity)
                 var count = 0
                 imageUris.forEach { uri ->
                     if (store.addImageFromUri(uri) != null) count++
@@ -168,8 +168,8 @@ class MainActivity : AppCompatActivity() {
                 count
             }
             if (added > 0) {
-                viewModel.dumpUpdated.call()
-                openDumpScreen()
+                viewModel.notesUpdated.call()
+                openNotesScreen()
             } else {
                 showToast(getString(R.string.couldnt_add_image))
             }
@@ -196,12 +196,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openDumpScreen() {
+    private fun openNotesScreen() {
         try {
-            if (navController.currentDestination?.id == R.id.dumpFragment) return
+            if (navController.currentDestination?.id == R.id.notesFragment) return
             if (navController.currentDestination?.id != R.id.mainFragment)
                 navController.popBackStack(R.id.mainFragment, false)
-            navController.navigate(R.id.dumpFragment)
+            navController.navigate(R.id.notesFragment)
         } catch (e: Exception) {
             e.printStackTrace()
         }
