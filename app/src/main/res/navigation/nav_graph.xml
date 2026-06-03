@@ -24,7 +24,20 @@
             app:exitAnim="@anim/fade_exit"
             app:popEnterAnim="@anim/fade_enter"
             app:popExitAnim="@anim/fade_exit" />
+        <action
+            android:id="@+id/action_mainFragment_to_dumpFragment"
+            app:destination="@id/dumpFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
+
+    <fragment
+        android:id="@+id/dumpFragment"
+        android:name="app.launch0.ui.DumpFragment"
+        android:label="dump_fragment"
+        tools:layout="@layout/fragment_dump" />
 
     <fragment
         android:id="@+id/appListFragment"

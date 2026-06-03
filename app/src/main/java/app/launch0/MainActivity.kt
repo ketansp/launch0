@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -14,11 +15,13 @@ import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import app.launch0.data.Constants
+import app.launch0.data.DumpStore
 import app.launch0.data.Prefs
 import app.launch0.databinding.ActivityMainBinding
 import app.launch0.helper.getColorFromAttr
@@ -37,10 +40,14 @@ import app.launch0.helper.setPlainWallpaper
 import app.launch0.helper.shareApp
 import app.launch0.helper.showLauncherSelector
 import app.launch0.helper.showToast
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Calendar
+
+private const val EXTRA_SHARE_HANDLED = "app.launch0.SHARE_HANDLED"
 
 class MainActivity : AppCompatActivity() {
 
@@ -103,6 +110,8 @@ class MainActivity : AppCompatActivity() {
         setupOrientation()
 
         window.addFlags(FLAG_LAYOUT_NO_LIMITS)
+
+        handleShareIntent(intent)
     }
 
     override fun onStart() {
@@ -121,8 +130,81 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onNewIntent(intent: Intent?) {
-        backToHomeScreen()
         super.onNewIntent(intent)
+        setIntent(intent)
+        if (isShareIntent(intent))
+            handleShareIntent(intent)
+        else
+            backToHomeScreen()
+    }
+
+    private fun isShareIntent(intent: Intent?): Boolean =
+        intent?.action == Intent.ACTION_SEND || intent?.action == Intent.ACTION_SEND_MULTIPLE
+
+    /**
+     * Captures content shared into Launch0 via Android's share sheet and drops it onto the personal
+     * dump page. Supports plain text and one or more images. Runs the copy/persist work off the main
+     * thread, then surfaces the dump page so the user sees what landed.
+     */
+    private fun handleShareIntent(intent: Intent?) {
+        if (!isShareIntent(intent) || intent == null) return
+        if (intent.getBooleanExtra(EXTRA_SHARE_HANDLED, false)) return
+        intent.putExtra(EXTRA_SHARE_HANDLED, true)
+
+        val type = intent.type.orEmpty()
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+        val imageUris = collectImageUris(intent)
+
+        lifecycleScope.launch {
+            val added = withContext(Dispatchers.IO) {
+                val store = DumpStore(this@MainActivity)
+                var count = 0
+                imageUris.forEach { uri ->
+                    if (store.addImageFromUri(uri) != null) count++
+                }
+                if (!text.isNullOrBlank() && !type.startsWith("image/")) {
+                    if (store.addText(text) != null) count++
+                }
+                count
+            }
+            if (added > 0) {
+                viewModel.dumpUpdated.call()
+                openDumpScreen()
+            } else {
+                showToast(getString(R.string.couldnt_add_image))
+            }
+        }
+    }
+
+    private fun collectImageUris(intent: Intent): List<Uri> {
+        val type = intent.type.orEmpty()
+        return when (intent.action) {
+            Intent.ACTION_SEND -> {
+                if (type.startsWith("image/"))
+                    listOfNotNull(IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java))
+                else emptyList()
+            }
+
+            Intent.ACTION_SEND_MULTIPLE -> {
+                if (type.startsWith("image/"))
+                    IntentCompat.getParcelableArrayListExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
+                        ?.filterNotNull() ?: emptyList()
+                else emptyList()
+            }
+
+            else -> emptyList()
+        }
+    }
+
+    private fun openDumpScreen() {
+        try {
+            if (navController.currentDestination?.id == R.id.dumpFragment) return
+            if (navController.currentDestination?.id != R.id.mainFragment)
+                navController.popBackStack(R.id.mainFragment, false)
+            navController.navigate(R.id.dumpFragment)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

@@ -482,6 +482,21 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         )
     }
 
+    private fun swipeLeftAction() {
+        when (prefs.swipeLeftAction) {
+            Constants.SwipeLeftAction.APP -> openSwipeLeftApp()
+            else -> openDumpPage()
+        }
+    }
+
+    private fun openDumpPage() {
+        try {
+            findNavController().navigate(R.id.action_mainFragment_to_dumpFragment)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun openSwipeLeftApp() {
         if (!prefs.swipeLeftEnabled) return
         launchAppOrShortcut(
@@ -602,7 +617,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         return object : OnSwipeTouchListener(context) {
             override fun onSwipeLeft() {
                 super.onSwipeLeft()
-                openSwipeLeftApp()
+                swipeLeftAction()
             }
 
             override fun onSwipeRight() {
@@ -649,7 +664,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         return object : ViewSwipeTouchListener(context, view) {
             override fun onSwipeLeft() {
                 super.onSwipeLeft()
-                openSwipeLeftApp()
+                swipeLeftAction()
             }
 
             override fun onSwipeRight() {

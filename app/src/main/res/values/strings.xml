@@ -157,4 +157,18 @@
     <string name="new_year_wish_1">It doesn\'t matter how January went. You still have the rest of the year to do better than ever.</string>
     <string name="cheers">Cheers!</string>
     <string name="notification_bar">Notification bar</string>
+
+    <!-- Personal dump page -->
+    <string name="dump_title">Dump</string>
+    <string name="swipe_left_for">Swipe left for</string>
+    <string name="dump_empty_hint">Dump anything here. Notes, links, images — like a chat with yourself.</string>
+    <string name="dump_input_hint">Write something…</string>
+    <string name="dump_send">Send</string>
+    <string name="dump_attach_symbol" translatable="false">+</string>
+    <string name="dump_add_image">Add image</string>
+    <string name="dump_image_desc">Image</string>
+    <string name="dump_delete">Delete</string>
+    <string name="dump_delete_confirm">Delete this item?</string>
+    <string name="couldnt_add_image">Couldn\'t add to dump</string>
+    <string name="cancel">Cancel</string>
 </resources>
