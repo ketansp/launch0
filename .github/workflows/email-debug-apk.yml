@@ -1,0 +1,78 @@
+name: Email Debug APK
+
+# Manually-triggered dev build. Builds the debug APK and emails it as a
+# password-protected zip, so nothing is published as a public artifact or
+# release. Run it from the Actions tab via the "Run workflow" button.
+#
+# One-time setup (Settings -> Secrets and variables -> Actions):
+#   MAIL_USERNAME  your Gmail address (e.g. you@gmail.com)
+#   MAIL_PASSWORD  a Google "App Password" (requires 2-Step Verification),
+#                  NOT your normal account password.
+#
+# Notes:
+#   * The APK is zipped with a password ("launch0") because Gmail blocks .apk
+#     attachments, even inside a plain zip. Unzip with that password, then
+#     install app-debug.apk.
+#   * Only repo collaborators can trigger this, so the mail secrets are safe.
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Recipient email address'
+        required: true
+        type: string
+        default: '100.percent.ketan@gmail.com'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Package APK as password-protected zip
+        id: package
+        run: |
+          ZIP_NAME="launch0-debug-${GITHUB_SHA::7}-run${GITHUB_RUN_NUMBER}.zip"
+          cd app/build/outputs/apk/debug
+          zip -P launch0 "$ZIP_NAME" app-debug.apk
+          echo "zip_path=app/build/outputs/apk/debug/$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Email the APK
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: Launch0 CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ inputs.email }}
+          subject: "Launch0 debug APK — ${{ steps.package.outputs.zip_name }}"
+          body: |
+            Your Launch0 debug build is attached.
+
+            Commit:    ${{ github.sha }}
+            Branch:    ${{ github.ref_name }}
+            Run:       ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            The attachment is a password-protected zip (Gmail blocks raw .apk
+            files). Unzip with the password "launch0", then install
+            app-debug.apk on your device.
+          attachments: ${{ steps.package.outputs.zip_path }}
