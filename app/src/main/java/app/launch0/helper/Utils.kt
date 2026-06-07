@@ -330,6 +330,16 @@ fun isAccessServiceEnabled(context: Context): Boolean {
     return false
 }
 
+fun isNotificationServiceEnabled(context: Context): Boolean {
+    return try {
+        androidx.core.app.NotificationManagerCompat
+            .getEnabledListenerPackages(context)
+            .contains(context.packageName)
+    } catch (e: Exception) {
+        false
+    }
+}
+
 fun isTablet(context: Context): Boolean {
     val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     val metrics = DisplayMetrics()

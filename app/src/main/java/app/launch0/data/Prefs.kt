@@ -36,6 +36,11 @@ class Prefs(context: Context) {
     private val WALLPAPER_MSG_SHOWN = "WALLPAPER_MSG_SHOWN"
     private val SHARE_SHOWN_TIME = "SHARE_SHOWN_TIME"
     private val SWIPE_DOWN_ACTION = "SWIPE_DOWN_ACTION"
+    private val DND_ENABLED = "DND_ENABLED"
+    private val DND_DURATION_MINUTES = "DND_DURATION_MINUTES"
+    private val DND_APPS = "DND_APPS"
+    private val DND_WINDOW_END = "DND_WINDOW_END"
+    private val DND_HELD_KEYS = "DND_HELD_KEYS"
     private val TEXT_SIZE_SCALE = "TEXT_SIZE_SCALE"
     private val PRO_MESSAGE_SHOWN = "PRO_MESSAGE_SHOWN"
     private val HIDE_SET_DEFAULT_LAUNCHER = "HIDE_SET_DEFAULT_LAUNCHER"
@@ -246,6 +251,29 @@ class Prefs(context: Context) {
     var swipeDownAction: Int
         get() = prefs.getInt(SWIPE_DOWN_ACTION, Constants.SwipeDownAction.NOTIFICATIONS)
         set(value) = prefs.edit { putInt(SWIPE_DOWN_ACTION, value).apply() }
+
+    // Do Not Disturb (notification holding)
+    var dndEnabled: Boolean
+        get() = prefs.getBoolean(DND_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(DND_ENABLED, value).apply() }
+
+    var dndDurationMinutes: Int
+        get() = prefs.getInt(DND_DURATION_MINUTES, Constants.Dnd.DEFAULT_DURATION_MINUTES)
+        set(value) = prefs.edit { putInt(DND_DURATION_MINUTES, value).apply() }
+
+    var dndApps: MutableSet<String>
+        get() = prefs.getStringSet(DND_APPS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        set(value) = prefs.edit { putStringSet(DND_APPS, value).apply() }
+
+    // Timestamp (millis) when the current hold window ends and held notifications are released.
+    var dndWindowEnd: Long
+        get() = prefs.getLong(DND_WINDOW_END, 0L)
+        set(value) = prefs.edit { putLong(DND_WINDOW_END, value).apply() }
+
+    // Notification keys currently being held (snoozed) by the DND service.
+    var dndHeldKeys: MutableSet<String>
+        get() = prefs.getStringSet(DND_HELD_KEYS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        set(value) = prefs.edit { putStringSet(DND_HELD_KEYS, value).apply() }
 
     var appName1: String
         get() = prefs.getString(APP_NAME_1, "").toString()

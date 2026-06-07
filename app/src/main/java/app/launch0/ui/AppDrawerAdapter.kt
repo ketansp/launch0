@@ -31,6 +31,7 @@ class AppDrawerAdapter(
     private val appDeleteListener: (AppModel) -> Unit,
     private val appHideListener: (AppModel, Int) -> Unit,
     private val appRenameListener: (AppModel, String) -> Unit,
+    private val isDndApp: (String) -> Boolean = { false },
 ) : ListAdapter<AppModel, AppDrawerAdapter.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
@@ -80,7 +81,8 @@ class AppDrawerAdapter(
                 appDeleteListener,
                 appInfoListener,
                 appHideListener,
-                appRenameListener
+                appRenameListener,
+                isDndApp
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -173,6 +175,7 @@ class AppDrawerAdapter(
             appInfoListener: (AppModel) -> Unit,
             appHideListener: (AppModel, Int) -> Unit,
             appRenameListener: (AppModel, String) -> Unit,
+            isDndApp: (String) -> Boolean,
         ) = with(binding) {
             appHideLayout.visibility = View.GONE
             renameLayout.visibility = View.GONE
@@ -180,6 +183,10 @@ class AppDrawerAdapter(
 
             // Show indicators in title based on app type and state
             appTitle.text = buildString {
+                if (flag == Constants.FLAG_SET_DND_APPS
+                    && appModel.appPackage.isNotEmpty()
+                    && isDndApp(appModel.appPackage)
+                ) append("✓ ")
                 append(appModel.appLabel)
                 if (appModel.isNew) append(" ✦")
             }
