@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
@@ -33,6 +34,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
     private val viewModel: MainViewModel by activityViewModels()
     private lateinit var notesStore: NotesStore
     private lateinit var adapter: NotesAdapter
+    private var imageViewerBackCallback: OnBackPressedCallback? = null
 
     private var _binding: FragmentNotesBinding? = null
     private val binding get() = _binding!!
@@ -58,6 +60,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
         applyWindowInsets()
         initRecyclerView()
         initInput()
+        initImageViewer()
         initObservers()
         loadEntries(scrollToBottom = true)
     }
@@ -81,10 +84,48 @@ class NotesFragment : androidx.fragment.app.Fragment() {
     }
 
     private fun initRecyclerView() {
-        adapter = NotesAdapter(onItemLongClick = { confirmDelete(it) })
+        adapter = NotesAdapter(
+            onItemLongClick = { confirmDelete(it) },
+            onImageClick = { showFullImage(it) },
+        )
         binding.recyclerView.layoutManager =
             LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
         binding.recyclerView.adapter = adapter
+    }
+
+    private fun initImageViewer() {
+        binding.notesImageViewer.setOnClickListener { hideFullImage() }
+        // Let the back gesture/button close the viewer before leaving the screen.
+        imageViewerBackCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() = hideFullImage()
+        }.also {
+            requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, it)
+        }
+    }
+
+    private fun showFullImage(entry: NotesEntry) {
+        val path = entry.imagePath ?: return
+        binding.notesImageViewer.visibility = View.VISIBLE
+        imageViewerBackCallback?.isEnabled = true
+        viewLifecycleOwner.lifecycleScope.launch {
+            val bitmap = withContext(Dispatchers.IO) {
+                decodeSampledBitmap(path, FULL_IMAGE_DIMEN, FULL_IMAGE_DIMEN)
+            }
+            if (_binding == null) return@launch
+            if (bitmap != null) {
+                binding.notesFullImage.setImageBitmap(bitmap)
+            } else {
+                hideFullImage()
+                requireContext().showToast(getString(R.string.couldnt_add_image))
+            }
+        }
+    }
+
+    private fun hideFullImage() {
+        if (_binding == null) return
+        binding.notesImageViewer.visibility = View.GONE
+        binding.notesFullImage.setImageDrawable(null)
+        imageViewerBackCallback?.isEnabled = false
     }
 
     private fun initInput() {
@@ -146,6 +187,11 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        imageViewerBackCallback = null
         _binding = null
+    }
+
+    companion object {
+        private const val FULL_IMAGE_DIMEN = 2048
     }
 }

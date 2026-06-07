@@ -1,5 +1,6 @@
 package app.launch0.ui
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import java.util.Locale
 
 class NotesAdapter(
     private val onItemLongClick: (NotesEntry) -> Unit,
+    private val onImageClick: (NotesEntry) -> Unit,
 ) : ListAdapter<NotesEntry, NotesAdapter.ViewHolder>(DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -26,22 +28,28 @@ class NotesAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position), onItemLongClick)
+        holder.bind(getItem(position), onItemLongClick, onImageClick)
     }
 
     class ViewHolder(private val binding: AdapterNotesItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(entry: NotesEntry, onItemLongClick: (NotesEntry) -> Unit) = with(binding) {
+        fun bind(
+            entry: NotesEntry,
+            onItemLongClick: (NotesEntry) -> Unit,
+            onImageClick: (NotesEntry) -> Unit,
+        ) = with(binding) {
             notesTime.text = timeFormat.format(Date(entry.timestamp))
 
             if (entry.isImage && !entry.imagePath.isNullOrEmpty()) {
                 notesText.isVisible = false
                 notesImage.isVisible = true
                 loadImage(entry.imagePath)
+                notesImage.setOnClickListener { onImageClick(entry) }
             } else {
                 notesImage.isVisible = false
                 notesImage.setImageDrawable(null)
+                notesImage.setOnClickListener(null)
                 notesText.isVisible = true
                 notesText.text = entry.text
             }
@@ -63,37 +71,6 @@ class NotesAdapter(
                 binding.notesImage.setImageBitmap(bitmap)
             }
         }
-
-        private fun decodeSampledBitmap(path: String, reqWidth: Int, reqHeight: Int) =
-            try {
-                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeFile(path, bounds)
-                val options = BitmapFactory.Options().apply {
-                    inSampleSize = calculateInSampleSize(bounds, reqWidth, reqHeight)
-                }
-                BitmapFactory.decodeFile(path, options)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-
-        private fun calculateInSampleSize(
-            options: BitmapFactory.Options,
-            reqWidth: Int,
-            reqHeight: Int,
-        ): Int {
-            val height = options.outHeight
-            val width = options.outWidth
-            var inSampleSize = 1
-            if (height > reqHeight || width > reqWidth) {
-                val halfHeight = height / 2
-                val halfWidth = width / 2
-                while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
-                    inSampleSize *= 2
-                }
-            }
-            return inSampleSize
-        }
     }
 
     companion object {
@@ -108,4 +85,36 @@ class NotesAdapter(
                 oldItem == newItem
         }
     }
+}
+
+/** Decodes a bitmap from [path], downsampled so it fits within [reqWidth] x [reqHeight]. */
+internal fun decodeSampledBitmap(path: String, reqWidth: Int, reqHeight: Int): Bitmap? =
+    try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, bounds)
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = calculateInSampleSize(bounds, reqWidth, reqHeight)
+        }
+        BitmapFactory.decodeFile(path, options)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+
+private fun calculateInSampleSize(
+    options: BitmapFactory.Options,
+    reqWidth: Int,
+    reqHeight: Int,
+): Int {
+    val height = options.outHeight
+    val width = options.outWidth
+    var inSampleSize = 1
+    if (height > reqHeight || width > reqWidth) {
+        val halfHeight = height / 2
+        val halfWidth = width / 2
+        while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+            inSampleSize *= 2
+        }
+    }
+    return inSampleSize
 }
