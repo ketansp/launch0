@@ -1,25 +1,24 @@
 name: Build Debug APK
 
-# Manually-triggered dev build. Builds the debug APK and uploads it as a
-# workflow artifact you can download from the run summary page. The artifact
-# auto-deletes after the retention period below.
+# Manually-triggered dev build. Builds the debug APK and publishes it to a
+# rolling "debug-latest" pre-release so there is always one stable, tappable
+# download link for installing on a phone:
 #
-# Note: on a public repo, run artifacts are downloadable by anyone. The debug
+#   https://github.com/${{ github.repository }}/releases/download/debug-latest/app-debug.apk
+#
+# Trigger from a phone: open the repo on github.com in your mobile browser with
+# "Request desktop site", go to Actions -> "Build Debug APK" -> Run workflow.
+# When it finishes, open the link above on the device and tap to install.
+#
+# Note: on a public repo the release asset is publicly downloadable. The debug
 # APK is built from already-public source, so this exposes only a prebuilt
-# binary, not any secret. Use the "Email Debug APK" workflow if you need
-# private delivery.
+# binary, not any secret.
 
 on:
   workflow_dispatch:
-    inputs:
-      retention_days:
-        description: 'Days to keep the artifact before auto-deletion (1-90)'
-        required: false
-        type: string
-        default: '7'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -39,10 +38,16 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: launch0-debug-${{ github.sha }}
-          path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: ${{ inputs.retention_days }}
-          if-no-files-found: error
+      - name: Publish to rolling debug-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Remove the previous rolling release and its tag (ignore if absent),
+          # then recreate so the download URL stays stable but points at this build.
+          gh release delete debug-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create debug-latest \
+            app/build/outputs/apk/debug/app-debug.apk \
+            --target "$GITHUB_SHA" \
+            --title "Debug build (latest)" \
+            --notes "Latest debug APK — commit ${GITHUB_SHA::7}, built $(date -u '+%Y-%m-%d %H:%M UTC'). Tap app-debug.apk to install." \
+            --prerelease
