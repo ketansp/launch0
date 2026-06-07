@@ -25,19 +25,15 @@ import app.launch0.data.NotesStore
 import app.launch0.data.Prefs
 import app.launch0.databinding.ActivityMainBinding
 import app.launch0.helper.getColorFromAttr
-import app.launch0.helper.hasBeenDays
 import app.launch0.helper.hasBeenHours
 import app.launch0.helper.hasBeenMinutes
 import app.launch0.helper.isDarkThemeOn
-import app.launch0.helper.isDaySince
 import app.launch0.helper.isDefaultLauncher
 import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isLaunch0Default
 import app.launch0.helper.isTablet
-import app.launch0.helper.openUrl
 import app.launch0.helper.resetLauncherViaFakeActivity
 import app.launch0.helper.setPlainWallpaper
-import app.launch0.helper.shareApp
 import app.launch0.helper.showLauncherSelector
 import app.launch0.helper.showToast
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +41,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Calendar
 
 private const val EXTRA_SHARE_HANDLED = "app.launch0.SHARE_HANDLED"
 
@@ -254,14 +249,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                Constants.Dialog.SHARE -> {
-                    prefs.shareShownTime = System.currentTimeMillis()
-                    showMessageDialog(R.string.hey, R.string.share_message, R.string.share_now) {
-                        showToast("😊❤️")
-                        shareApp()
-                    }
-                }
-
                 Constants.Dialog.HIDDEN -> {
                     showMessageDialog(R.string.hidden_apps, R.string.hidden_apps_message, R.string.okay) {
                     }
@@ -278,11 +265,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                Constants.Dialog.PRO_MESSAGE -> {
-                    showMessageDialog(R.string.hey, R.string.pro_message, R.string.olauncher_pro) {
-                        openUrl(Constants.URL_OLAUNCHER_PRO)
-                    }
-                }
             }
         }
     }
@@ -302,18 +284,6 @@ class MainActivity : AppCompatActivity() {
         if (prefs.firstOpenTime == 0L)
             prefs.firstOpenTime = System.currentTimeMillis()
 
-        val calendar = Calendar.getInstance()
-        val dayOfYear = calendar.get(Calendar.DAY_OF_YEAR)
-        if (dayOfYear == 1 && dayOfYear != prefs.shownOnDayOfYear) {
-            prefs.shownOnDayOfYear = dayOfYear
-            showMessageDialog(R.string.hey, R.string.new_year_wish, R.string.cheers) {}
-            return
-        } else if (dayOfYear == 32 && dayOfYear != prefs.shownOnDayOfYear) {
-            prefs.shownOnDayOfYear = dayOfYear
-            showMessageDialog(R.string.hey, R.string.new_year_wish_1, R.string.cheers) {}
-            return
-        }
-
         when (prefs.userState) {
             Constants.UserState.START -> {
                 if (prefs.firstOpenTime.hasBeenMinutes(10))
@@ -322,21 +292,14 @@ class MainActivity : AppCompatActivity() {
 
             Constants.UserState.WALLPAPER -> {
                 if (prefs.wallpaperMsgShown || prefs.hourlyWallpaper)
-                    prefs.userState = Constants.UserState.SHARE
+                    prefs.userState = Constants.UserState.DONE
                 else if (isLaunch0Default(this))
                     viewModel.showDialog.postValue(Constants.Dialog.WALLPAPER)
             }
 
             Constants.UserState.REVIEW,
             Constants.UserState.RATE -> {
-                prefs.userState = Constants.UserState.SHARE
-            }
-
-            Constants.UserState.SHARE -> {
-                if (isLaunch0Default(this) && prefs.firstOpenTime.hasBeenDays(14)
-                    && prefs.shareShownTime.isDaySince() >= 70
-                    && calendar.get(Calendar.HOUR_OF_DAY) >= 16
-                ) viewModel.showDialog.postValue(Constants.Dialog.SHARE)
+                prefs.userState = Constants.UserState.DONE
             }
         }
     }

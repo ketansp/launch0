@@ -1,0 +1,52 @@
+name: Build Debug APK
+
+# Manually-triggered dev build. Builds the debug APK and uploads it as a
+# workflow artifact you can download from the run summary page. The artifact
+# auto-deletes after the retention period below.
+#
+# Trigger from a phone: open the repo on github.com in your mobile browser with
+# "Request desktop site", go to Actions -> "Build Debug APK" -> Run workflow.
+# When it finishes, open the run and download the artifact from the Artifacts
+# section (it downloads as a .zip you unzip to get app-debug.apk).
+#
+# Note: on a public repo, run artifacts are downloadable by anyone. The debug
+# APK is built from already-public source, so this exposes only a prebuilt
+# binary, not any secret.
+
+on:
+  workflow_dispatch:
+    inputs:
+      retention_days:
+        description: 'Days to keep the artifact before auto-deletion (1-90)'
+        required: false
+        type: string
+        default: '7'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: launch0-debug-${{ github.sha }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: ${{ inputs.retention_days }}
+          if-no-files-found: error
