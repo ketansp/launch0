@@ -52,6 +52,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var timerJob: Job? = null
 
+    /**
+     * Set when we intentionally launch another activity (e.g. the image picker for notes) and expect
+     * to come back to the same screen. While true, the launcher's usual "snap back to the home
+     * screen when backgrounded" behavior is suppressed so the current fragment — and its pending
+     * activity result — survive the trip. Reset on the next [onStart].
+     */
+    private var awaitingActivityResult = false
+
 //    override fun onBackPressed() {
 //        if (navController.currentDestination?.id != R.id.mainFragment)
 //            super.onBackPressed()
@@ -111,17 +119,32 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Returning from an activity we launched ourselves (e.g. the notes image picker): keep the
+        // current screen and skip the periodic restart/theme check so we land back where we left.
+        if (awaitingActivityResult) {
+            awaitingActivityResult = false
+            return
+        }
         restartLauncherOrCheckTheme()
     }
 
     override fun onStop() {
-        backToHomeScreen()
+        if (!awaitingActivityResult) backToHomeScreen()
         super.onStop()
     }
 
     override fun onUserLeaveHint() {
-        backToHomeScreen()
+        if (!awaitingActivityResult) backToHomeScreen()
         super.onUserLeaveHint()
+    }
+
+    /**
+     * Called by fragments right before launching an activity whose result they need (e.g. the notes
+     * image picker), so backgrounding doesn't snap the user back to the home screen and discard the
+     * pending result.
+     */
+    fun setAwaitingActivityResult() {
+        awaitingActivityResult = true
     }
 
     override fun onNewIntent(intent: Intent?) {

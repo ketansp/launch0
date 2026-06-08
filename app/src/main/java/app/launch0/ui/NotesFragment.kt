@@ -14,6 +14,7 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import app.launch0.MainActivity
 import app.launch0.MainViewModel
 import app.launch0.R
 import app.launch0.data.NotesEntry
@@ -130,7 +131,12 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
     private fun initInput() {
         binding.notesSend.setOnClickListener { sendText() }
-        binding.notesAttach.setOnClickListener { pickImage.launch("image/*") }
+        binding.notesAttach.setOnClickListener {
+            // Tell the launcher we're leaving for a result, so it doesn't snap back to the home
+            // screen (which would destroy this fragment and drop the picked image).
+            (activity as? MainActivity)?.setAwaitingActivityResult()
+            pickImage.launch("image/*")
+        }
     }
 
     private fun initObservers() {
