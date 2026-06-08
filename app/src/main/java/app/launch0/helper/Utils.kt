@@ -9,9 +9,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.Point
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.UserHandle
@@ -20,6 +22,7 @@ import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.MediaStore
 import android.provider.Settings
+import android.provider.Telephony
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
@@ -179,6 +182,72 @@ fun getUserHandleFromString(context: Context, userHandleString: String): UserHan
         }
     }
     return android.os.Process.myUserHandle()
+}
+
+/**
+ * Builds an [AppModel.App] for the given package using its launcher activity (current user).
+ * Returns null if the package has no launchable activity.
+ */
+private fun appModelForPackage(context: Context, packageName: String?): AppModel.App? {
+    if (packageName.isNullOrBlank() || packageName == "android") return null
+    return try {
+        val launcher = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val user = android.os.Process.myUserHandle()
+        val activities = launcher.getActivityList(packageName, user)
+        if (activities.isEmpty()) return null
+        val activity = activities[0]
+        AppModel.App(
+            appLabel = activity.label.toString(),
+            key = null,
+            appPackage = packageName,
+            activityClassName = activity.componentName.className,
+            isNew = false,
+            user = user,
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+/**
+ * Resolves the default home screen favourites — phone, camera, messaging and WhatsApp — to the
+ * apps actually installed on this device, in that order. Entries that can't be resolved are skipped.
+ */
+fun getDefaultHomeApps(context: Context): List<AppModel.App> {
+    val pm = context.packageManager
+    fun resolvePackage(intent: Intent): String? =
+        pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName
+
+    val apps = mutableListOf<AppModel.App>()
+
+    // Phone
+    appModelForPackage(context, resolvePackage(Intent(Intent.ACTION_DIAL)))?.let { apps.add(it) }
+    // Camera
+    appModelForPackage(context, resolvePackage(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)))?.let { apps.add(it) }
+    // Messaging
+    val smsPackage = Telephony.Sms.getDefaultSmsPackage(context)
+        ?: resolvePackage(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MESSAGING))
+    appModelForPackage(context, smsPackage)?.let { apps.add(it) }
+    // WhatsApp
+    Constants.WHATSAPP_PACKAGES.firstNotNullOfOrNull { appModelForPackage(context, it) }?.let { apps.add(it) }
+
+    return apps.distinctBy { it.appPackage }
+}
+
+/** App icon for a home favourite, badged for the owning user profile. Null if unavailable. */
+fun Context.getAppIcon(packageName: String, userString: String): Drawable? {
+    if (packageName.isBlank()) return null
+    return try {
+        val launcher = getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val user = getUserHandleFromString(this, userString)
+        val activities = launcher.getActivityList(packageName, user)
+        if (activities.isNotEmpty()) activities[0].getBadgedIcon(0)
+        else packageManager.getApplicationIcon(packageName)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }
 
 fun isLaunch0Default(context: Context): Boolean {

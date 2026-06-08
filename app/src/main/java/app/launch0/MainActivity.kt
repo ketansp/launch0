@@ -103,6 +103,7 @@ class MainActivity : AppCompatActivity() {
             prefs.firstOpen = false
             prefs.firstOpenTime = System.currentTimeMillis()
             viewModel.setDefaultClockApp()
+            viewModel.setDefaultHomeApps()
             viewModel.resetLauncherLiveData.call()
         }
 

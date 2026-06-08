@@ -19,6 +19,7 @@ import app.launch0.helper.SingleLiveEvent
 import app.launch0.helper.WallpaperWorker
 import app.launch0.helper.formattedTimeSpent
 import app.launch0.helper.getAppsList
+import app.launch0.helper.getDefaultHomeApps
 import app.launch0.helper.hasBeenMinutes
 import app.launch0.helper.isLaunch0Default
 import app.launch0.helper.isPackageInstalled
@@ -424,6 +425,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val viewTimeSpent = appContext.formattedTimeSpent(timeSpent)
         screenTimeValue.postValue(viewTimeSpent)
         prefs.screenTimeLastUpdated = endTime
+    }
+
+    fun setDefaultHomeApps() {
+        viewModelScope.launch {
+            try {
+                val apps = getDefaultHomeApps(appContext)
+                if (apps.isEmpty()) return@launch
+                apps.forEachIndexed { index, app -> saveHomeApp(app, index + 1) }
+                prefs.homeAppsNum = apps.size
+                refreshHome(true)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun setDefaultClockApp() {

@@ -79,6 +79,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateStatusBar()
         populateDateTime()
         populateYearWidget()
+        populateAppIcons()
         populateSwipeApps()
         populateSwipeDownAction()
         populateDnd()
@@ -129,6 +130,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.statusBar -> toggleStatusBar()
             R.id.dateTime -> binding.dateTimeSelectLayout.visibility = View.VISIBLE
             R.id.daysLeftWidget -> toggleYearWidget()
+            R.id.showAppIcons -> toggleAppIcons()
             R.id.dateTimeOn -> toggleDateTime(Constants.DateTime.ON)
             R.id.dateTimeOff -> toggleDateTime(Constants.DateTime.OFF)
             R.id.dateOnly -> toggleDateTime(Constants.DateTime.DATE_ONLY)
@@ -224,6 +226,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
         binding.daysLeftWidget.setOnClickListener(this)
+        binding.showAppIcons.setOnClickListener(this)
         binding.dateTimeOn.setOnClickListener(this)
         binding.dateTimeOff.setOnClickListener(this)
         binding.dateOnly.setOnClickListener(this)
@@ -345,6 +348,18 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     private fun populateYearWidget() {
         binding.daysLeftWidget.text = getString(
             if (prefs.showYearWidget) R.string.on else R.string.off
+        )
+    }
+
+    private fun toggleAppIcons() {
+        prefs.showAppIcons = !prefs.showAppIcons
+        populateAppIcons()
+        viewModel.refreshHome(false)
+    }
+
+    private fun populateAppIcons() {
+        binding.showAppIcons.text = getString(
+            if (prefs.showAppIcons) R.string.on else R.string.off
         )
     }
 

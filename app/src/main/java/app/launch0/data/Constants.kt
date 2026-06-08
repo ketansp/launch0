@@ -66,6 +66,11 @@ object Constants {
         "com.miui.clock", //Xiaomi Clock
     )
 
+    val WHATSAPP_PACKAGES = arrayOf(
+        "com.whatsapp", //WhatsApp Messenger
+        "com.whatsapp.w4b", //WhatsApp Business
+    )
+
 
 //    const val THEME_MODE_DARK = 0
 //    const val THEME_MODE_LIGHT = 1

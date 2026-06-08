@@ -33,6 +33,7 @@ import app.launch0.databinding.FragmentHomeBinding
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.dpToPx
 import app.launch0.helper.expandNotificationDrawer
+import app.launch0.helper.getAppIcon
 import app.launch0.helper.getChangedAppTheme
 import app.launch0.helper.getUserHandleFromString
 import app.launch0.helper.isPackageInstalled
@@ -378,24 +379,42 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                 // Check if our shortcut still exists
                 if (shortcuts?.any { it.id == shortcutId } == true) {
                     textView.text = appName
+                    setHomeAppIcon(textView, packageName, userString)
                     return true
                 }
                 textView.text = ""
+                setHomeAppIcon(textView, "", userString)
                 return false
             } catch (e: Exception) {
                 e.printStackTrace()
                 textView.text = ""
+                setHomeAppIcon(textView, "", userString)
                 return false
             }
         }
-        
+
         // Regular app check
         if (isPackageInstalled(requireContext(), packageName, userString)) {
             textView.text = appName
+            setHomeAppIcon(textView, packageName, userString)
             return true
         }
         textView.text = ""
+        setHomeAppIcon(textView, "", userString)
         return false
+    }
+
+    /** Shows the app icon at the start of [textView] when enabled, or clears it otherwise. */
+    private fun setHomeAppIcon(textView: TextView, packageName: String, userString: String) {
+        val icon = if (prefs.showAppIcons) requireContext().getAppIcon(packageName, userString) else null
+        if (icon == null) {
+            textView.setCompoundDrawables(null, null, null, null)
+            return
+        }
+        val size = (textView.textSize * 1.2f).toInt()
+        icon.setBounds(0, 0, size, size)
+        textView.setCompoundDrawablesRelative(icon, null, null, null)
+        textView.compoundDrawablePadding = 12.dpToPx()
     }
 
     private fun hideHomeApps() {

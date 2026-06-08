@@ -66,6 +66,7 @@
     <string name="rename">Rename</string>
     <string name="show_date_time">Show date time</string>
     <string name="days_left_widget">Days left widget</string>
+    <string name="show_app_icons">Show app icons</string>
     <string name="appearance">Appearance</string>
     <string name="gestures">Gestures</string>
     <string name="theme_mode">Theme mode</string>
