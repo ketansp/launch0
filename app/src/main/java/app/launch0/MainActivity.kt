@@ -30,7 +30,6 @@ import app.launch0.helper.hasBeenMinutes
 import app.launch0.helper.isDarkThemeOn
 import app.launch0.helper.isDefaultLauncher
 import app.launch0.helper.isEinkDisplay
-import app.launch0.helper.isLaunch0Default
 import app.launch0.helper.isTablet
 import app.launch0.helper.resetLauncherViaFakeActivity
 import app.launch0.helper.setPlainWallpaper
@@ -262,16 +261,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                Constants.Dialog.WALLPAPER -> {
-                    prefs.wallpaperMsgShown = true
-                    prefs.userState = Constants.UserState.REVIEW
-                    showMessageDialog(R.string.did_you_know, R.string.wallpaper_message, R.string.enable) {
-                        prefs.hourlyWallpaper = true
-                        viewModel.setWallpaperWorker()
-                        showToast(getString(R.string.your_wallpaper_will_update_shortly))
-                    }
-                }
-
                 Constants.Dialog.HIDDEN -> {
                     showMessageDialog(R.string.hidden_apps, R.string.hidden_apps_message, R.string.okay) {
                     }
@@ -310,16 +299,10 @@ class MainActivity : AppCompatActivity() {
         when (prefs.userState) {
             Constants.UserState.START -> {
                 if (prefs.firstOpenTime.hasBeenMinutes(10))
-                    prefs.userState = Constants.UserState.WALLPAPER
-            }
-
-            Constants.UserState.WALLPAPER -> {
-                if (prefs.wallpaperMsgShown || prefs.hourlyWallpaper)
                     prefs.userState = Constants.UserState.DONE
-                else if (isLaunch0Default(this))
-                    viewModel.showDialog.postValue(Constants.Dialog.WALLPAPER)
             }
 
+            Constants.UserState.WALLPAPER,
             Constants.UserState.REVIEW,
             Constants.UserState.RATE -> {
                 prefs.userState = Constants.UserState.DONE
