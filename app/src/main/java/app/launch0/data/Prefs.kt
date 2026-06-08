@@ -41,6 +41,7 @@ class Prefs(context: Context) {
     private val DND_APPS = "DND_APPS"
     private val DND_WINDOW_END = "DND_WINDOW_END"
     private val DND_HELD_KEYS = "DND_HELD_KEYS"
+    private val SWIPE_LEFT_ACTION = "SWIPE_LEFT_ACTION"
     private val TEXT_SIZE_SCALE = "TEXT_SIZE_SCALE"
     private val PRO_MESSAGE_SHOWN = "PRO_MESSAGE_SHOWN"
     private val HIDE_SET_DEFAULT_LAUNCHER = "HIDE_SET_DEFAULT_LAUNCHER"
@@ -274,6 +275,10 @@ class Prefs(context: Context) {
     var dndHeldKeys: MutableSet<String>
         get() = prefs.getStringSet(DND_HELD_KEYS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
         set(value) = prefs.edit { putStringSet(DND_HELD_KEYS, value).apply() }
+
+    var swipeLeftAction: Int
+        get() = prefs.getInt(SWIPE_LEFT_ACTION, Constants.SwipeLeftAction.NOTES)
+        set(value) = prefs.edit { putInt(SWIPE_LEFT_ACTION, value).apply() }
 
     var appName1: String
         get() = prefs.getString(APP_NAME_1, "").toString()
