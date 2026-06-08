@@ -113,6 +113,7 @@ class AppDrawerFragment : Fragment() {
         adapter = AppDrawerAdapter(
             flag,
             prefs.appLabelAlignment,
+            prefs.showAppIcons,
             appClickListener = { appModel ->
                 if (flag == Constants.FLAG_SET_DND_APPS) {
                     toggleDndApp(appModel)

@@ -4,12 +4,14 @@ import android.content.Context
 import android.os.UserHandle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Filter
 import android.widget.Filterable
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -18,6 +20,7 @@ import app.launch0.R
 import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.databinding.AdapterAppDrawerBinding
+import app.launch0.helper.getAppIcon
 import app.launch0.helper.hideKeyboard
 import app.launch0.helper.isSystemApp
 import app.launch0.helper.showKeyboard
@@ -26,6 +29,7 @@ import java.text.Normalizer
 class AppDrawerAdapter(
     private var flag: Int,
     private val appLabelGravity: Int,
+    private val showAppIcons: Boolean,
     private val appClickListener: (AppModel) -> Unit,
     private val appInfoListener: (AppModel) -> Unit,
     private val appDeleteListener: (AppModel) -> Unit,
@@ -75,6 +79,7 @@ class AppDrawerAdapter(
             holder.bind(
                 flag,
                 appLabelGravity,
+                showAppIcons,
                 myUserHandle,
                 appModel,
                 appClickListener,
@@ -168,6 +173,7 @@ class AppDrawerAdapter(
         fun bind(
             flag: Int,
             appLabelGravity: Int,
+            showAppIcons: Boolean,
             myUserHandle: UserHandle,
             appModel: AppModel,
             clickListener: (AppModel) -> Unit,
@@ -191,6 +197,7 @@ class AppDrawerAdapter(
                 if (appModel.isNew) append(" ✦")
             }
             appTitle.gravity = appLabelGravity
+            setAppTitleIcon(appTitle, appModel, showAppIcons, appLabelGravity)
             otherProfileIndicator.isVisible = appModel.user != myUserHandle
 
             appTitle.setOnClickListener { clickListener(appModel) }
@@ -290,6 +297,24 @@ class AppDrawerAdapter(
                 appTitle.visibility = View.VISIBLE
             }
             appHide.setOnClickListener { appHideListener(appModel, bindingAdapterPosition) }
+        }
+
+        /** Shows the app icon next to the label (on the side matching its alignment) when enabled. */
+        private fun setAppTitleIcon(textView: TextView, appModel: AppModel, showAppIcons: Boolean, gravity: Int) {
+            val icon = if (showAppIcons && appModel.appPackage.isNotEmpty())
+                textView.context.getAppIcon(appModel.appPackage, appModel.user.toString())
+            else null
+            if (icon == null) {
+                textView.setCompoundDrawables(null, null, null, null)
+                return
+            }
+            val size = (textView.textSize * 1.2f).toInt()
+            icon.setBounds(0, 0, size, size)
+            if (gravity == Gravity.END)
+                textView.setCompoundDrawablesRelative(null, null, icon, null)
+            else
+                textView.setCompoundDrawablesRelative(icon, null, null, null)
+            textView.compoundDrawablePadding = (textView.resources.displayMetrics.density * 12).toInt()
         }
 
         private fun getAppName(context: Context, appPackage: String): String {
