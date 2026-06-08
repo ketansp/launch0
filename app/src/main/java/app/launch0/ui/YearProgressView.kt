@@ -11,7 +11,6 @@ import app.launch0.R
 import app.launch0.helper.getColorFromAttr
 import java.util.Calendar
 import kotlin.math.ceil
-import kotlin.math.roundToInt
 
 /**
  * "Days left in the year" widget — a GitHub-contribution-style grid rendered in the
@@ -75,9 +74,6 @@ class YearProgressView @JvmOverloads constructor(
         requestLayout()
         invalidate()
     }
-
-    /** Percentage of the year elapsed (today inclusive), e.g. 41. */
-    fun percentOver(): Int = ((todayIndex + 1) / totalDays.toFloat() * 100).roundToInt()
 
     private fun resolveColors() {
         val fg = context.getColorFromAttr(R.attr.primaryColor)

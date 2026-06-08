@@ -230,7 +230,6 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
-        binding.tvWidgetCaption.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity
         binding.homeApp2.gravity = horizontalGravity
         binding.homeApp3.gravity = horizontalGravity
@@ -291,8 +290,6 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.widgetLayout.isVisible = show
         if (!show) return
         binding.yearWidget.refresh()
-        binding.tvWidgetCaption.text =
-            getString(R.string.widget_percent_over, binding.yearWidget.percentOver())
     }
 
     private fun populateHomeScreen(appCountUpdated: Boolean) {
