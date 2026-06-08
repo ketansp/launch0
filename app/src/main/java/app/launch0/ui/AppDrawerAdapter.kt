@@ -20,7 +20,7 @@ import app.launch0.R
 import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.databinding.AdapterAppDrawerBinding
-import app.launch0.helper.getAppIcon
+import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.hideKeyboard
 import app.launch0.helper.isSystemApp
 import app.launch0.helper.showKeyboard
@@ -30,6 +30,8 @@ class AppDrawerAdapter(
     private var flag: Int,
     private val appLabelGravity: Int,
     private val showAppIcons: Boolean,
+    private val iconSizePx: Int,
+    private val iconShape: Int,
     private val appClickListener: (AppModel) -> Unit,
     private val appInfoListener: (AppModel) -> Unit,
     private val appDeleteListener: (AppModel) -> Unit,
@@ -80,6 +82,8 @@ class AppDrawerAdapter(
                 flag,
                 appLabelGravity,
                 showAppIcons,
+                iconSizePx,
+                iconShape,
                 myUserHandle,
                 appModel,
                 appClickListener,
@@ -174,6 +178,8 @@ class AppDrawerAdapter(
             flag: Int,
             appLabelGravity: Int,
             showAppIcons: Boolean,
+            iconSizePx: Int,
+            iconShape: Int,
             myUserHandle: UserHandle,
             appModel: AppModel,
             clickListener: (AppModel) -> Unit,
@@ -197,7 +203,7 @@ class AppDrawerAdapter(
                 if (appModel.isNew) append(" ✦")
             }
             appTitle.gravity = appLabelGravity
-            setAppTitleIcon(appTitle, appModel, showAppIcons, appLabelGravity)
+            setAppTitleIcon(appTitle, appModel, showAppIcons, iconSizePx, iconShape, appLabelGravity)
             otherProfileIndicator.isVisible = appModel.user != myUserHandle
 
             appTitle.setOnClickListener { clickListener(appModel) }
@@ -300,16 +306,22 @@ class AppDrawerAdapter(
         }
 
         /** Shows the app icon next to the label (on the side matching its alignment) when enabled. */
-        private fun setAppTitleIcon(textView: TextView, appModel: AppModel, showAppIcons: Boolean, gravity: Int) {
+        private fun setAppTitleIcon(
+            textView: TextView,
+            appModel: AppModel,
+            showAppIcons: Boolean,
+            iconSizePx: Int,
+            iconShape: Int,
+            gravity: Int,
+        ) {
             val icon = if (showAppIcons && appModel.appPackage.isNotEmpty())
-                textView.context.getAppIcon(appModel.appPackage, appModel.user.toString())
+                textView.context.getShapedAppIcon(appModel.appPackage, appModel.user.toString(), iconSizePx, iconShape)
             else null
             if (icon == null) {
                 textView.setCompoundDrawables(null, null, null, null)
                 return
             }
-            val size = (textView.textSize * 1.2f).toInt()
-            icon.setBounds(0, 0, size, size)
+            icon.setBounds(0, 0, iconSizePx, iconSizePx)
             if (gravity == Gravity.END)
                 textView.setCompoundDrawablesRelative(null, null, icon, null)
             else

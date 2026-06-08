@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
@@ -80,6 +81,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateDateTime()
         populateYearWidget()
         populateAppIcons()
+        populateIconSize()
+        populateIconShape()
         populateSwipeApps()
         populateSwipeDownAction()
         populateDnd()
@@ -111,6 +114,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         }
         if (view.id != R.id.alignmentBottom)
             binding.alignmentSelectLayout.visibility = View.GONE
+        if (view.id != R.id.iconSizeValue)
+            binding.iconSizeLayout.visibility = View.GONE
+        if (view.id != R.id.iconShape)
+            binding.iconShapeSelectLayout.visibility = View.GONE
 
         when (view.id) {
             R.id.launch0HiddenApps -> showHiddenApps()
@@ -131,6 +138,13 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.dateTime -> binding.dateTimeSelectLayout.visibility = View.VISIBLE
             R.id.daysLeftWidget -> toggleYearWidget()
             R.id.showAppIcons -> toggleAppIcons()
+            R.id.iconSizeValue -> binding.iconSizeLayout.visibility = View.VISIBLE
+            R.id.iconShape -> binding.iconShapeSelectLayout.visibility = View.VISIBLE
+            R.id.shapeDefault -> updateIconShape(Constants.IconShape.DEFAULT)
+            R.id.shapeCircle -> updateIconShape(Constants.IconShape.CIRCLE)
+            R.id.shapeSquare -> updateIconShape(Constants.IconShape.SQUARE)
+            R.id.shapeSquircle -> updateIconShape(Constants.IconShape.SQUIRCLE)
+            R.id.shapeTeardrop -> updateIconShape(Constants.IconShape.TEARDROP)
             R.id.dateTimeOn -> toggleDateTime(Constants.DateTime.ON)
             R.id.dateTimeOff -> toggleDateTime(Constants.DateTime.OFF)
             R.id.dateOnly -> toggleDateTime(Constants.DateTime.DATE_ONLY)
@@ -227,6 +241,21 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.dateTime.setOnClickListener(this)
         binding.daysLeftWidget.setOnClickListener(this)
         binding.showAppIcons.setOnClickListener(this)
+        binding.iconSizeValue.setOnClickListener(this)
+        binding.iconShape.setOnClickListener(this)
+        binding.shapeDefault.setOnClickListener(this)
+        binding.shapeCircle.setOnClickListener(this)
+        binding.shapeSquare.setOnClickListener(this)
+        binding.shapeSquircle.setOnClickListener(this)
+        binding.shapeTeardrop.setOnClickListener(this)
+        binding.iconSizeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) updateIconSize(Constants.ICON_SIZE_MIN + progress)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
         binding.dateTimeOn.setOnClickListener(this)
         binding.dateTimeOff.setOnClickListener(this)
         binding.dateOnly.setOnClickListener(this)
@@ -361,6 +390,40 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.showAppIcons.text = getString(
             if (prefs.showAppIcons) R.string.on else R.string.off
         )
+    }
+
+    private fun populateIconSize() {
+        binding.iconSizeValue.text = prefs.iconSize.toString()
+        binding.iconSizeSeekBar.progress =
+            (prefs.iconSize - Constants.ICON_SIZE_MIN).coerceIn(0, binding.iconSizeSeekBar.max)
+    }
+
+    private fun updateIconSize(size: Int) {
+        val clamped = size.coerceIn(Constants.ICON_SIZE_MIN, Constants.ICON_SIZE_MAX)
+        if (prefs.iconSize == clamped) return
+        prefs.iconSize = clamped
+        binding.iconSizeValue.text = clamped.toString()
+        viewModel.refreshHome(false)
+    }
+
+    private fun populateIconShape() {
+        binding.iconShape.text = getString(
+            when (prefs.iconShape) {
+                Constants.IconShape.CIRCLE -> R.string.shape_circle
+                Constants.IconShape.SQUARE -> R.string.shape_square
+                Constants.IconShape.SQUIRCLE -> R.string.shape_squircle
+                Constants.IconShape.TEARDROP -> R.string.shape_teardrop
+                else -> R.string.shape_default
+            }
+        )
+    }
+
+    private fun updateIconShape(shape: Int) {
+        binding.iconShapeSelectLayout.visibility = View.GONE
+        if (prefs.iconShape == shape) return
+        prefs.iconShape = shape
+        populateIconShape()
+        viewModel.refreshHome(false)
     }
 
     private fun populateDateTime() {

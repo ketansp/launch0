@@ -33,8 +33,8 @@ import app.launch0.databinding.FragmentHomeBinding
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.dpToPx
 import app.launch0.helper.expandNotificationDrawer
-import app.launch0.helper.getAppIcon
 import app.launch0.helper.getChangedAppTheme
+import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.getUserHandleFromString
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.openAlarmApp
@@ -404,16 +404,24 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         return false
     }
 
-    /** Shows the app icon at the start of [textView] when enabled, or clears it otherwise. */
+    /**
+     * Shows the app icon next to [textView] when enabled, sized and shaped per settings.
+     * The icon sits on the same side as the home layout alignment (right when right-aligned).
+     */
     private fun setHomeAppIcon(textView: TextView, packageName: String, userString: String) {
-        val icon = if (prefs.showAppIcons) requireContext().getAppIcon(packageName, userString) else null
+        val sizePx = prefs.iconSize.dpToPx()
+        val icon = if (prefs.showAppIcons)
+            requireContext().getShapedAppIcon(packageName, userString, sizePx, prefs.iconShape)
+        else null
         if (icon == null) {
             textView.setCompoundDrawables(null, null, null, null)
             return
         }
-        val size = (textView.textSize * 1.2f).toInt()
-        icon.setBounds(0, 0, size, size)
-        textView.setCompoundDrawablesRelative(icon, null, null, null)
+        icon.setBounds(0, 0, sizePx, sizePx)
+        if (prefs.homeAlignment == Gravity.END)
+            textView.setCompoundDrawablesRelative(null, null, icon, null)
+        else
+            textView.setCompoundDrawablesRelative(icon, null, null, null)
         textView.compoundDrawablePadding = 12.dpToPx()
     }
 

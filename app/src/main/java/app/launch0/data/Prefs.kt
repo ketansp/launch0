@@ -27,6 +27,8 @@ class Prefs(context: Context) {
     private val DATE_TIME_VISIBILITY = "DATE_TIME_VISIBILITY"
     private val SHOW_YEAR_WIDGET = "SHOW_YEAR_WIDGET"
     private val SHOW_APP_ICONS = "SHOW_APP_ICONS"
+    private val ICON_SIZE = "ICON_SIZE"
+    private val ICON_SHAPE = "ICON_SHAPE"
     private val SWIPE_LEFT_ENABLED = "SWIPE_LEFT_ENABLED"
     private val SWIPE_RIGHT_ENABLED = "SWIPE_RIGHT_ENABLED"
     private val HIDDEN_APPS = "HIDDEN_APPS"
@@ -194,6 +196,14 @@ class Prefs(context: Context) {
     var showAppIcons: Boolean
         get() = prefs.getBoolean(SHOW_APP_ICONS, false)
         set(value) = prefs.edit { putBoolean(SHOW_APP_ICONS, value).apply() }
+
+    var iconSize: Int
+        get() = prefs.getInt(ICON_SIZE, Constants.ICON_SIZE_DEFAULT)
+        set(value) = prefs.edit { putInt(ICON_SIZE, value).apply() }
+
+    var iconShape: Int
+        get() = prefs.getInt(ICON_SHAPE, Constants.IconShape.DEFAULT)
+        set(value) = prefs.edit { putInt(ICON_SHAPE, value).apply() }
 
     var swipeLeftEnabled: Boolean
         get() = prefs.getBoolean(SWIPE_LEFT_ENABLED, true)
