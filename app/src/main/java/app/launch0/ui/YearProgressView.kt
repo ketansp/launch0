@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
 /**
  * "Days left in the year" widget — a GitHub-contribution-style grid rendered in the
  * launcher's monochrome register. One box per day of the current year, filled
- * sequentially from the first box (Jan 1), left-to-right:
+ * sequentially from the first box (Jan 1), top-to-bottom down each column:
  *
  *  - elapsed days  → bright foreground (alpha 0.80)
  *  - today         → solid foreground with an inset ring (a donut)
@@ -123,8 +123,8 @@ class YearProgressView @JvmOverloads constructor(
         val ringInset = dp(0.7f)
         val step = boxPx + gapPx
         for (i in 0 until totalDays) {
-            val left = paddingLeft + (i % cols) * step
-            val top = paddingTop + (i / cols) * step
+            val left = paddingLeft + (i / rows) * step
+            val top = paddingTop + (i % rows) * step
             drawRect.set(left, top, left + boxPx, top + boxPx)
             when {
                 i < todayIndex -> {
