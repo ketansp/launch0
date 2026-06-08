@@ -255,22 +255,6 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.showDialog.observe(this) {
             when (it) {
-                Constants.Dialog.ABOUT -> {
-                    showMessageDialog(R.string.app_name, R.string.welcome_to_olauncher_settings, R.string.okay) {
-                        binding.messageLayout.visibility = View.GONE
-                    }
-                }
-
-                Constants.Dialog.HIDDEN -> {
-                    showMessageDialog(R.string.hidden_apps, R.string.hidden_apps_message, R.string.okay) {
-                    }
-                }
-
-                Constants.Dialog.KEYBOARD -> {
-                    showMessageDialog(R.string.app_name, R.string.keyboard_message, R.string.okay) {
-                    }
-                }
-
                 Constants.Dialog.DIGITAL_WELLBEING -> {
                     showMessageDialog(R.string.screen_time, R.string.app_usage_message, R.string.permission) {
                         startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
