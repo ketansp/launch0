@@ -30,7 +30,6 @@ import app.launch0.helper.hasBeenMinutes
 import app.launch0.helper.isDarkThemeOn
 import app.launch0.helper.isDefaultLauncher
 import app.launch0.helper.isEinkDisplay
-import app.launch0.helper.isLaunch0Default
 import app.launch0.helper.isTablet
 import app.launch0.helper.resetLauncherViaFakeActivity
 import app.launch0.helper.setPlainWallpaper
@@ -256,32 +255,6 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.showDialog.observe(this) {
             when (it) {
-                Constants.Dialog.ABOUT -> {
-                    showMessageDialog(R.string.app_name, R.string.welcome_to_olauncher_settings, R.string.okay) {
-                        binding.messageLayout.visibility = View.GONE
-                    }
-                }
-
-                Constants.Dialog.WALLPAPER -> {
-                    prefs.wallpaperMsgShown = true
-                    prefs.userState = Constants.UserState.REVIEW
-                    showMessageDialog(R.string.did_you_know, R.string.wallpaper_message, R.string.enable) {
-                        prefs.hourlyWallpaper = true
-                        viewModel.setWallpaperWorker()
-                        showToast(getString(R.string.your_wallpaper_will_update_shortly))
-                    }
-                }
-
-                Constants.Dialog.HIDDEN -> {
-                    showMessageDialog(R.string.hidden_apps, R.string.hidden_apps_message, R.string.okay) {
-                    }
-                }
-
-                Constants.Dialog.KEYBOARD -> {
-                    showMessageDialog(R.string.app_name, R.string.keyboard_message, R.string.okay) {
-                    }
-                }
-
                 Constants.Dialog.DIGITAL_WELLBEING -> {
                     showMessageDialog(R.string.screen_time, R.string.app_usage_message, R.string.permission) {
                         startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
@@ -310,16 +283,10 @@ class MainActivity : AppCompatActivity() {
         when (prefs.userState) {
             Constants.UserState.START -> {
                 if (prefs.firstOpenTime.hasBeenMinutes(10))
-                    prefs.userState = Constants.UserState.WALLPAPER
-            }
-
-            Constants.UserState.WALLPAPER -> {
-                if (prefs.wallpaperMsgShown || prefs.hourlyWallpaper)
                     prefs.userState = Constants.UserState.DONE
-                else if (isLaunch0Default(this))
-                    viewModel.showDialog.postValue(Constants.Dialog.WALLPAPER)
             }
 
+            Constants.UserState.WALLPAPER,
             Constants.UserState.REVIEW,
             Constants.UserState.RATE -> {
                 prefs.userState = Constants.UserState.DONE
