@@ -79,6 +79,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateDateTime()
         populateSwipeApps()
         populateSwipeDownAction()
+        populateSwipeLeftAction()
         populateActionHints()
         initClickListeners()
         initObservers()
@@ -89,6 +90,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.dateTimeSelectLayout.visibility = View.GONE
         binding.appThemeSelectLayout.visibility = View.GONE
         binding.swipeDownSelectLayout.visibility = View.GONE
+        if (view.id != R.id.swipeLeftAction)
+            binding.swipeLeftSelectLayout.visibility = View.GONE
         if (view.id != R.id.textSizeMinus && view.id != R.id.textSizePlus) {
             if (binding.textSizesLayout.visibility == View.VISIBLE) {
                 binding.textSizesLayout.visibility = View.GONE
@@ -147,6 +150,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.swipeDownAction -> binding.swipeDownSelectLayout.visibility = View.VISIBLE
             R.id.notifications -> updateSwipeDownAction(Constants.SwipeDownAction.NOTIFICATIONS)
             R.id.search -> updateSwipeDownAction(Constants.SwipeDownAction.SEARCH)
+            R.id.swipeLeftAction -> binding.swipeLeftSelectLayout.visibility = View.VISIBLE
+            R.id.swipeLeftNotes -> updateSwipeLeftAction(Constants.SwipeLeftAction.NOTES)
+            R.id.swipeLeftAppOption -> updateSwipeLeftAction(Constants.SwipeLeftAction.APP)
 
             R.id.aboutLaunch0 -> {
                 prefs.aboutClicked = true
@@ -203,6 +209,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.swipeDownAction.setOnClickListener(this)
         binding.search.setOnClickListener(this)
         binding.notifications.setOnClickListener(this)
+        binding.swipeLeftAction.setOnClickListener(this)
+        binding.swipeLeftNotes.setOnClickListener(this)
+        binding.swipeLeftAppOption.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
         binding.themeLight.setOnClickListener(this)
         binding.themeDark.setOnClickListener(this)
@@ -576,6 +585,22 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.swipeDownAction == swipeDownFor) return
         prefs.swipeDownAction = swipeDownFor
         populateSwipeDownAction()
+    }
+
+    private fun populateSwipeLeftAction() {
+        binding.swipeLeftAction.text = when (prefs.swipeLeftAction) {
+            Constants.SwipeLeftAction.APP -> getString(R.string.app)
+            else -> getString(R.string.notes_title)
+        }
+        // The "Swipe left app" picker only matters when swipe-left launches an app.
+        binding.swipeLeftAppRow.isVisible = prefs.swipeLeftAction == Constants.SwipeLeftAction.APP
+    }
+
+    private fun updateSwipeLeftAction(swipeLeftFor: Int) {
+        binding.swipeLeftSelectLayout.visibility = View.GONE
+        if (prefs.swipeLeftAction == swipeLeftFor) return
+        prefs.swipeLeftAction = swipeLeftFor
+        populateSwipeLeftAction()
     }
 
     private fun populateSwipeApps() {

@@ -157,4 +157,18 @@
     <string name="new_year_wish_1">It doesn\'t matter how January went. You still have the rest of the year to do better than ever.</string>
     <string name="cheers">Cheers!</string>
     <string name="notification_bar">Notification bar</string>
+
+    <!-- Personal notes page -->
+    <string name="notes_title">Notes</string>
+    <string name="swipe_left_for">Swipe left for</string>
+    <string name="notes_empty_hint">Jot anything here. Notes, links, images — like a chat with yourself.</string>
+    <string name="notes_input_hint">Write something…</string>
+    <string name="notes_send">Send</string>
+    <string name="notes_attach_symbol" translatable="false">+</string>
+    <string name="notes_add_image">Add image</string>
+    <string name="notes_image_desc">Image</string>
+    <string name="notes_delete">Delete</string>
+    <string name="notes_delete_confirm">Delete this item?</string>
+    <string name="couldnt_add_image">Couldn\'t add to notes</string>
+    <string name="cancel">Cancel</string>
 </resources>

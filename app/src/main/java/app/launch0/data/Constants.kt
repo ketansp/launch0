@@ -44,6 +44,11 @@ object Constants {
         const val NOTIFICATIONS = 2
     }
 
+    object SwipeLeftAction {
+        const val NOTES = 1
+        const val APP = 2
+    }
+
     object CharacterIndicator {
         const val SHOW = 102
         const val HIDE = 101
