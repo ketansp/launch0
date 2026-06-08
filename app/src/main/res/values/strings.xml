@@ -157,6 +157,21 @@
     <string name="new_year_wish_1">It doesn\'t matter how January went. You still have the rest of the year to do better than ever.</string>
     <string name="cheers">Cheers!</string>
     <string name="notification_bar">Notification bar</string>
+    <string name="do_not_disturb">Do Not Disturb</string>
+    <string name="hold_notifications">Hold notifications</string>
+    <string name="notification_access">Notification access</string>
+    <string name="hold_duration">Hold duration</string>
+    <string name="apps_to_hold">Apps to hold</string>
+    <string name="dnd_select_apps_hint">Tap apps to hold their notifications</string>
+    <string name="dnd_grant_access">Please allow notification access for Launch0</string>
+    <string name="dnd_no_apps_selected">Select at least one app to hold</string>
+    <string name="minutes_suffix" translatable="false">%1$d min</string>
+    <string name="dnd_30" translatable="false">30</string>
+    <string name="dnd_45" translatable="false">45</string>
+    <string name="dnd_60" translatable="false">60</string>
+    <string name="dnd_90" translatable="false">90</string>
+    <string name="dnd_120" translatable="false">120</string>
+    <string name="dnd_180" translatable="false">180</string>
 
     <!-- Personal notes page -->
     <string name="notes_title">Notes</string>

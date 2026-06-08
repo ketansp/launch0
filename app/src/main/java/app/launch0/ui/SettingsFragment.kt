@@ -33,6 +33,7 @@ import app.launch0.helper.isAccessServiceEnabled
 import app.launch0.helper.isDarkThemeOn
 import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isLaunch0Default
+import app.launch0.helper.isNotificationServiceEnabled
 import app.launch0.helper.isTablet
 import app.launch0.helper.openAppInfo
 import app.launch0.helper.openUrl
@@ -79,10 +80,17 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateDateTime()
         populateSwipeApps()
         populateSwipeDownAction()
+        populateDnd()
         populateSwipeLeftAction()
         populateActionHints()
         initClickListeners()
         initObservers()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh notification-access status after returning from system settings.
+        if (_binding != null) populateDnd()
     }
 
     override fun onClick(view: View) {
@@ -90,6 +98,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.dateTimeSelectLayout.visibility = View.GONE
         binding.appThemeSelectLayout.visibility = View.GONE
         binding.swipeDownSelectLayout.visibility = View.GONE
+        binding.dndDurationSelectLayout.visibility = View.GONE
         if (view.id != R.id.swipeLeftAction)
             binding.swipeLeftSelectLayout.visibility = View.GONE
         if (view.id != R.id.textSizeMinus && view.id != R.id.textSizePlus) {
@@ -154,6 +163,17 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.swipeLeftNotes -> updateSwipeLeftAction(Constants.SwipeLeftAction.NOTES)
             R.id.swipeLeftAppOption -> updateSwipeLeftAction(Constants.SwipeLeftAction.APP)
 
+            R.id.dndEnabled -> toggleDnd()
+            R.id.dndAccess -> openNotificationAccessSettings()
+            R.id.dndDuration -> binding.dndDurationSelectLayout.visibility = View.VISIBLE
+            R.id.dndDur30 -> updateDndDuration(30)
+            R.id.dndDur45 -> updateDndDuration(45)
+            R.id.dndDur60 -> updateDndDuration(60)
+            R.id.dndDur90 -> updateDndDuration(90)
+            R.id.dndDur120 -> updateDndDuration(120)
+            R.id.dndDur180 -> updateDndDuration(180)
+            R.id.dndApps -> showDndApps()
+
             R.id.aboutLaunch0 -> {
                 prefs.aboutClicked = true
                 requireContext().openUrl(Constants.URL_ABOUT)
@@ -209,6 +229,16 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.swipeDownAction.setOnClickListener(this)
         binding.search.setOnClickListener(this)
         binding.notifications.setOnClickListener(this)
+        binding.dndEnabled.setOnClickListener(this)
+        binding.dndAccess.setOnClickListener(this)
+        binding.dndDuration.setOnClickListener(this)
+        binding.dndDur30.setOnClickListener(this)
+        binding.dndDur45.setOnClickListener(this)
+        binding.dndDur60.setOnClickListener(this)
+        binding.dndDur90.setOnClickListener(this)
+        binding.dndDur120.setOnClickListener(this)
+        binding.dndDur180.setOnClickListener(this)
+        binding.dndApps.setOnClickListener(this)
         binding.swipeLeftAction.setOnClickListener(this)
         binding.swipeLeftNotes.setOnClickListener(this)
         binding.swipeLeftAppOption.setOnClickListener(this)
@@ -585,6 +615,57 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.swipeDownAction == swipeDownFor) return
         prefs.swipeDownAction = swipeDownFor
         populateSwipeDownAction()
+    }
+
+    private fun populateDnd() {
+        binding.dndEnabled.text = getString(if (prefs.dndEnabled) R.string.on else R.string.off)
+        binding.dndAccess.text = getString(
+            if (isNotificationServiceEnabled(requireContext())) R.string.on else R.string.off
+        )
+        binding.dndDuration.text = getString(R.string.minutes_suffix, prefs.dndDurationMinutes)
+        binding.dndApps.text = prefs.dndApps.size.toString()
+    }
+
+    private fun toggleDnd() {
+        prefs.dndEnabled = !prefs.dndEnabled
+        if (prefs.dndEnabled) {
+            if (!isNotificationServiceEnabled(requireContext())) {
+                requireContext().showToast(getString(R.string.dnd_grant_access), Toast.LENGTH_LONG)
+                openNotificationAccessSettings()
+            } else if (prefs.dndApps.isEmpty()) {
+                requireContext().showToast(getString(R.string.dnd_no_apps_selected))
+            }
+        } else {
+            // Stop holding new notifications; already-held ones release at their scheduled time.
+            prefs.dndWindowEnd = 0L
+            prefs.dndHeldKeys = mutableSetOf()
+        }
+        populateDnd()
+    }
+
+    private fun updateDndDuration(minutes: Int) {
+        binding.dndDurationSelectLayout.visibility = View.GONE
+        if (prefs.dndDurationMinutes == minutes) return
+        prefs.dndDurationMinutes = minutes
+        // Apply the new duration to the next hold window.
+        prefs.dndWindowEnd = 0L
+        populateDnd()
+    }
+
+    private fun openNotificationAccessSettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        } catch (e: Exception) {
+            startActivity(Intent(Settings.ACTION_SETTINGS))
+        }
+    }
+
+    private fun showDndApps() {
+        viewModel.getAppList(true)
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_appListFragment,
+            bundleOf(Constants.Key.FLAG to Constants.FLAG_SET_DND_APPS)
+        )
     }
 
     private fun populateSwipeLeftAction() {

@@ -70,6 +70,8 @@ class AppDrawerFragment : Fragment() {
     private fun initViews() {
         if (flag == Constants.FLAG_HIDDEN_APPS)
             binding.search.queryHint = getString(R.string.hidden_apps)
+        else if (flag == Constants.FLAG_SET_DND_APPS)
+            binding.search.queryHint = getString(R.string.dnd_select_apps_hint)
         else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_CALENDAR_APP)
             binding.search.queryHint = "Please select an app"
         try {
@@ -112,11 +114,15 @@ class AppDrawerFragment : Fragment() {
             flag,
             prefs.appLabelAlignment,
             appClickListener = { appModel ->
-                viewModel.selectedApp(appModel, flag)
-                if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
-                    findNavController().popBackStack(R.id.mainFragment, false)
-                else
-                    findNavController().popBackStack()
+                if (flag == Constants.FLAG_SET_DND_APPS) {
+                    toggleDndApp(appModel)
+                } else {
+                    viewModel.selectedApp(appModel, flag)
+                    if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
+                        findNavController().popBackStack(R.id.mainFragment, false)
+                    else
+                        findNavController().popBackStack()
+                }
             },
             appInfoListener = {
                 openAppInfo(
@@ -182,7 +188,8 @@ class AppDrawerFragment : Fragment() {
                 }
                 prefs.setAppRenameLabel(identifier, renameLabel)
                 viewModel.getAppList()
-            }
+            },
+            isDndApp = { appPackage -> prefs.dndApps.contains(appPackage) }
         )
 
         linearLayoutManager = object : LinearLayoutManager(requireContext()) {
@@ -283,6 +290,15 @@ class AppDrawerFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun toggleDndApp(appModel: AppModel) {
+        if (appModel.appPackage.isBlank()) return
+        val dndApps = prefs.dndApps
+        if (!dndApps.add(appModel.appPackage)) dndApps.remove(appModel.appPackage)
+        prefs.dndApps = dndApps
+        val position = adapter.appFilteredList.indexOf(appModel)
+        if (position >= 0) adapter.notifyItemChanged(position)
     }
 
     private fun checkMessageAndExit() {
