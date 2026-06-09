@@ -34,6 +34,7 @@ import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.dpToPx
 import app.launch0.helper.expandNotificationDrawer
 import app.launch0.helper.getChangedAppTheme
+import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.getUserHandleFromString
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.openAlarmApp
@@ -230,7 +231,6 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
-        binding.tvWidgetCaption.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity
         binding.homeApp2.gravity = horizontalGravity
         binding.homeApp3.gravity = horizontalGravity
@@ -291,8 +291,6 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.widgetLayout.isVisible = show
         if (!show) return
         binding.yearWidget.refresh()
-        binding.tvWidgetCaption.text =
-            getString(R.string.widget_percent_over, binding.yearWidget.percentOver())
     }
 
     private fun populateHomeScreen(appCountUpdated: Boolean) {
@@ -381,24 +379,50 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                 // Check if our shortcut still exists
                 if (shortcuts?.any { it.id == shortcutId } == true) {
                     textView.text = appName
+                    setHomeAppIcon(textView, packageName, userString)
                     return true
                 }
                 textView.text = ""
+                setHomeAppIcon(textView, "", userString)
                 return false
             } catch (e: Exception) {
                 e.printStackTrace()
                 textView.text = ""
+                setHomeAppIcon(textView, "", userString)
                 return false
             }
         }
-        
+
         // Regular app check
         if (isPackageInstalled(requireContext(), packageName, userString)) {
             textView.text = appName
+            setHomeAppIcon(textView, packageName, userString)
             return true
         }
         textView.text = ""
+        setHomeAppIcon(textView, "", userString)
         return false
+    }
+
+    /**
+     * Shows the app icon next to [textView] when enabled, sized and shaped per settings.
+     * The icon sits on the same side as the home layout alignment (right when right-aligned).
+     */
+    private fun setHomeAppIcon(textView: TextView, packageName: String, userString: String) {
+        val sizePx = prefs.iconSize.dpToPx()
+        val icon = if (prefs.showAppIcons)
+            requireContext().getShapedAppIcon(packageName, userString, sizePx, prefs.iconShape)
+        else null
+        if (icon == null) {
+            textView.setCompoundDrawables(null, null, null, null)
+            return
+        }
+        icon.setBounds(0, 0, sizePx, sizePx)
+        if (prefs.homeAlignment == Gravity.END)
+            textView.setCompoundDrawablesRelative(null, null, icon, null)
+        else
+            textView.setCompoundDrawablesRelative(icon, null, null, null)
+        textView.compoundDrawablePadding = 12.dpToPx()
     }
 
     private fun hideHomeApps() {

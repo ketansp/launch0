@@ -54,6 +54,19 @@ object Constants {
         const val APP = 2
     }
 
+    object IconShape {
+        const val DEFAULT = 0
+        const val CIRCLE = 1
+        const val SQUARE = 2
+        const val SQUIRCLE = 3
+        const val TEARDROP = 4
+    }
+
+    // Home/drawer app icon size in dp (used when "Show app icons" is on).
+    const val ICON_SIZE_MIN = 16
+    const val ICON_SIZE_MAX = 48
+    const val ICON_SIZE_DEFAULT = 28
+
     object CharacterIndicator {
         const val SHOW = 102
         const val HIDE = 101
@@ -64,6 +77,11 @@ object Constants {
         "com.sec.android.app.clockpackage", //Samsung Clock
         "com.oneplus.deskclock", //OnePlus Clock
         "com.miui.clock", //Xiaomi Clock
+    )
+
+    val WHATSAPP_PACKAGES = arrayOf(
+        "com.whatsapp", //WhatsApp Messenger
+        "com.whatsapp.w4b", //WhatsApp Business
     )
 
 

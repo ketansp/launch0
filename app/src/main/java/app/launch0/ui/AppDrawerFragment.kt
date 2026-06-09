@@ -20,6 +20,7 @@ import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentAppDrawerBinding
 import app.launch0.helper.deletePinnedShortcut
+import app.launch0.helper.dpToPx
 import app.launch0.helper.hideKeyboard
 import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isSystemApp
@@ -113,6 +114,9 @@ class AppDrawerFragment : Fragment() {
         adapter = AppDrawerAdapter(
             flag,
             prefs.appLabelAlignment,
+            prefs.showAppIcons,
+            prefs.iconSize.dpToPx(),
+            prefs.iconShape,
             appClickListener = { appModel ->
                 if (flag == Constants.FLAG_SET_DND_APPS) {
                     toggleDndApp(appModel)
