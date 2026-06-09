@@ -13,7 +13,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
-import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
@@ -114,7 +113,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         }
         if (view.id != R.id.alignmentBottom)
             binding.alignmentSelectLayout.visibility = View.GONE
-        if (view.id != R.id.iconSizeValue)
+        if (view.id != R.id.iconSizeValue && view.id != R.id.iconSizeMinus && view.id != R.id.iconSizePlus)
             binding.iconSizeLayout.visibility = View.GONE
         if (view.id != R.id.iconShape)
             binding.iconShapeSelectLayout.visibility = View.GONE
@@ -139,6 +138,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.daysLeftWidget -> toggleYearWidget()
             R.id.showAppIcons -> toggleAppIcons()
             R.id.iconSizeValue -> binding.iconSizeLayout.visibility = View.VISIBLE
+            R.id.iconSizeMinus -> updateIconSize(prefs.iconSize - 1)
+            R.id.iconSizePlus -> updateIconSize(prefs.iconSize + 1)
             R.id.iconShape -> binding.iconShapeSelectLayout.visibility = View.VISIBLE
             R.id.shapeDefault -> updateIconShape(Constants.IconShape.DEFAULT)
             R.id.shapeCircle -> updateIconShape(Constants.IconShape.CIRCLE)
@@ -248,14 +249,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.shapeSquare.setOnClickListener(this)
         binding.shapeSquircle.setOnClickListener(this)
         binding.shapeTeardrop.setOnClickListener(this)
-        binding.iconSizeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) updateIconSize(Constants.ICON_SIZE_MIN + progress)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        binding.iconSizeMinus.setOnClickListener(this)
+        binding.iconSizePlus.setOnClickListener(this)
         binding.dateTimeOn.setOnClickListener(this)
         binding.dateTimeOff.setOnClickListener(this)
         binding.dateOnly.setOnClickListener(this)
@@ -394,8 +389,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun populateIconSize() {
         binding.iconSizeValue.text = prefs.iconSize.toString()
-        binding.iconSizeSeekBar.progress =
-            (prefs.iconSize - Constants.ICON_SIZE_MIN).coerceIn(0, binding.iconSizeSeekBar.max)
+        binding.iconSizeCurrent.text = prefs.iconSize.toString()
     }
 
     private fun updateIconSize(size: Int) {
@@ -403,6 +397,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.iconSize == clamped) return
         prefs.iconSize = clamped
         binding.iconSizeValue.text = clamped.toString()
+        binding.iconSizeCurrent.text = clamped.toString()
         viewModel.refreshHome(false)
     }
 
