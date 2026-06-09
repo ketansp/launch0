@@ -12,6 +12,9 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -67,12 +70,31 @@ class AppDrawerFragment : Fragment() {
             canRename = it.getBoolean(Constants.Key.RENAME, false)
         }
 
+        applyWindowInsets()
         initViews()
         initSearch()
         initAdapter()
         initAlphabetIndex()
         initObservers()
         initClickListeners()
+    }
+
+    /**
+     * Pushes the bottom-aligned search bar (and the list above it) clear of the keyboard by
+     * padding the drawer with the IME inset, falling back to the system bar inset when the
+     * keyboard is hidden. This is more reliable than panning the window, which left the list
+     * and search bar tucked behind the keyboard.
+     */
+    private fun applyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            v.updatePadding(
+                top = bars.top,
+                bottom = maxOf(bars.bottom, ime.bottom),
+            )
+            insets
+        }
     }
 
     private fun initViews() {
@@ -366,11 +388,12 @@ class AppDrawerFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        // Pan the whole drawer up so the bottom aligned search bar stays
-        // above the keyboard, restoring the previous mode in onStop.
+        // Resize the window for the keyboard so the IME inset is dispatched to
+        // applyWindowInsets(), which lifts the list and search bar above the keyboard.
+        // The previous mode is restored in onStop.
         requireActivity().window.let { window ->
             previousSoftInputMode = window.attributes.softInputMode
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         }
         binding.search.showKeyboard(prefs.autoShowKeyboard)
     }
