@@ -69,6 +69,9 @@ class AppDrawerAdapter(
     var appsList: MutableList<AppModel> = mutableListOf()
     var appFilteredList: MutableList<AppModel> = mutableListOf()
 
+    /** Invoked after the displayed list changes so the alphabet index can be refreshed. */
+    var onListUpdated: (() -> Unit)? = null
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         ViewHolder(
             AdapterAppDrawerBinding.inflate(
@@ -133,6 +136,7 @@ class AppDrawerAdapter(
                     appFilteredList = items
                     submitList(appFilteredList) {
                         autoLaunch()
+                        onListUpdated?.invoke()
                     }
                 }
             }
@@ -185,12 +189,32 @@ class AppDrawerAdapter(
         )
         this.appsList = appsList
         this.appFilteredList = appsList
-        submitList(appsList)
+        submitList(appsList) { onListUpdated?.invoke() }
     }
 
     fun launchFirstInList() {
         if (appFilteredList.size > 0)
             appClickListener(appFilteredList[0])
+    }
+
+    /** Distinct section letters present in the current list, in their alphabetical order. */
+    fun getSections(): List<String> =
+        appFilteredList.mapNotNull { sectionFor(it.appLabel) }.distinct()
+
+    /** Position of the first app belonging to [section], or -1 if none. */
+    fun getPositionForSection(section: String): Int =
+        appFilteredList.indexOfFirst { sectionFor(it.appLabel) == section }
+
+    /**
+     * Section a label belongs to: its first letter (accent-stripped, uppercased), or "#" when the
+     * name starts with a digit or symbol. Blank labels (e.g. the trailing padding row) return null.
+     */
+    private fun sectionFor(appLabel: String): String? {
+        val normalized = Normalizer.normalize(appLabel.trim(), Normalizer.Form.NFD)
+            .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+        val first = normalized.firstOrNull() ?: return null
+        val upper = first.uppercaseChar()
+        return if (upper in 'A'..'Z') upper.toString() else "#"
     }
 
     class ViewHolder(private val binding: AdapterAppDrawerBinding) :

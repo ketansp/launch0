@@ -1,13 +1,17 @@
 package app.launch0.ui
 
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -66,6 +70,7 @@ class AppDrawerFragment : Fragment() {
         initViews()
         initSearch()
         initAdapter()
+        initAlphabetIndex()
         initObservers()
         initClickListeners()
     }
@@ -219,6 +224,47 @@ class AppDrawerFragment : Fragment() {
         if (requireContext().isEinkDisplay().not())
             binding.recyclerView.layoutAnimation =
                 AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_anim_from_bottom)
+    }
+
+    private fun initAlphabetIndex() {
+        // Place the index opposite the app name alignment: names on the right (END) put the
+        // index on the left, otherwise it sits on the right.
+        val onEndSide = prefs.appLabelAlignment != Gravity.END
+        (binding.alphabetIndex.layoutParams as FrameLayout.LayoutParams).gravity =
+            (if (onEndSide) Gravity.END else Gravity.START) or Gravity.CENTER_VERTICAL
+
+        binding.alphabetIndex.setTextColor(themeColor(R.attr.primaryColor))
+        binding.alphabetIndex.setOnSectionSelectedListener { section ->
+            val position = adapter.getPositionForSection(section)
+            if (position >= 0) linearLayoutManager.scrollToPositionWithOffset(position, 0)
+        }
+        adapter.onListUpdated = { refreshAlphabetIndex() }
+
+        // Reserve space on the index side so long app names don't render under the letters.
+        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        binding.alphabetIndex.measure(unspecified, unspecified)
+        val reserve = binding.alphabetIndex.measuredWidth
+        if (onEndSide)
+            binding.recyclerView.setPaddingRelative(0, 0, reserve, 0)
+        else
+            binding.recyclerView.setPaddingRelative(reserve, 0, 0, 0)
+    }
+
+    /** Rebuilds the alphabet index from the current list, hiding it while a search is active. */
+    private fun refreshAlphabetIndex() {
+        if (_binding == null) return
+        val searching = binding.search.query?.isNotBlank() == true
+        val sections = if (searching) emptyList() else adapter.getSections()
+        binding.alphabetIndex.setSections(sections)
+        binding.alphabetIndex.visibility = if (sections.size > 1) View.VISIBLE else View.GONE
+    }
+
+    private fun themeColor(attr: Int): Int {
+        val typedValue = TypedValue()
+        requireContext().theme.resolveAttribute(attr, typedValue, true)
+        return if (typedValue.resourceId != 0)
+            ContextCompat.getColor(requireContext(), typedValue.resourceId)
+        else typedValue.data
     }
 
     private fun initObservers() {
