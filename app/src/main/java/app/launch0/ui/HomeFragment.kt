@@ -291,6 +291,30 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.widgetLayout.isVisible = show
         if (!show) return
         binding.yearWidget.refresh()
+        positionWidgetBelowHeader()
+    }
+
+    /**
+     * Anchors the days-left widget just below whichever header is currently showing — the
+     * clock/date block and/or the screen-time label — so the grid never overlaps them,
+     * regardless of font size, density or which headers are enabled. Falls back to a fixed
+     * top margin when no header is visible. Posted so the headers are measured first.
+     */
+    private fun positionWidgetBelowHeader() {
+        binding.widgetLayout.post {
+            if (_binding == null) return@post
+            var top = 56.dpToPx()
+            if (binding.dateTimeLayout.isVisible)
+                top = maxOf(top, binding.dateTimeLayout.bottom)
+            if (binding.tvScreenTime.isVisible)
+                top = maxOf(top, binding.tvScreenTime.bottom)
+            val params = binding.widgetLayout.layoutParams as FrameLayout.LayoutParams
+            val target = top + 16.dpToPx()
+            if (params.topMargin != target) {
+                params.topMargin = target
+                binding.widgetLayout.layoutParams = params
+            }
+        }
     }
 
     private fun populateHomeScreen(appCountUpdated: Boolean) {
