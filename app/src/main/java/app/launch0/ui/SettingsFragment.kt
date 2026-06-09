@@ -80,6 +80,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateDateTime()
         populateYearWidget()
         populateAppIcons()
+        populateAppNames()
         populateIconSize()
         populateIconShape()
         populateSwipeApps()
@@ -137,6 +138,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.dateTime -> binding.dateTimeSelectLayout.visibility = View.VISIBLE
             R.id.daysLeftWidget -> toggleYearWidget()
             R.id.showAppIcons -> toggleAppIcons()
+            R.id.showAppNames -> toggleAppNames()
             R.id.iconSizeValue -> binding.iconSizeLayout.visibility = View.VISIBLE
             R.id.iconSizeMinus -> updateIconSize(prefs.iconSize - 1)
             R.id.iconSizePlus -> updateIconSize(prefs.iconSize + 1)
@@ -242,6 +244,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.dateTime.setOnClickListener(this)
         binding.daysLeftWidget.setOnClickListener(this)
         binding.showAppIcons.setOnClickListener(this)
+        binding.showAppNames.setOnClickListener(this)
         binding.iconSizeValue.setOnClickListener(this)
         binding.iconShape.setOnClickListener(this)
         binding.shapeDefault.setOnClickListener(this)
@@ -377,6 +380,11 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun toggleAppIcons() {
         prefs.showAppIcons = !prefs.showAppIcons
+        // Icons and names can't both be hidden — turning icons off forces names back on.
+        if (!prefs.showAppIcons && !prefs.showAppNames) {
+            prefs.showAppNames = true
+            populateAppNames()
+        }
         populateAppIcons()
         viewModel.refreshHome(false)
     }
@@ -384,6 +392,23 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     private fun populateAppIcons() {
         binding.showAppIcons.text = getString(
             if (prefs.showAppIcons) R.string.on else R.string.off
+        )
+    }
+
+    private fun toggleAppNames() {
+        prefs.showAppNames = !prefs.showAppNames
+        // Icons and names can't both be hidden — hiding names forces icons on.
+        if (!prefs.showAppNames && !prefs.showAppIcons) {
+            prefs.showAppIcons = true
+            populateAppIcons()
+        }
+        populateAppNames()
+        viewModel.refreshHome(false)
+    }
+
+    private fun populateAppNames() {
+        binding.showAppNames.text = getString(
+            if (prefs.showAppNames) R.string.on else R.string.off
         )
     }
 

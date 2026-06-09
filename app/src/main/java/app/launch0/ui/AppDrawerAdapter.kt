@@ -3,7 +3,10 @@ package app.launch0.ui
 import android.content.Context
 import android.os.UserHandle
 import android.text.Editable
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.TextWatcher
+import android.text.style.ImageSpan
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -30,6 +33,7 @@ class AppDrawerAdapter(
     private var flag: Int,
     private val appLabelGravity: Int,
     private val showAppIcons: Boolean,
+    private val showAppNames: Boolean,
     private val iconSizePx: Int,
     private val iconShape: Int,
     private val appClickListener: (AppModel) -> Unit,
@@ -82,6 +86,7 @@ class AppDrawerAdapter(
                 flag,
                 appLabelGravity,
                 showAppIcons,
+                showAppNames,
                 iconSizePx,
                 iconShape,
                 myUserHandle,
@@ -178,6 +183,7 @@ class AppDrawerAdapter(
             flag: Int,
             appLabelGravity: Int,
             showAppIcons: Boolean,
+            showAppNames: Boolean,
             iconSizePx: Int,
             iconShape: Int,
             myUserHandle: UserHandle,
@@ -193,17 +199,19 @@ class AppDrawerAdapter(
             renameLayout.visibility = View.GONE
             appTitle.visibility = View.VISIBLE
 
+            // Icons and names can't both be hidden, so only drop the name when icons are shown.
+            val showNames = showAppNames || !showAppIcons
             // Show indicators in title based on app type and state
-            appTitle.text = buildString {
+            appTitle.text = if (showNames) buildString {
                 if (flag == Constants.FLAG_SET_DND_APPS
                     && appModel.appPackage.isNotEmpty()
                     && isDndApp(appModel.appPackage)
                 ) append("✓ ")
                 append(appModel.appLabel)
                 if (appModel.isNew) append(" ✦")
-            }
+            } else ""
             appTitle.gravity = appLabelGravity
-            setAppTitleIcon(appTitle, appModel, showAppIcons, iconSizePx, iconShape, appLabelGravity)
+            setAppTitleIcon(appTitle, appModel, showAppIcons, showNames, iconSizePx, iconShape, appLabelGravity)
             otherProfileIndicator.isVisible = appModel.user != myUserHandle
 
             appTitle.setOnClickListener { clickListener(appModel) }
@@ -305,11 +313,16 @@ class AppDrawerAdapter(
             appHide.setOnClickListener { appHideListener(appModel, bindingAdapterPosition) }
         }
 
-        /** Shows the app icon next to the label (on the side matching its alignment) when enabled. */
+        /**
+         * Shows the app icon when enabled. With a visible label the icon sits next to it (on the
+         * side matching its alignment); in icons-only mode ([showNames] false) the icon is rendered
+         * inline so it follows the row alignment (left/center/right) on its own.
+         */
         private fun setAppTitleIcon(
             textView: TextView,
             appModel: AppModel,
             showAppIcons: Boolean,
+            showNames: Boolean,
             iconSizePx: Int,
             iconShape: Int,
             gravity: Int,
@@ -322,6 +335,14 @@ class AppDrawerAdapter(
                 return
             }
             icon.setBounds(0, 0, iconSizePx, iconSizePx)
+            if (!showNames) {
+                // Icons-only: render the icon as inline content so it honours the row alignment.
+                textView.setCompoundDrawables(null, null, null, null)
+                textView.text = SpannableString(" ").apply {
+                    setSpan(ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                return
+            }
             if (gravity == Gravity.END)
                 textView.setCompoundDrawablesRelative(null, null, icon, null)
             else
