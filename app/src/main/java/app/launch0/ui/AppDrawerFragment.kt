@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
@@ -39,6 +40,7 @@ class AppDrawerFragment : Fragment() {
 
     private var flag = Constants.FLAG_LAUNCH_APP
     private var canRename = false
+    private var previousSoftInputMode: Int? = null
 
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentAppDrawerBinding? = null
@@ -313,11 +315,18 @@ class AppDrawerFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
+        // Pan the whole drawer up so the bottom aligned search bar stays
+        // above the keyboard, restoring the previous mode in onStop.
+        requireActivity().window.let { window ->
+            previousSoftInputMode = window.attributes.softInputMode
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+        }
         binding.search.showKeyboard(prefs.autoShowKeyboard)
     }
 
     override fun onStop() {
         binding.search.hideKeyboard()
+        previousSoftInputMode?.let { requireActivity().window.setSoftInputMode(it) }
         super.onStop()
     }
 
