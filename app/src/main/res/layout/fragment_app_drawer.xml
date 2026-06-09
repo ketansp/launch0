@@ -14,22 +14,6 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <TextView
-        android:id="@+id/appDrawerTip"
-        style="@style/TextSmallLight"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="4dp"
-        android:ellipsize="marquee"
-        android:freezesText="true"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:maxLines="1"
-        android:scrollHorizontally="true"
-        android:singleLine="true"
-        android:text="@string/app_drawer_tips"
-        android:visibility="gone" />
-
     <!-- Scrolling app list with the alphabet index; height is set to half the
          screen at runtime so the list (and the index beside it) span one half. -->
     <FrameLayout

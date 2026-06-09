@@ -22,7 +22,6 @@
     <string name="email">E-mail</string>
 
     <string name="donate">Donner</string>
-    <string name="swipe_up_for_apps">1. Balayez vers le haut pour toutes les applications.\n2. Appuyez longuement n\'importe où pour les paramètres.</string>
     <string name="apps_on_home_screen">Applications sur l\'écran d\'accueil</string>
     <string name="hourly_wallpaper_update">Nouveau fond d\'écran toutes les heures</string>
     <string name="left">Gauche</string>
@@ -40,7 +39,6 @@
     <string name="_6">6</string>
     <string name="_7">7</string>
     <string name="_8">8</string>
-    <string name="app_drawer_tips">Conseil : Commencez à saisir le nom d\'une application pour la lancer automatiquement.</string>
     <string name="okay">D\'accord</string>
     <string name="cool">Cool !</string>
     <string name="auto_show_keyboard">Afficher automatiquement le clavier</string>

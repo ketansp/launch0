@@ -22,7 +22,6 @@
     <string name="email">Электронная почта</string>
 
     <string name="donate">Пожертвовать</string>
-    <string name="swipe_up_for_apps">1. Проведите вверх чтобы открыть все приложения.\n2. Длительным нажатием в любом месте открываются настройки</string>
     <string name="apps_on_home_screen">Количество приложений на главном экране</string>
     <string name="hourly_wallpaper_update">Ежечасно новые обои</string>
     <string name="left">Слева</string>
@@ -40,7 +39,6 @@
     <string name="_6">6</string>
     <string name="_7">7</string>
     <string name="_8">8</string>
-    <string name="app_drawer_tips">Совет: начните вводить название приложения, чтобы запустить его автоматически.</string>
     <string name="okay">Хорошо</string>
     <string name="cool">Круто!</string>
     <string name="auto_show_keyboard">Автопоказ клавиатуры</string>

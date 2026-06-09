@@ -22,7 +22,6 @@
     <string name="email">E-mail</string>
 
     <string name="donate">Fazer donativo</string>
-    <string name="swipe_up_for_apps">1. Deslize para cima para ver todos os aplicativos\n2. Pressione continuamente em qualquer ponto do ecrã para aceder às configurações</string>
     <string name="apps_on_home_screen">Aplicativos na home</string>
     <string name="hourly_wallpaper_update">Novo fundo de ecrã a cada hora</string>
     <string name="left">Esquerda</string>
@@ -40,7 +39,6 @@
     <string name="_6">6</string>
     <string name="_7">7</string>
     <string name="_8">8</string>
-    <string name="app_drawer_tips">Dica: comece a digitar um nome de aplicativo para iniciá-lo automaticamente</string>
     <string name="okay">Ok</string>
     <string name="cool">Boa!</string>
     <string name="auto_show_keyboard">Exibição automática do teclado</string>
