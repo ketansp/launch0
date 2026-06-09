@@ -114,7 +114,12 @@ class AppDrawerAdapter(
                 val appFilteredList = (if (charSearch.isNullOrBlank()) appsList
                 else appsList.filter { app ->
                     appLabelMatches(app.appLabel, charSearch)
-                } as MutableList<AppModel>)
+                }
+                    // Rank apps whose name starts with the term above mid-string matches.
+                    // sortedByDescending is stable, so the original (alphabetical) order is
+                    // preserved within each group.
+                    .sortedByDescending { app -> appLabelStartsWith(app.appLabel, charSearch) }
+                    .toMutableList())
 
                 val filterResults = FilterResults()
                 filterResults.values = appFilteredList
@@ -153,6 +158,17 @@ class AppDrawerAdapter(
                     .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
                     .replace(Regex("[-_+,. ]"), "")
                     .contains(charSearch, true))
+    }
+
+    /** True when the app name starts with the search term (raw or accent/separator-normalized). */
+    private fun appLabelStartsWith(appLabel: String, charSearch: CharSequence): Boolean {
+        val term = charSearch.trim()
+        if (term.isEmpty()) return false
+        return (appLabel.startsWith(term, true) ||
+                Normalizer.normalize(appLabel, Normalizer.Form.NFD)
+                    .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+                    .replace(Regex("[-_+,. ]"), "")
+                    .startsWith(term.toString(), true))
     }
 
     fun setAppList(appsList: MutableList<AppModel>) {
