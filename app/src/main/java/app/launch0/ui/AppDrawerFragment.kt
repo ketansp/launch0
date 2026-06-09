@@ -227,6 +227,11 @@ class AppDrawerFragment : Fragment() {
     }
 
     private fun initAlphabetIndex() {
+        // The list (and the index beside it) span exactly half of the screen height.
+        binding.listContainer.layoutParams = binding.listContainer.layoutParams.apply {
+            height = resources.displayMetrics.heightPixels / 2
+        }
+
         // Place the index opposite the app name alignment: names on the right (END) put the
         // index on the left, otherwise it sits on the right.
         val onEndSide = prefs.appLabelAlignment != Gravity.END
