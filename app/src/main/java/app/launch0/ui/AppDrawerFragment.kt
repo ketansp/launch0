@@ -115,6 +115,7 @@ class AppDrawerFragment : Fragment() {
             flag,
             prefs.appLabelAlignment,
             prefs.showAppIcons,
+            prefs.showAppNames,
             prefs.iconSize.dpToPx(),
             prefs.iconShape,
             appClickListener = { appModel ->

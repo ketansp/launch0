@@ -2,8 +2,15 @@ package app.launch0.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.text.Spannable
+import android.text.method.ArrowKeyMovementMethod
+import android.text.style.ClickableSpan
+import android.text.util.Linkify
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.core.text.util.LinkifyCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -52,6 +59,9 @@ class NotesAdapter(
                 notesImage.setOnClickListener(null)
                 notesText.isVisible = true
                 notesText.text = entry.text
+                // Turn web/email URLs into tappable links while keeping the text selectable.
+                LinkifyCompat.addLinks(notesText, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
+                notesText.movementMethod = LinkAndSelectMovementMethod
             }
 
             root.setOnLongClickListener {
@@ -84,6 +94,33 @@ class NotesAdapter(
             override fun areContentsTheSame(oldItem: NotesEntry, newItem: NotesEntry) =
                 oldItem == newItem
         }
+    }
+}
+
+/**
+ * A movement method that lets a [TextView] both react to taps on links and stay selectable.
+ *
+ * [android.text.method.LinkMovementMethod] handles link clicks but disables text selection, while
+ * the default selectable behaviour ([ArrowKeyMovementMethod]) supports selection but ignores link
+ * taps. This combines the two: a tap on a [ClickableSpan] follows the link, anything else falls
+ * through to the standard selection handling.
+ */
+internal object LinkAndSelectMovementMethod : ArrowKeyMovementMethod() {
+    override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
+        val action = event.action
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_DOWN) {
+            val x = event.x.toInt() - widget.totalPaddingLeft + widget.scrollX
+            val y = event.y.toInt() - widget.totalPaddingTop + widget.scrollY
+            val layout = widget.layout
+            val line = layout.getLineForVertical(y)
+            val off = layout.getOffsetForHorizontal(line, x.toFloat())
+            val links = buffer.getSpans(off, off, ClickableSpan::class.java)
+            if (links.isNotEmpty()) {
+                if (action == MotionEvent.ACTION_UP) links[0].onClick(widget)
+                return true
+            }
+        }
+        return super.onTouchEvent(widget, buffer, event)
     }
 }
 

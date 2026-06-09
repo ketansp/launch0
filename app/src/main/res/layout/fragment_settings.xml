@@ -376,6 +376,34 @@
 
                 </FrameLayout>
 
+                <!-- Show app names -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:animateLayoutChanges="true">
+
+                    <TextView
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/show_app_names"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/showAppNames"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        android:text="@string/on" />
+
+                </FrameLayout>
+
                 <!-- Icon size -->
                 <FrameLayout
                     android:layout_width="match_parent"
@@ -406,6 +434,7 @@
                         android:paddingEnd="8dp"
                         tools:text="28" />
 
+                    <!-- Icon size +/- controls -->
                     <LinearLayout
                         android:id="@+id/iconSizeLayout"
                         android:layout_width="match_parent"
@@ -413,22 +442,43 @@
                         android:animateLayoutChanges="true"
                         android:background="@drawable/rounded_primary_gradient"
                         android:elevation="8dp"
-                        android:gravity="center_vertical"
+                        android:gravity="center"
                         android:orientation="horizontal"
                         android:outlineAmbientShadowColor="@color/colorPrimaryDark"
                         android:outlineSpotShadowColor="@color/colorPrimaryDark"
-                        android:paddingHorizontal="16dp"
                         android:visibility="gone"
                         tools:ignore="UnusedAttribute"
                         tools:visibility="gone">
 
-                        <SeekBar
-                            android:id="@+id/iconSizeSeekBar"
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:id="@+id/iconSizeMinus"
+                            style="@style/TextSmallBold"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:max="32"
-                            android:progressTint="?attr/primaryColor"
-                            android:thumbTint="?attr/primaryColor" />
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:paddingVertical="8dp"
+                            android:text="\u2212" />
+
+                        <TextView
+                            android:id="@+id/iconSizeCurrent"
+                            style="@style/TextSmallBold"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:paddingVertical="8dp"
+                            tools:text="28" />
+
+                        <TextView
+                            android:id="@+id/iconSizePlus"
+                            style="@style/TextSmallBold"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:paddingVertical="8dp"
+                            android:text="+" />
 
                     </LinearLayout>
 
