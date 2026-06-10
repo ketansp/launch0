@@ -21,7 +21,6 @@
     <string name="follow">Volgen</string>
     <string name="email">E-mail</string>
     <string name="donate">Doneren</string>
-    <string name="swipe_up_for_apps">1. Veeg omhoog voor alle apps\n2. Ergens lang indrukken voor instellingen</string>
     <string name="apps_on_home_screen">Apps op startscherm</string>
     <string name="hourly_wallpaper_update">Elk uur nieuwe achtergrond</string>
     <string name="left">Links</string>
@@ -39,7 +38,6 @@
     <string name="_6">6</string>
     <string name="_7">7</string>
     <string name="_8">8</string>
-    <string name="app_drawer_tips">Tip: Begin met het typen van een app-naam om deze automatisch te starten</string>
     <string name="okay">Oke</string>
     <string name="cool">Cool!</string>
     <string name="auto_show_keyboard">Auto tonen toetsenbord</string>

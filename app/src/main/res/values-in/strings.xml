@@ -22,7 +22,6 @@
     <string name="email">Surel</string>
 
     <string name="donate">Donasi</string>
-    <string name="swipe_up_for_apps">1. Geser ke atas untuk semua aplikasi\n2. Tekan lama di mana saja untuk pengaturan</string>
     <string name="apps_on_home_screen">Aplikasi di layar awal</string>
     <string name="hourly_wallpaper_update">Wallpaper baru setiap jam</string>
     <string name="left">Kiri</string>
@@ -40,7 +39,6 @@
     <string name="_6">6</string>
     <string name="_7">7</string>
     <string name="_8">8</string>
-    <string name="app_drawer_tips">Kiat: Mulai ketikkan nama aplikasi untuk meluncurkannya secara otomatis</string>
     <string name="okay">Oke</string>
     <string name="cool">Keren!</string>
     <string name="auto_show_keyboard">Tampilkan keyboard secara otomatis</string>
