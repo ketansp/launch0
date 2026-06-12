@@ -21,7 +21,19 @@ class NotificationDndService : NotificationListenerService() {
 
     private val prefs by lazy { Prefs(applicationContext) }
 
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        instance = this
+        onNotificationsChanged?.invoke()
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        instance = null
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        onNotificationsChanged?.invoke()
         sbn ?: return
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         if (!prefs.dndEnabled) return
@@ -68,11 +80,51 @@ class NotificationDndService : NotificationListenerService() {
         reason: Int,
     ) {
         super.onNotificationRemoved(sbn, rankingMap, reason)
+        onNotificationsChanged?.invoke()
         // Ignore removals caused by our own snooze, otherwise we'd forget the key and
         // re-hold the notification forever when it is re-posted.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && reason == REASON_SNOOZED) return
         val key = sbn?.key ?: return
         val heldKeys = prefs.dndHeldKeys
         if (heldKeys.remove(key)) prefs.dndHeldKeys = heldKeys
+    }
+
+    companion object {
+        /**
+         * Live reference to the bound service, used by the quick-actions panel to read the
+         * currently active notifications. Null when the listener isn't connected (e.g. the user
+         * hasn't granted notification access).
+         */
+        @Volatile
+        private var instance: NotificationDndService? = null
+
+        /** Invoked whenever notifications are posted/removed so an open panel can refresh. */
+        @Volatile
+        var onNotificationsChanged: (() -> Unit)? = null
+
+        fun isConnected(): Boolean = instance != null
+
+        /** Active notifications, or an empty list if the listener isn't connected. */
+        fun activeNotifications(): List<StatusBarNotification> = try {
+            instance?.activeNotifications?.toList() ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+        fun dismiss(key: String) {
+            try {
+                instance?.cancelNotification(key)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        fun clearAll() {
+            try {
+                instance?.cancelAllNotifications()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }
