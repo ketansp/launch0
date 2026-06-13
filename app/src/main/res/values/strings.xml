@@ -195,6 +195,34 @@
     <string name="couldnt_add_image">Couldn\'t add to notes</string>
     <string name="cancel">Cancel</string>
 
+    <!-- Notes: search, recording, message actions, to-dos -->
+    <string name="notes_search">Search</string>
+    <string name="notes_copy">Copy</string>
+    <string name="notes_share">Share</string>
+    <string name="notes_edit">Edit</string>
+    <string name="notes_save">Save</string>
+    <string name="notes_copied">Copied</string>
+    <string name="notes_editing">Editing note</string>
+    <string name="notes_search_results">Results for “%1$s”</string>
+    <string name="notes_no_results">No matching notes</string>
+    <string name="notes_audio_desc">Voice note</string>
+    <string name="notes_record_desc">Record a voice note</string>
+    <string name="notes_recording">Recording…</string>
+    <string name="notes_mic_permission">Microphone permission is needed to record voice notes</string>
+    <string name="notes_recording_failed">Couldn\'t record audio</string>
+    <string name="notes_today">Today</string>
+    <string name="notes_yesterday">Yesterday</string>
+    <string name="notes_mark_done">Mark as done</string>
+    <string name="notes_mark_urgent">Mark as urgent</string>
+    <string name="notes_record_symbol" translatable="false">●</string>
+    <string name="notes_stop_symbol" translatable="false">■</string>
+    <string name="notes_done_off_symbol" translatable="false">○</string>
+    <string name="notes_done_on_symbol" translatable="false">✔</string>
+    <string name="notes_flag_off_symbol" translatable="false">⚐</string>
+    <string name="notes_flag_on_symbol" translatable="false">⚑</string>
+    <string name="notes_play_symbol" translatable="false">▶</string>
+    <string name="notes_stop_play_symbol" translatable="false">⏹</string>
+
     <!-- Quick actions + notifications panel -->
     <string name="quick_actions">Quick actions</string>
     <string name="swipe_right_for">Swipe right for</string>

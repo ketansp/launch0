@@ -3,45 +3,118 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="end"
-    android:orientation="vertical"
-    android:paddingHorizontal="16dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="12dp"
     android:paddingVertical="6dp">
 
+    <!-- Column 1: to-do tick box (text notes only) -->
     <TextView
-        android:id="@+id/notesText"
+        android:id="@+id/notesDone"
         style="@style/TextSmall"
-        android:layout_width="wrap_content"
+        android:layout_width="36dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_rect_shade_color"
-        android:maxWidth="320dp"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
-        android:textColor="?attr/primaryColor"
-        android:textIsSelectable="true"
-        tools:text="Remember to buy milk and call the bank tomorrow." />
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/notes_mark_done"
+        android:gravity="center"
+        android:paddingVertical="6dp"
+        android:text="@string/notes_done_off_symbol"
+        android:textColor="?attr/primaryColorTrans50"
+        tools:ignore="TextContrastCheck" />
 
-    <ImageView
-        android:id="@+id/notesImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/notes_image_desc"
-        android:maxWidth="280dp"
-        android:maxHeight="360dp"
-        android:scaleType="fitEnd"
-        android:visibility="gone"
-        tools:src="@drawable/logo"
-        tools:visibility="visible" />
-
+    <!-- Column 2: urgent / important flag (text notes only) -->
     <TextView
-        android:id="@+id/notesTime"
-        style="@style/TextSmallLight"
-        android:layout_width="wrap_content"
+        android:id="@+id/notesUrgent"
+        style="@style/TextSmall"
+        android:layout_width="36dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="4dp"
-        android:textSize="11sp"
-        tools:text="3 Jun, 9:41 AM" />
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/notes_mark_urgent"
+        android:gravity="center"
+        android:paddingVertical="6dp"
+        android:text="@string/notes_flag_off_symbol"
+        android:textColor="?attr/primaryColorTrans50"
+        tools:ignore="TextContrastCheck" />
+
+    <!-- Content, right-aligned like a sent chat message -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="end"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/notesText"
+            style="@style/TextSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_rect_shade_color"
+            android:maxWidth="320dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:textColor="?attr/primaryColor"
+            android:textIsSelectable="true"
+            tools:text="Remember to buy milk and call the bank tomorrow." />
+
+        <ImageView
+            android:id="@+id/notesImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:background="@drawable/rounded_image_clip"
+            android:clipToOutline="true"
+            android:contentDescription="@string/notes_image_desc"
+            android:maxWidth="280dp"
+            android:maxHeight="360dp"
+            android:scaleType="fitEnd"
+            android:visibility="gone"
+            tools:src="@drawable/logo"
+            tools:visibility="visible" />
+
+        <!-- Voice note chip: play/stop glyph + duration -->
+        <LinearLayout
+            android:id="@+id/notesAudio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_rect_shade_color"
+            android:gravity="center_vertical"
+            android:minWidth="120dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/notesAudioIcon"
+                style="@style/TextSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/notes_play_symbol"
+                android:textColor="?attr/primaryColor" />
+
+            <TextView
+                android:id="@+id/notesAudioDuration"
+                style="@style/TextSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:textColor="?attr/primaryColor"
+                tools:text="0:12" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/notesTime"
+            style="@style/TextSmallLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="4dp"
+            android:textSize="9sp"
+            tools:text="9:41 AM" />
+
+    </LinearLayout>
 
 </LinearLayout>
