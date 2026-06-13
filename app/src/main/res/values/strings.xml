@@ -222,4 +222,19 @@
     <string name="notes_flag_on_symbol" translatable="false">⚑</string>
     <string name="notes_play_symbol" translatable="false">▶</string>
     <string name="notes_stop_play_symbol" translatable="false">⏹</string>
+
+    <!-- Quick actions + notifications panel -->
+    <string name="quick_actions">Quick actions</string>
+    <string name="swipe_right_for">Swipe right for</string>
+    <string name="qa_flashlight">Flashlight</string>
+    <string name="qa_wifi">Wi-Fi</string>
+    <string name="qa_bluetooth">Bluetooth</string>
+    <string name="qa_mobile_data">Mobile data</string>
+    <string name="qa_airplane">Airplane mode</string>
+    <string name="qa_display">Display</string>
+    <string name="qa_settings">Settings</string>
+    <string name="qa_no_notifications">No notifications</string>
+    <string name="qa_clear_all">Clear all</string>
+    <string name="qa_grant_access">Tap to allow notification access for Launch0</string>
+    <string name="qa_flashlight_unavailable">Flashlight unavailable</string>
 </resources>
