@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Transparent shape used purely as an outline so an ImageView can clip its bitmap
+     to rounded corners via android:clipToOutline. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <corners android:radius="16dp" />
+</shape>

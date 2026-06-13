@@ -2,6 +2,7 @@ package app.launch0.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.text.Spannable
 import android.text.method.ArrowKeyMovementMethod
 import android.text.style.ClickableSpan
@@ -10,64 +11,175 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.text.util.LinkifyCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import app.launch0.R
 import app.launch0.data.NotesEntry
+import app.launch0.databinding.AdapterNotesDateBinding
 import app.launch0.databinding.AdapterNotesItemBinding
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
+
+/** One row in the notes list: either a [DateHeader] divider or a note [Item]. */
+sealed class NotesRow {
+    abstract val rowId: Long
+
+    data class DateHeader(override val rowId: Long, val label: String) : NotesRow()
+    data class Item(val entry: NotesEntry) : NotesRow() {
+        override val rowId: Long get() = entry.id
+    }
+}
 
 class NotesAdapter(
     private val onItemLongClick: (NotesEntry) -> Unit,
     private val onImageClick: (NotesEntry) -> Unit,
-) : ListAdapter<NotesEntry, NotesAdapter.ViewHolder>(DIFF_CALLBACK) {
+    private val onAudioClick: (NotesEntry) -> Unit,
+    private val onToggleDone: (NotesEntry) -> Unit,
+    private val onToggleUrgent: (NotesEntry) -> Unit,
+) : ListAdapter<NotesRow, RecyclerView.ViewHolder>(DIFF_CALLBACK) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = AdapterNotesItemBinding.inflate(
-            LayoutInflater.from(parent.context), parent, false
-        )
-        return ViewHolder(binding)
+    /** Id of the voice note currently playing, or null. Drives the play/stop glyph. */
+    private var playingId: Long? = null
+
+    fun setPlayingId(id: Long?) {
+        if (playingId == id) return
+        val previous = playingId
+        playingId = id
+        currentList.forEachIndexed { index, row ->
+            if (row is NotesRow.Item && (row.entry.id == previous || row.entry.id == id)) {
+                notifyItemChanged(index)
+            }
+        }
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position), onItemLongClick, onImageClick)
+    override fun getItemViewType(position: Int): Int =
+        if (getItem(position) is NotesRow.DateHeader) TYPE_DATE else TYPE_ITEM
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == TYPE_DATE) {
+            DateViewHolder(AdapterNotesDateBinding.inflate(inflater, parent, false))
+        } else {
+            ItemViewHolder(AdapterNotesItemBinding.inflate(inflater, parent, false))
+        }
     }
 
-    class ViewHolder(private val binding: AdapterNotesItemBinding) :
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (val row = getItem(position)) {
+            is NotesRow.DateHeader -> (holder as DateViewHolder).bind(row)
+            is NotesRow.Item -> (holder as ItemViewHolder).bind(
+                row.entry, playingId, onItemLongClick, onImageClick, onAudioClick,
+                onToggleDone, onToggleUrgent,
+            )
+        }
+    }
+
+    class DateViewHolder(private val binding: AdapterNotesDateBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun bind(header: NotesRow.DateHeader) {
+            binding.notesDate.text = header.label
+        }
+    }
+
+    class ItemViewHolder(private val binding: AdapterNotesItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
             entry: NotesEntry,
+            playingId: Long?,
             onItemLongClick: (NotesEntry) -> Unit,
             onImageClick: (NotesEntry) -> Unit,
+            onAudioClick: (NotesEntry) -> Unit,
+            onToggleDone: (NotesEntry) -> Unit,
+            onToggleUrgent: (NotesEntry) -> Unit,
         ) = with(binding) {
             notesTime.text = timeFormat.format(Date(entry.timestamp))
 
-            if (entry.isImage && !entry.imagePath.isNullOrEmpty()) {
-                notesText.isVisible = false
-                notesImage.isVisible = true
-                loadImage(entry.imagePath)
-                notesImage.setOnClickListener { onImageClick(entry) }
-            } else {
-                notesImage.isVisible = false
-                notesImage.setImageDrawable(null)
-                notesImage.setOnClickListener(null)
-                notesText.isVisible = true
-                notesText.text = entry.text
-                // Turn web/email URLs into tappable links while keeping the text selectable.
-                LinkifyCompat.addLinks(notesText, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
-                notesText.movementMethod = LinkAndSelectMovementMethod
+            // The to-do toggles only make sense for text notes.
+            notesDone.isVisible = entry.isText
+            notesUrgent.isVisible = entry.isText
+            if (entry.isText) bindTodoToggles(entry, onToggleDone, onToggleUrgent)
+
+            when {
+                entry.isImage && !entry.mediaPath.isNullOrEmpty() -> {
+                    notesText.isVisible = false
+                    notesAudio.isVisible = false
+                    notesImage.isVisible = true
+                    loadImage(entry.mediaPath)
+                    notesImage.setOnClickListener { onImageClick(entry) }
+                }
+                entry.isAudio -> {
+                    notesText.isVisible = false
+                    notesImage.isVisible = false
+                    notesImage.setImageDrawable(null)
+                    notesAudio.isVisible = true
+                    notesAudioDuration.text = formatDuration(entry.durationMs)
+                    notesAudioIcon.text = root.context.getString(
+                        if (entry.id == playingId) R.string.notes_stop_play_symbol
+                        else R.string.notes_play_symbol
+                    )
+                    notesAudio.setOnClickListener { onAudioClick(entry) }
+                }
+                else -> {
+                    notesImage.isVisible = false
+                    notesImage.setImageDrawable(null)
+                    notesImage.setOnClickListener(null)
+                    notesAudio.isVisible = false
+                    notesText.isVisible = true
+                    notesText.text = entry.text
+                    // Strike through and dim completed to-dos.
+                    notesText.paintFlags = if (entry.done) {
+                        notesText.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                    } else {
+                        notesText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    }
+                    notesText.alpha = if (entry.done) 0.5f else 1f
+                    // Turn web/email URLs into tappable links while keeping the text selectable.
+                    LinkifyCompat.addLinks(notesText, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
+                    notesText.movementMethod = LinkAndSelectMovementMethod
+                }
             }
 
             root.setOnLongClickListener {
                 onItemLongClick(entry)
                 true
             }
+        }
+
+        private fun bindTodoToggles(
+            entry: NotesEntry,
+            onToggleDone: (NotesEntry) -> Unit,
+            onToggleUrgent: (NotesEntry) -> Unit,
+        ) = with(binding) {
+            val ctx = root.context
+            notesDone.text = ctx.getString(
+                if (entry.done) R.string.notes_done_on_symbol else R.string.notes_done_off_symbol
+            )
+            notesDone.setTextColor(
+                ContextCompat.getColor(
+                    ctx,
+                    if (entry.done) android.R.color.holo_green_dark else android.R.color.darker_gray
+                )
+            )
+            notesDone.setOnClickListener { onToggleDone(entry) }
+
+            notesUrgent.text = ctx.getString(
+                if (entry.urgent) R.string.notes_flag_on_symbol else R.string.notes_flag_off_symbol
+            )
+            notesUrgent.setTextColor(
+                ContextCompat.getColor(
+                    ctx,
+                    if (entry.urgent) R.color.notesUrgent else android.R.color.darker_gray
+                )
+            )
+            notesUrgent.setOnClickListener { onToggleUrgent(entry) }
         }
 
         private fun loadImage(path: String) {
@@ -84,14 +196,23 @@ class NotesAdapter(
     }
 
     companion object {
+        private const val TYPE_ITEM = 0
+        private const val TYPE_DATE = 1
         private const val MAX_IMAGE_DIMEN = 1080
-        private val timeFormat = SimpleDateFormat("d MMM, h:mm a", Locale.getDefault())
+        private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
 
-        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<NotesEntry>() {
-            override fun areItemsTheSame(oldItem: NotesEntry, newItem: NotesEntry) =
-                oldItem.id == newItem.id
+        private fun formatDuration(ms: Long): String {
+            val totalSeconds = (ms / 1000).coerceAtLeast(0)
+            val minutes = TimeUnit.SECONDS.toMinutes(totalSeconds)
+            val seconds = totalSeconds - minutes * 60
+            return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds)
+        }
 
-            override fun areContentsTheSame(oldItem: NotesEntry, newItem: NotesEntry) =
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<NotesRow>() {
+            override fun areItemsTheSame(oldItem: NotesRow, newItem: NotesRow) =
+                oldItem::class == newItem::class && oldItem.rowId == newItem.rowId
+
+            override fun areContentsTheSame(oldItem: NotesRow, newItem: NotesRow) =
                 oldItem == newItem
         }
     }
