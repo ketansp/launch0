@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.service.notification.StatusBarNotification
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -18,12 +19,15 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import app.launch0.R
 import app.launch0.databinding.FragmentQuickActionsBinding
 import app.launch0.helper.NotificationDndService
 import app.launch0.helper.isNotificationServiceEnabled
 import app.launch0.helper.showToast
+import app.launch0.listener.OnSwipeTouchListener
 
 /**
  * The quick-actions + notification-centre page, reached by swiping right on the home screen
@@ -69,8 +73,42 @@ class QuickActionsFragment : Fragment() {
         flashlightCameraId = findFlashlightCamera()
         buildQuickActions()
         initRecyclerView()
+        initBackSwipe()
         binding.qaClearAll.setOnClickListener { NotificationDndService.clearAll() }
         binding.qaGrantAccess.setOnClickListener { openNotificationAccessSettings() }
+    }
+
+    /**
+     * The panel slides in from the left (swipe-right on home), so swiping back to the left returns
+     * home. The notification list consumes its own touches, so the same gesture listener is also
+     * fed the list's events via an item-touch listener.
+     */
+    private fun initBackSwipe() {
+        val swipeListener = object : OnSwipeTouchListener(requireContext()) {
+            override fun onSwipeLeft() {
+                super.onSwipeLeft()
+                goHome()
+            }
+        }
+        binding.quickActionsRoot.setOnTouchListener(swipeListener)
+        binding.qaNotifications.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                swipeListener.onTouch(rv, e)
+                return false
+            }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {}
+            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
+        })
+    }
+
+    private fun goHome() {
+        if (_binding == null) return
+        try {
+            findNavController().popBackStack()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onResume() {
