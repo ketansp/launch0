@@ -2,6 +2,7 @@ package app.launch0.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
@@ -13,7 +14,9 @@ import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import app.launch0.MainActivity
 import app.launch0.MainViewModel
 import app.launch0.R
@@ -21,6 +24,7 @@ import app.launch0.data.NotesEntry
 import app.launch0.data.NotesStore
 import app.launch0.databinding.FragmentNotesBinding
 import app.launch0.helper.showToast
+import app.launch0.listener.OnSwipeTouchListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,6 +64,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
         applyWindowInsets()
         initRecyclerView()
+        initBackSwipe()
         initInput()
         initImageViewer()
         initObservers()
@@ -92,6 +97,39 @@ class NotesFragment : androidx.fragment.app.Fragment() {
         binding.recyclerView.layoutManager =
             LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
         binding.recyclerView.adapter = adapter
+    }
+
+    /**
+     * Notes slides in from the right (swipe-left on home), so swiping back to the right returns
+     * home. The same gesture listener is fed the list's touches via an item-touch listener so the
+     * swipe also works while the finger is over the (otherwise touch-consuming) RecyclerView.
+     */
+    private fun initBackSwipe() {
+        val swipeListener = object : OnSwipeTouchListener(requireContext()) {
+            override fun onSwipeRight() {
+                super.onSwipeRight()
+                goHome()
+            }
+        }
+        binding.notesRoot.setOnTouchListener(swipeListener)
+        binding.recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                swipeListener.onTouch(rv, e)
+                return false
+            }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {}
+            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
+        })
+    }
+
+    private fun goHome() {
+        if (_binding == null) return
+        try {
+            findNavController().popBackStack()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun initImageViewer() {
