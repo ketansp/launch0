@@ -86,7 +86,7 @@
         android:id="@+id/homeAppsLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_vertical"
+        android:gravity="bottom"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="112dp"

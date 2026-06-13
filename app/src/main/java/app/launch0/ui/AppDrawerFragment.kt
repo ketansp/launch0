@@ -126,6 +126,12 @@ class AppDrawerFragment : Fragment() {
 
             override fun onQueryTextChange(newText: String): Boolean {
                 try {
+                    // While searching, flip the list so the most relevant result (item 0 after
+                    // the adapter's ranking sort) renders at the bottom, closest to the search
+                    // box and keyboard. Cleared search reverts to the normal top-anchored list.
+                    val searching = newText.isNotBlank()
+                    if (linearLayoutManager.reverseLayout != searching)
+                        linearLayoutManager.reverseLayout = searching
                     adapter.filter.filter(newText)
                     binding.appRename.visibility =
                         if (canRename && newText.isNotBlank()) View.VISIBLE else View.GONE
