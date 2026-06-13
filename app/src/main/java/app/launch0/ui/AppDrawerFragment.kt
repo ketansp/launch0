@@ -2,13 +2,11 @@ package app.launch0.ui
 
 import android.os.Bundle
 import android.util.TypedValue
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
-import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
@@ -106,7 +104,7 @@ class AppDrawerFragment : Fragment() {
             binding.search.queryHint = "Please select an app"
         try {
             val searchTextView = binding.search.findViewById<TextView>(R.id.search_src_text)
-            if (searchTextView != null) searchTextView.gravity = prefs.appLabelAlignment
+            if (searchTextView != null) searchTextView.gravity = prefs.homeAlignment
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -147,7 +145,7 @@ class AppDrawerFragment : Fragment() {
     private fun initAdapter() {
         adapter = AppDrawerAdapter(
             flag,
-            prefs.appLabelAlignment,
+            prefs.homeAlignment,
             prefs.showAppIcons,
             prefs.showAppNames,
             prefs.iconSize.dpToPx(),
@@ -259,27 +257,14 @@ class AppDrawerFragment : Fragment() {
             height = resources.displayMetrics.heightPixels / 2
         }
 
-        // Place the index opposite the app name alignment: names on the right (END) put the
-        // index on the left, otherwise it sits on the right.
-        val onEndSide = prefs.appLabelAlignment != Gravity.END
-        (binding.alphabetIndex.layoutParams as FrameLayout.LayoutParams).gravity =
-            (if (onEndSide) Gravity.END else Gravity.START) or Gravity.CENTER_VERTICAL
-
+        // The index always sits in its own column on the right (see the layout); the app
+        // names follow the home screen alignment independently of it.
         binding.alphabetIndex.setTextColor(themeColor(R.attr.primaryColor))
         binding.alphabetIndex.setOnSectionSelectedListener { section ->
             val position = adapter.getPositionForSection(section)
             if (position >= 0) linearLayoutManager.scrollToPositionWithOffset(position, 0)
         }
         adapter.onListUpdated = { refreshAlphabetIndex() }
-
-        // Reserve space on the index side so long app names don't render under the letters.
-        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        binding.alphabetIndex.measure(unspecified, unspecified)
-        val reserve = binding.alphabetIndex.measuredWidth
-        if (onEndSide)
-            binding.recyclerView.setPaddingRelative(0, 0, reserve, 0)
-        else
-            binding.recyclerView.setPaddingRelative(reserve, 0, 0, 0)
     }
 
     /** Rebuilds the alphabet index from the current list, hiding it while a search is active. */

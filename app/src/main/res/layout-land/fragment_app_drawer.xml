@@ -14,18 +14,20 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- Scrolling app list with the alphabet index; height is set to half the
-         screen at runtime so the list (and the index beside it) span one half. -->
-    <FrameLayout
+    <!-- Scrolling app list with the alphabet index in its own column on the right; height is
+         set to half the screen at runtime so the list (and the index beside it) span one half. -->
+    <LinearLayout
         android:id="@+id/listContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="56dp">
+        android:layout_marginHorizontal="56dp"
+        android:orientation="horizontal">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_weight="1"
             android:clipChildren="false"
             android:clipToPadding="false"
             android:fadingEdgeLength="24dp"
@@ -36,11 +38,10 @@
             android:id="@+id/alphabetIndex"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_gravity="end|center_vertical"
             android:paddingHorizontal="8dp"
             android:paddingVertical="8dp" />
 
-    </FrameLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/searchContainer"
