@@ -748,6 +748,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             // Stop holding new notifications; already-held ones release at their scheduled time.
             prefs.dndWindowEnd = 0L
             prefs.dndHeldKeys = mutableSetOf()
+            prefs.dndReleasedKeys = mutableSetOf()
         }
         populateDnd()
     }

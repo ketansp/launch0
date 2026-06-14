@@ -467,6 +467,51 @@ fun Context.getColorFromAttr(
     return typedValue.data
 }
 
+/**
+ * Builds a small capsule/pill drawable showing a notification [count], used next to an app name
+ * to indicate how many notifications have been held (parked) under DND. Counts above 99 collapse
+ * to "99+". The pill is filled with the theme's primary colour and the text uses its inverse so it
+ * stays legible in both light and dark themes. The returned drawable's bounds are already set to
+ * its intrinsic size, ready to be used as a compound drawable.
+ */
+fun Context.getNotificationCountDrawable(count: Int): Drawable {
+    val density = resources.displayMetrics.density
+    val label = if (count > 99) "99+" else count.toString()
+
+    val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = getColorFromAttr(R.attr.primaryColor)
+        style = android.graphics.Paint.Style.FILL
+    }
+    val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = getColorFromAttr(R.attr.primaryInverseColor)
+        textSize = 11f * density
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+
+    val verticalPadding = 3f * density
+    val horizontalPadding = 7f * density
+    val height = textPaint.textSize + verticalPadding * 2f
+    val width = maxOf(height, textPaint.measureText(label) + horizontalPadding * 2f)
+
+    val bitmap = android.graphics.Bitmap.createBitmap(
+        kotlin.math.ceil(width).toInt(),
+        kotlin.math.ceil(height).toInt(),
+        android.graphics.Bitmap.Config.ARGB_8888,
+    )
+    val canvas = android.graphics.Canvas(bitmap)
+    val radius = height / 2f
+    canvas.drawRoundRect(0f, 0f, width, height, radius, radius, fillPaint)
+
+    val fontMetrics = textPaint.fontMetrics
+    val baseline = height / 2f - (fontMetrics.ascent + fontMetrics.descent) / 2f
+    canvas.drawText(label, width / 2f, baseline, textPaint)
+
+    return android.graphics.drawable.BitmapDrawable(resources, bitmap).apply {
+        setBounds(0, 0, bitmap.width, bitmap.height)
+    }
+}
+
 fun View.animateAlpha(alpha: Float = 1.0f) {
     this.animate().apply {
         interpolator = LinearInterpolator()

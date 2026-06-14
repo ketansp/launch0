@@ -25,6 +25,7 @@ import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentAppDrawerBinding
+import app.launch0.helper.NotificationDndService
 import app.launch0.helper.deletePinnedShortcut
 import app.launch0.helper.dpToPx
 import app.launch0.helper.hideKeyboard
@@ -225,7 +226,16 @@ class AppDrawerFragment : Fragment() {
                 prefs.setAppRenameLabel(identifier, renameLabel)
                 viewModel.getAppList()
             },
-            isDndApp = { appPackage -> prefs.dndApps.contains(appPackage) }
+            isDndApp = { appPackage -> prefs.dndApps.contains(appPackage) },
+            parkedNotificationCount = { appPackage ->
+                NotificationDndService.parkedCount(prefs, appPackage)
+            },
+            onReleaseNotifications = { appModel ->
+                NotificationDndService.releaseForPackage(prefs, appModel.appPackage)
+                val position = adapter.appFilteredList.indexOf(appModel)
+                if (position >= 0) adapter.notifyItemChanged(position)
+                requireContext().showToast(getString(R.string.dnd_released))
+            }
         )
 
         linearLayoutManager = object : LinearLayoutManager(requireContext()) {

@@ -30,14 +30,17 @@ import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentHomeBinding
+import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.dpToPx
 import app.launch0.helper.expandNotificationDrawer
 import app.launch0.helper.getChangedAppTheme
+import app.launch0.helper.getNotificationCountDrawable
 import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.getUserHandleFromString
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.openAlarmApp
+import app.launch0.helper.pillTouchListener
 import app.launch0.helper.openCalendar
 import app.launch0.helper.openCameraApp
 import app.launch0.helper.openDialerApp
@@ -200,14 +203,26 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     private fun initSwipeTouchListener() {
         val context = requireContext()
         binding.mainLayout.setOnTouchListener(getSwipeGestureListener(context))
-        binding.homeApp1.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp1))
-        binding.homeApp2.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp2))
-        binding.homeApp3.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp3))
-        binding.homeApp4.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp4))
-        binding.homeApp5.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp5))
-        binding.homeApp6.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp6))
-        binding.homeApp7.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp7))
-        binding.homeApp8.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp8))
+        val homeApps = listOf(
+            binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
+            binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
+        )
+        homeApps.forEachIndexed { index, textView ->
+            setHomeAppTouchListener(textView, index + 1)
+        }
+    }
+
+    /**
+     * Combines the per-app swipe gestures with the notification-count pill: a touch starting on the
+     * pill releases the app's parked notifications, anything else falls through to the swipe handler.
+     */
+    private fun setHomeAppTouchListener(textView: TextView, location: Int) {
+        val swipeListener = getViewSwipeTouchListener(requireContext(), textView)
+        textView.setOnTouchListener(
+            pillTouchListener(delegate = { v, event -> swipeListener.onTouch(v, event) }) {
+                releaseNotificationsForHomeApp(location)
+            }
+        )
     }
 
     private fun initClickListeners() {
@@ -397,16 +412,16 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                 // Check if our shortcut still exists
                 if (shortcuts?.any { it.id == shortcutId } == true) {
                     textView.text = appName
-                    setHomeAppIcon(textView, packageName, userString)
+                    setHomeAppDecorations(textView, packageName, userString)
                     return true
                 }
                 textView.text = ""
-                setHomeAppIcon(textView, "", userString)
+                setHomeAppDecorations(textView, "", userString)
                 return false
             } catch (e: Exception) {
                 e.printStackTrace()
                 textView.text = ""
-                setHomeAppIcon(textView, "", userString)
+                setHomeAppDecorations(textView, "", userString)
                 return false
             }
         }
@@ -414,33 +429,52 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         // Regular app check
         if (isPackageInstalled(requireContext(), packageName, userString)) {
             textView.text = appName
-            setHomeAppIcon(textView, packageName, userString)
+            setHomeAppDecorations(textView, packageName, userString)
             return true
         }
         textView.text = ""
-        setHomeAppIcon(textView, "", userString)
+        setHomeAppDecorations(textView, "", userString)
         return false
     }
 
     /**
-     * Shows the app icon next to [textView] when enabled, sized and shaped per settings.
-     * The icon sits on the same side as the home layout alignment (right when right-aligned).
+     * Decorates [textView] with the app icon (when enabled) and, when DND has parked notifications
+     * for the app, a count pill. The icon sits on the same side as the home layout alignment (right
+     * when right-aligned); the pill sits on the opposite side of the app name. Tags the view so the
+     * pill can be hit-tested for taps (which release the parked notifications).
      */
-    private fun setHomeAppIcon(textView: TextView, packageName: String, userString: String) {
+    private fun setHomeAppDecorations(textView: TextView, packageName: String, userString: String) {
         val sizePx = prefs.iconSize.dpToPx()
-        val icon = if (prefs.showAppIcons)
+        val icon = if (prefs.showAppIcons && packageName.isNotEmpty())
             requireContext().getShapedAppIcon(packageName, userString, sizePx, prefs.iconShape)
         else null
-        if (icon == null) {
+        icon?.setBounds(0, 0, sizePx, sizePx)
+
+        val count = NotificationDndService.parkedCount(prefs, packageName)
+        val pill = if (count > 0) requireContext().getNotificationCountDrawable(count) else null
+
+        if (icon == null && pill == null) {
             textView.setCompoundDrawables(null, null, null, null)
+            textView.setTag(R.id.notif_pill_side, null)
             return
         }
-        icon.setBounds(0, 0, sizePx, sizePx)
-        if (prefs.homeAlignment == Gravity.END)
-            textView.setCompoundDrawablesRelative(null, null, icon, null)
-        else
-            textView.setCompoundDrawablesRelative(icon, null, null, null)
+
+        // Icon on the alignment side, pill on the opposite (start) side when right-aligned.
+        val iconOnEnd = prefs.homeAlignment == Gravity.END
+        val startDrawable = if (iconOnEnd) pill else icon
+        val endDrawable = if (iconOnEnd) icon else pill
+        textView.setCompoundDrawablesRelative(startDrawable, null, endDrawable, null)
         textView.compoundDrawablePadding = 12.dpToPx()
+        textView.setTag(R.id.notif_pill_side, if (pill != null) iconOnEnd else null)
+    }
+
+    private fun releaseNotificationsForHomeApp(location: Int) {
+        val packageName = prefs.getAppPackage(location)
+        if (packageName.isBlank()) return
+        if (NotificationDndService.parkedCount(prefs, packageName) == 0) return
+        NotificationDndService.releaseForPackage(prefs, packageName)
+        populateHomeScreen(false)
+        requireContext().showToast(getString(R.string.dnd_released))
     }
 
     private fun hideHomeApps() {

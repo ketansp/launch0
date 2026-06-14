@@ -23,9 +23,11 @@ import app.launch0.R
 import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.databinding.AdapterAppDrawerBinding
+import app.launch0.helper.getNotificationCountDrawable
 import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.hideKeyboard
 import app.launch0.helper.isSystemApp
+import app.launch0.helper.pillTouchListener
 import app.launch0.helper.showKeyboard
 import java.text.Normalizer
 
@@ -42,6 +44,8 @@ class AppDrawerAdapter(
     private val appHideListener: (AppModel, Int) -> Unit,
     private val appRenameListener: (AppModel, String) -> Unit,
     private val isDndApp: (String) -> Boolean = { false },
+    private val parkedNotificationCount: (String) -> Int = { 0 },
+    private val onReleaseNotifications: (AppModel) -> Unit = {},
 ) : ListAdapter<AppModel, AppDrawerAdapter.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
@@ -99,7 +103,9 @@ class AppDrawerAdapter(
                 appInfoListener,
                 appHideListener,
                 appRenameListener,
-                isDndApp
+                isDndApp,
+                parkedNotificationCount,
+                onReleaseNotifications
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -234,6 +240,8 @@ class AppDrawerAdapter(
             appHideListener: (AppModel, Int) -> Unit,
             appRenameListener: (AppModel, String) -> Unit,
             isDndApp: (String) -> Boolean,
+            parkedNotificationCount: (String) -> Int,
+            onReleaseNotifications: (AppModel) -> Unit,
         ) = with(binding) {
             appHideLayout.visibility = View.GONE
             renameLayout.visibility = View.GONE
@@ -251,10 +259,18 @@ class AppDrawerAdapter(
                 if (appModel.isNew) append(" ✦")
             } else ""
             appTitle.gravity = appLabelGravity
-            setAppTitleIcon(appTitle, appModel, showAppIcons, showNames, iconSizePx, iconShape, appLabelGravity)
+            val notificationCount =
+                if (appModel.appPackage.isNotEmpty()) parkedNotificationCount(appModel.appPackage) else 0
+            setAppTitleDecorations(
+                appTitle, appModel, showAppIcons, showNames, iconSizePx, iconShape,
+                appLabelGravity, notificationCount,
+            )
             otherProfileIndicator.isVisible = appModel.user != myUserHandle
 
             appTitle.setOnClickListener { clickListener(appModel) }
+            appTitle.setOnTouchListener(
+                pillTouchListener { onReleaseNotifications(appModel) }
+            )
 
             appTitle.setOnLongClickListener {
                 if (appModel.appPackage.isNotEmpty()) {
@@ -354,11 +370,14 @@ class AppDrawerAdapter(
         }
 
         /**
-         * Shows the app icon when enabled. With a visible label the icon sits next to it (on the
-         * side matching its alignment); in icons-only mode ([showNames] false) the icon is rendered
-         * inline so it follows the row alignment (left/center/right) on its own.
+         * Shows the app icon when enabled and, when DND has parked notifications for the app, a
+         * count pill on the side opposite the app name. With a visible label the icon sits next to
+         * it (on the side matching its alignment); in icons-only mode ([showNames] false) the icon
+         * is rendered inline so it follows the row alignment, with the pill alongside as a compound
+         * drawable. The view is tagged so the pill can be hit-tested for taps (which release the
+         * parked notifications).
          */
-        private fun setAppTitleIcon(
+        private fun setAppTitleDecorations(
             textView: TextView,
             appModel: AppModel,
             showAppIcons: Boolean,
@@ -366,28 +385,40 @@ class AppDrawerAdapter(
             iconSizePx: Int,
             iconShape: Int,
             gravity: Int,
+            notificationCount: Int,
         ) {
+            val pill = if (notificationCount > 0)
+                textView.context.getNotificationCountDrawable(notificationCount)
+            else null
+            val iconOnEnd = gravity == Gravity.END
+            // The pill always sits opposite the app name: the start slot when the name (and icon)
+            // are end-aligned, the end slot otherwise.
+            val pillInStart = iconOnEnd
+
             val icon = if (showAppIcons && appModel.appPackage.isNotEmpty())
                 textView.context.getShapedAppIcon(appModel.appPackage, appModel.user.toString(), iconSizePx, iconShape)
             else null
-            if (icon == null) {
-                textView.setCompoundDrawables(null, null, null, null)
-                return
-            }
-            icon.setBounds(0, 0, iconSizePx, iconSizePx)
-            if (!showNames) {
-                // Icons-only: render the icon as inline content so it honours the row alignment.
-                textView.setCompoundDrawables(null, null, null, null)
+            icon?.setBounds(0, 0, iconSizePx, iconSizePx)
+
+            if (icon != null && !showNames) {
+                // Icons-only: render the icon inline so it honours the row alignment; place the pill
+                // (if any) as a compound drawable on the opposite side.
                 textView.text = SpannableString(" ").apply {
                     setSpan(ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
-                return
+                textView.setCompoundDrawablesRelative(
+                    if (pillInStart) pill else null, null, if (pillInStart) null else pill, null,
+                )
+            } else if (icon == null && pill == null) {
+                textView.setCompoundDrawables(null, null, null, null)
+            } else {
+                // Icon on the alignment side, pill on the opposite side of the name.
+                textView.setCompoundDrawablesRelative(
+                    if (iconOnEnd) pill else icon, null, if (iconOnEnd) icon else pill, null,
+                )
             }
-            if (gravity == Gravity.END)
-                textView.setCompoundDrawablesRelative(null, null, icon, null)
-            else
-                textView.setCompoundDrawablesRelative(icon, null, null, null)
             textView.compoundDrawablePadding = (textView.resources.displayMetrics.density * 12).toInt()
+            textView.setTag(R.id.notif_pill_side, if (pill != null) pillInStart else null)
         }
 
         private fun getAppName(context: Context, appPackage: String): String {
