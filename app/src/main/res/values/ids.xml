@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Stores which compound-drawable slot the notification-count pill occupies (Boolean:
+         true when in the start slot) so touches can be hit-tested against it. -->
+    <item name="notif_pill_side" type="id" />
+    <!-- Tracks an in-progress touch that started on the pill, so the whole gesture is consumed. -->
+    <item name="notif_pill_down" type="id" />
+</resources>
