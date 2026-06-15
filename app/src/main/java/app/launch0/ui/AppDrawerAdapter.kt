@@ -388,7 +388,7 @@ class AppDrawerAdapter(
             notificationCount: Int,
         ) {
             val pill = if (notificationCount > 0)
-                textView.context.getNotificationCountDrawable(notificationCount)
+                textView.context.getNotificationCountDrawable(notificationCount, compact = true)
             else null
             val iconOnEnd = gravity == Gravity.END
             // The pill always sits opposite the app name: the start slot when the name (and icon)
