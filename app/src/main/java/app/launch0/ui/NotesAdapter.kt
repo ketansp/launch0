@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import app.launch0.R
 import app.launch0.data.NotesEntry
+import app.launch0.helper.getColorFromAttr
 import app.launch0.databinding.AdapterNotesDateBinding
 import app.launch0.databinding.AdapterNotesItemBinding
 import java.io.File
@@ -102,9 +103,8 @@ class NotesAdapter(
         ) = with(binding) {
             notesTime.text = timeFormat.format(Date(entry.timestamp))
 
-            // The to-do toggles only make sense for text notes.
-            notesDone.isVisible = entry.isText
-            notesUrgent.isVisible = entry.isText
+            // The text row (note + to-do toggles) only shows for text notes.
+            notesTextRow.isVisible = entry.isText
             if (entry.isText) bindTodoToggles(entry, onToggleDone, onToggleUrgent)
 
             when {
@@ -141,6 +141,13 @@ class NotesAdapter(
                         notesText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     }
                     notesText.alpha = if (entry.done) 0.5f else 1f
+                    // A still-open urgent note is drawn in the accent red; done takes precedence
+                    // (it dims to the plain foreground and strikes through instead).
+                    notesText.setTextColor(
+                        if (entry.urgent && !entry.done)
+                            ContextCompat.getColor(root.context, R.color.notesUrgent)
+                        else root.context.getColorFromAttr(R.attr.primaryColor)
+                    )
                     // Turn web/email URLs into tappable links while keeping the text selectable.
                     LinkifyCompat.addLinks(notesText, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
                     notesText.movementMethod = LinkAndSelectMovementMethod
@@ -159,25 +166,23 @@ class NotesAdapter(
             onToggleUrgent: (NotesEntry) -> Unit,
         ) = with(binding) {
             val ctx = root.context
+            // Monochrome, in keeping with the launcher's no-third-colour rule: a completed to-do
+            // turns the full foreground colour, an incomplete one stays dimmed.
+            val dim = ctx.getColorFromAttr(R.attr.primaryColorTrans50)
             notesDone.text = ctx.getString(
                 if (entry.done) R.string.notes_done_on_symbol else R.string.notes_done_off_symbol
             )
             notesDone.setTextColor(
-                ContextCompat.getColor(
-                    ctx,
-                    if (entry.done) android.R.color.holo_green_dark else android.R.color.darker_gray
-                )
+                if (entry.done) ctx.getColorFromAttr(R.attr.primaryColor) else dim
             )
             notesDone.setOnClickListener { onToggleDone(entry) }
 
+            // The urgent flag is the only accent colour allowed inside Notes.
             notesUrgent.text = ctx.getString(
                 if (entry.urgent) R.string.notes_flag_on_symbol else R.string.notes_flag_off_symbol
             )
             notesUrgent.setTextColor(
-                ContextCompat.getColor(
-                    ctx,
-                    if (entry.urgent) R.color.notesUrgent else android.R.color.darker_gray
-                )
+                if (entry.urgent) ContextCompat.getColor(ctx, R.color.notesUrgent) else dim
             )
             notesUrgent.setOnClickListener { onToggleUrgent(entry) }
         }
