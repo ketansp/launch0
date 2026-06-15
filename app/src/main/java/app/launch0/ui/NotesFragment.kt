@@ -208,6 +208,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
     }
 
     private fun initInput() {
+        binding.notesBack.setOnClickListener { goHome() }
         binding.notesSend.setOnClickListener { onSend() }
         binding.notesSearch.setOnClickListener { onSearch() }
         binding.notesRecord.setOnClickListener { onRecordTapped() }
@@ -320,6 +321,8 @@ class NotesFragment : androidx.fragment.app.Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val all = withContext(Dispatchers.IO) { notesStore.getEntries() }
             if (_binding == null) return@launch
+            binding.notesCount.text =
+                resources.getQuantityString(R.plurals.notes_entry_count, all.size, all.size)
             val query = searchQuery
             val entries = if (query == null) all else all.filter {
                 it.text.contains(query, ignoreCase = true)

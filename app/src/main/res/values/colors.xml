@@ -4,8 +4,9 @@
     <color name="colorPrimaryDark">@android:color/darker_gray</color>
     <color name="colorAccent">#FFEB3B</color>
 
-    <!--Notes: urgent/important flag-->
-    <color name="notesUrgent">#E53935</color>
+    <!--Notes: urgent/important flag (darker red reads better on light wallpapers;
+        values-night supplies the lighter variant for dark)-->
+    <color name="notesUrgent">#DC2626</color>
 
     <!--White-->
     <color name="white">#FFFFFF</color>

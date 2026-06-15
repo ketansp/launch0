@@ -184,6 +184,8 @@
 
     <!-- Personal notes page -->
     <string name="notes_title">Notes</string>
+    <string name="notes_back">Back</string>
+    <string name="notes_back_symbol" translatable="false">‹</string>
     <string name="swipe_left_for">Swipe left for</string>
     <string name="notes_empty_hint">Jot anything here. Notes, links, images — like a chat with yourself.</string>
     <string name="notes_input_hint">Write something…</string>
@@ -213,6 +215,10 @@
     <string name="notes_recording_failed">Couldn\'t record audio</string>
     <string name="notes_today">Today</string>
     <string name="notes_yesterday">Yesterday</string>
+    <plurals name="notes_entry_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
     <string name="notes_mark_done">Mark as done</string>
     <string name="notes_mark_urgent">Mark as urgent</string>
     <string name="notes_record_symbol" translatable="false">●</string>

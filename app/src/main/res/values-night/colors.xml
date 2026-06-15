@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Notes: urgent/important flag — a lighter red so it stays legible on dark wallpapers.-->
+    <color name="notesUrgent">#F87171</color>
+</resources>
