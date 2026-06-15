@@ -468,31 +468,43 @@ fun Context.getColorFromAttr(
 }
 
 /**
- * Builds a small capsule/pill drawable showing a notification [count], used next to an app name
- * to indicate how many notifications have been held (parked) under DND. Counts above 99 collapse
- * to "99+". The pill is filled with the theme's primary colour and the text uses its inverse so it
- * stays legible in both light and dark themes. The returned drawable's bounds are already set to
- * its intrinsic size, ready to be used as a compound drawable.
+ * Builds the parked-notification count capsule shown next to an app name when DND has held
+ * notifications back. Faithful to the launcher's monochrome register: a translucent capsule filled
+ * with the foreground colour at low opacity, a bell glyph and the count drawn in the foreground
+ * colour, and an inverse-colour text shadow so the number stays legible over any wallpaper. Counts
+ * above 99 collapse to "99+". [compact] renders the slightly smaller drawer variant. The returned
+ * drawable's bounds are already set to its intrinsic size, ready to be used as a compound drawable.
  */
-fun Context.getNotificationCountDrawable(count: Int): Drawable {
+fun Context.getNotificationCountDrawable(count: Int, compact: Boolean = false): Drawable {
     val density = resources.displayMetrics.density
     val label = if (count > 99) "99+" else count.toString()
 
-    val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        color = getColorFromAttr(R.attr.primaryColor)
-        style = android.graphics.Paint.Style.FILL
-    }
-    val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        color = getColorFromAttr(R.attr.primaryInverseColor)
-        textSize = 11f * density
-        typeface = android.graphics.Typeface.DEFAULT_BOLD
-        textAlign = android.graphics.Paint.Align.CENTER
-    }
+    val foreground = getColorFromAttr(R.attr.primaryColor)
+    val inverse = getColorFromAttr(R.attr.primaryInverseColor)
 
-    val verticalPadding = 3f * density
-    val horizontalPadding = 7f * density
-    val height = textPaint.textSize + verticalPadding * 2f
-    val width = maxOf(height, textPaint.measureText(label) + horizontalPadding * 2f)
+    // Translucent foreground fill — lighter foregrounds (dark theme) get a touch more opacity,
+    // matching the design's 0.13 (light) / 0.20 (dark) capsule.
+    val foregroundIsLight = androidx.core.graphics.ColorUtils.calculateLuminance(foreground) > 0.5
+    val fillAlpha = if (foregroundIsLight) 0.20f else 0.13f
+
+    val bellSizePx = (if (compact) 13f else 14f) * density
+    val gapPx = 6f * density
+    val horizontalPadding = (if (compact) 9f else 11f) * density
+    val verticalPadding = (if (compact) 3f else 4f) * density
+
+    val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = foreground
+        textSize = (if (compact) 13.5f else 15f) * density
+        typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+        textAlign = android.graphics.Paint.Align.LEFT
+        setShadowLayer(4f * density, 0f, 2f * density, android.graphics.Color.argb(140, android.graphics.Color.red(inverse), android.graphics.Color.green(inverse), android.graphics.Color.blue(inverse)))
+    }
+    val textWidth = textPaint.measureText(label)
+    val fontMetrics = textPaint.fontMetrics
+
+    val contentHeight = maxOf(bellSizePx, fontMetrics.descent - fontMetrics.ascent)
+    val height = contentHeight + verticalPadding * 2f
+    val width = horizontalPadding * 2f + bellSizePx + gapPx + textWidth
 
     val bitmap = android.graphics.Bitmap.createBitmap(
         kotlin.math.ceil(width).toInt(),
@@ -500,12 +512,27 @@ fun Context.getNotificationCountDrawable(count: Int): Drawable {
         android.graphics.Bitmap.Config.ARGB_8888,
     )
     val canvas = android.graphics.Canvas(bitmap)
+
+    val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = foreground
+        alpha = (fillAlpha * 255f).toInt()
+        style = android.graphics.Paint.Style.FILL
+    }
     val radius = height / 2f
     canvas.drawRoundRect(0f, 0f, width, height, radius, radius, fillPaint)
 
-    val fontMetrics = textPaint.fontMetrics
+    val bell = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_notif_bell)?.mutate()
+    if (bell != null) {
+        bell.setTint(foreground)
+        val bellTop = ((height - bellSizePx) / 2f).toInt()
+        val bellLeft = horizontalPadding.toInt()
+        bell.setBounds(bellLeft, bellTop, bellLeft + bellSizePx.toInt(), bellTop + bellSizePx.toInt())
+        bell.draw(canvas)
+    }
+
+    val textX = horizontalPadding + bellSizePx + gapPx
     val baseline = height / 2f - (fontMetrics.ascent + fontMetrics.descent) / 2f
-    canvas.drawText(label, width / 2f, baseline, textPaint)
+    canvas.drawText(label, textX, baseline, textPaint)
 
     return android.graphics.drawable.BitmapDrawable(resources, bitmap).apply {
         setBounds(0, 0, bitmap.width, bitmap.height)
