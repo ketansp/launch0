@@ -47,7 +47,6 @@ class Prefs(context: Context) {
     private val DND_HELD_KEYS = "DND_HELD_KEYS"
     private val DND_RELEASED_KEYS = "DND_RELEASED_KEYS"
     private val SWIPE_LEFT_ACTION = "SWIPE_LEFT_ACTION"
-    private val SWIPE_RIGHT_ACTION = "SWIPE_RIGHT_ACTION"
     private val TEXT_SIZE_SCALE = "TEXT_SIZE_SCALE"
     private val PRO_MESSAGE_SHOWN = "PRO_MESSAGE_SHOWN"
     private val HIDE_SET_DEFAULT_LAUNCHER = "HIDE_SET_DEFAULT_LAUNCHER"
@@ -307,10 +306,6 @@ class Prefs(context: Context) {
     var swipeLeftAction: Int
         get() = prefs.getInt(SWIPE_LEFT_ACTION, Constants.SwipeLeftAction.NOTES)
         set(value) = prefs.edit { putInt(SWIPE_LEFT_ACTION, value).apply() }
-
-    var swipeRightAction: Int
-        get() = prefs.getInt(SWIPE_RIGHT_ACTION, Constants.SwipeRightAction.PANEL)
-        set(value) = prefs.edit { putInt(SWIPE_RIGHT_ACTION, value).apply() }
 
     var appName1: String
         get() = prefs.getString(APP_NAME_1, "").toString()

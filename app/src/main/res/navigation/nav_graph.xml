@@ -31,13 +31,6 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
-        <action
-            android:id="@+id/action_mainFragment_to_quickActionsFragment"
-            app:destination="@id/quickActionsFragment"
-            app:enterAnim="@anim/slide_in_left"
-            app:exitAnim="@anim/slide_out_right"
-            app:popEnterAnim="@anim/slide_in_right"
-            app:popExitAnim="@anim/slide_out_left" />
     </fragment>
 
     <fragment
@@ -45,12 +38,6 @@
         android:name="app.launch0.ui.NotesFragment"
         android:label="notes_fragment"
         tools:layout="@layout/fragment_notes" />
-
-    <fragment
-        android:id="@+id/quickActionsFragment"
-        android:name="app.launch0.ui.QuickActionsFragment"
-        android:label="quick_actions_fragment"
-        tools:layout="@layout/fragment_quick_actions" />
 
     <fragment
         android:id="@+id/appListFragment"
