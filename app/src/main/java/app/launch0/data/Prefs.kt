@@ -191,7 +191,7 @@ class Prefs(context: Context) {
         set(value) = prefs.edit { putBoolean(SHOW_YEAR_WIDGET, value).apply() }
 
     var showAppIcons: Boolean
-        get() = prefs.getBoolean(SHOW_APP_ICONS, false)
+        get() = prefs.getBoolean(SHOW_APP_ICONS, true)
         set(value) = prefs.edit { putBoolean(SHOW_APP_ICONS, value).apply() }
 
     var showAppNames: Boolean

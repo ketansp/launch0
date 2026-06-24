@@ -169,19 +169,19 @@ class NotesAdapter(
             // Monochrome, in keeping with the launcher's no-third-colour rule: a completed to-do
             // turns the full foreground colour, an incomplete one stays dimmed.
             val dim = ctx.getColorFromAttr(R.attr.primaryColorTrans50)
-            notesDone.text = ctx.getString(
-                if (entry.done) R.string.notes_done_on_symbol else R.string.notes_done_off_symbol
+            notesDone.setImageResource(
+                if (entry.done) R.drawable.ic_lucide_circle_check else R.drawable.ic_lucide_circle
             )
-            notesDone.setTextColor(
+            notesDone.setColorFilter(
                 if (entry.done) ctx.getColorFromAttr(R.attr.primaryColor) else dim
             )
             notesDone.setOnClickListener { onToggleDone(entry) }
 
             // The urgent flag is the only accent colour allowed inside Notes.
-            notesUrgent.text = ctx.getString(
-                if (entry.urgent) R.string.notes_flag_on_symbol else R.string.notes_flag_off_symbol
+            notesUrgent.setImageResource(
+                if (entry.urgent) R.drawable.ic_lucide_flag_filled else R.drawable.ic_lucide_flag
             )
-            notesUrgent.setTextColor(
+            notesUrgent.setColorFilter(
                 if (entry.urgent) ContextCompat.getColor(ctx, R.color.notesUrgent) else dim
             )
             notesUrgent.setOnClickListener { onToggleUrgent(entry) }

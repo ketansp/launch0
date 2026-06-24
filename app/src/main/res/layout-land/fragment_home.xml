@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
@@ -181,6 +182,20 @@
             tools:visibility="visible" />
 
     </LinearLayout>
+
+    <!-- Animated swipe-up nudge: hints that swiping up opens the app list. Not clickable so the
+         gesture falls through to the home screen's swipe handler. -->
+    <ImageView
+        android:id="@+id/swipeUpNudge"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_gravity="center"
+        android:clickable="false"
+        android:contentDescription="@string/swipe_up_for_apps"
+        android:focusable="false"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_lucide_chevrons_up"
+        app:tint="?attr/primaryColor" />
 
     <!-- Set default launcher -->
     <TextView
