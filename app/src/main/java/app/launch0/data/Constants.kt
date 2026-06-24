@@ -54,11 +54,6 @@ object Constants {
         const val APP = 2
     }
 
-    object SwipeRightAction {
-        const val PANEL = 1 // Quick actions + notifications screen
-        const val APP = 2
-    }
-
     object IconShape {
         const val DEFAULT = 0
         const val CIRCLE = 1

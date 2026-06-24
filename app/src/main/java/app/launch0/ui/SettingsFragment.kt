@@ -87,7 +87,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateSwipeDownAction()
         populateDnd()
         populateSwipeLeftAction()
-        populateSwipeRightAction()
         populateActionHints()
         initClickListeners()
         initObservers()
@@ -107,8 +106,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.dndDurationSelectLayout.visibility = View.GONE
         if (view.id != R.id.swipeLeftAction)
             binding.swipeLeftSelectLayout.visibility = View.GONE
-        if (view.id != R.id.swipeRightAction)
-            binding.swipeRightSelectLayout.visibility = View.GONE
         if (view.id != R.id.textSizeMinus && view.id != R.id.textSizePlus) {
             if (binding.textSizesLayout.visibility == View.VISIBLE) {
                 binding.textSizesLayout.visibility = View.GONE
@@ -186,9 +183,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.swipeLeftAction -> binding.swipeLeftSelectLayout.visibility = View.VISIBLE
             R.id.swipeLeftNotes -> updateSwipeLeftAction(Constants.SwipeLeftAction.NOTES)
             R.id.swipeLeftAppOption -> updateSwipeLeftAction(Constants.SwipeLeftAction.APP)
-            R.id.swipeRightAction -> binding.swipeRightSelectLayout.visibility = View.VISIBLE
-            R.id.swipeRightPanel -> updateSwipeRightAction(Constants.SwipeRightAction.PANEL)
-            R.id.swipeRightAppOption -> updateSwipeRightAction(Constants.SwipeRightAction.APP)
 
             R.id.dndEnabled -> toggleDnd()
             R.id.dndAccess -> openNotificationAccessSettings()
@@ -275,9 +269,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.swipeLeftAction.setOnClickListener(this)
         binding.swipeLeftNotes.setOnClickListener(this)
         binding.swipeLeftAppOption.setOnClickListener(this)
-        binding.swipeRightAction.setOnClickListener(this)
-        binding.swipeRightPanel.setOnClickListener(this)
-        binding.swipeRightAppOption.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
         binding.themeLight.setOnClickListener(this)
         binding.themeDark.setOnClickListener(this)
@@ -792,22 +783,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.swipeLeftAction == swipeLeftFor) return
         prefs.swipeLeftAction = swipeLeftFor
         populateSwipeLeftAction()
-    }
-
-    private fun populateSwipeRightAction() {
-        binding.swipeRightAction.text = when (prefs.swipeRightAction) {
-            Constants.SwipeRightAction.APP -> getString(R.string.app)
-            else -> getString(R.string.quick_actions)
-        }
-        // The "Swipe right app" picker only matters when swipe-right launches an app.
-        binding.swipeRightAppRow.isVisible = prefs.swipeRightAction == Constants.SwipeRightAction.APP
-    }
-
-    private fun updateSwipeRightAction(swipeRightFor: Int) {
-        binding.swipeRightSelectLayout.visibility = View.GONE
-        if (prefs.swipeRightAction == swipeRightFor) return
-        prefs.swipeRightAction = swipeRightFor
-        populateSwipeRightAction()
     }
 
     private fun populateSwipeApps() {
