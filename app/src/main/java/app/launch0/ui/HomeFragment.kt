@@ -83,19 +83,46 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         initSwipeTouchListener()
         initClickListeners()
         initSwipeUpNudge()
+        initSwipeLeftNudge()
     }
 
     /**
-     * Starts the gentle bobbing/pulse hint that swiping up opens the app list. The icon is left
-     * static on e-ink panels, where a perpetual animation would constantly redraw the screen.
+     * Starts the gentle bobbing/pulse hint that swiping up opens the app list. The hint retires once
+     * the user has opened the app drawer enough times. The icon is left static on e-ink panels,
+     * where a perpetual animation would constantly redraw the screen.
      */
     private fun initSwipeUpNudge() {
+        if (prefs.appDrawerOpenCount >= Constants.NUDGE_DISMISS_AFTER) {
+            binding.swipeUpNudge.visibility = View.GONE
+            return
+        }
         if (requireContext().isEinkDisplay()) {
             binding.swipeUpNudge.alpha = 0.5f
             return
         }
         binding.swipeUpNudge.startAnimation(
             AnimationUtils.loadAnimation(requireContext(), R.anim.swipe_up_nudge)
+        )
+    }
+
+    /**
+     * Starts the gentle sideways drift/pulse hint that a right-to-left swipe opens notes. Only shown
+     * while a left swipe is actually wired to notes, and retired once the user has opened notes
+     * enough times. Left static on e-ink panels to avoid constant redraws.
+     */
+    private fun initSwipeLeftNudge() {
+        val opensNotes = prefs.swipeLeftAction == Constants.SwipeLeftAction.NOTES
+        if (!opensNotes || prefs.notesOpenCount >= Constants.NUDGE_DISMISS_AFTER) {
+            binding.swipeLeftNudge.visibility = View.GONE
+            return
+        }
+        binding.swipeLeftNudge.visibility = View.VISIBLE
+        if (requireContext().isEinkDisplay()) {
+            binding.swipeLeftNudge.alpha = 0.5f
+            return
+        }
+        binding.swipeLeftNudge.startAnimation(
+            AnimationUtils.loadAnimation(requireContext(), R.anim.swipe_left_nudge)
         )
     }
 
@@ -599,6 +626,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun openNotesPage() {
+        if (prefs.notesOpenCount < Constants.NUDGE_DISMISS_AFTER)
+            prefs.notesOpenCount++
         try {
             findNavController().navigate(R.id.action_mainFragment_to_notesFragment)
         } catch (e: Exception) {
@@ -620,6 +649,9 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun showAppList(flag: Int, rename: Boolean = false, includeHiddenApps: Boolean = false) {
+        // Count genuine app-drawer opens (launching an app) so the swipe-up hint can retire.
+        if (flag == Constants.FLAG_LAUNCH_APP && prefs.appDrawerOpenCount < Constants.NUDGE_DISMISS_AFTER)
+            prefs.appDrawerOpenCount++
         viewModel.getAppList(includeHiddenApps)
         try {
             findNavController().navigate(

@@ -67,6 +67,9 @@ object Constants {
     const val ICON_SIZE_MAX = 48
     const val ICON_SIZE_DEFAULT = 28
 
+    // Times the app drawer / notes must be opened before its swipe-hint nudge is retired.
+    const val NUDGE_DISMISS_AFTER = 10
+
     object CharacterIndicator {
         const val SHOW = 102
         const val HIDE = 101
