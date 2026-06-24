@@ -6,6 +6,7 @@
   every entry's timestamp sits bottom-left, consistent across all three types.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -31,7 +32,7 @@
             android:lineSpacingMultiplier="1.25"
             android:textColor="?attr/primaryColor"
             android:textIsSelectable="true"
-            android:textSize="17sp"
+            android:textSize="16sp"
             tools:text="Remember to buy milk and call the bank tomorrow." />
 
         <!-- Urgent then done, pinned to the far right edge -->
@@ -43,33 +44,27 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <TextView
+            <ImageView
                 android:id="@+id/notesUrgent"
-                style="@style/TextSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/notes_mark_urgent"
-                android:gravity="center"
-                android:minWidth="32dp"
-                android:padding="4dp"
-                android:text="@string/notes_flag_off_symbol"
-                android:textColor="?attr/primaryColorTrans50"
-                tools:ignore="TextContrastCheck" />
+                android:padding="6dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_lucide_flag"
+                app:tint="?attr/primaryColorTrans50" />
 
-            <TextView
+            <ImageView
                 android:id="@+id/notesDone"
-                style="@style/TextSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/notes_mark_done"
-                android:gravity="center"
-                android:minWidth="32dp"
-                android:padding="4dp"
-                android:text="@string/notes_done_off_symbol"
-                android:textColor="?attr/primaryColorTrans50"
-                tools:ignore="TextContrastCheck" />
+                android:padding="6dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_lucide_circle"
+                app:tint="?attr/primaryColorTrans50" />
 
         </LinearLayout>
 

@@ -34,6 +34,7 @@ import app.launch0.R
 import app.launch0.data.NotesEntry
 import app.launch0.data.NotesStore
 import app.launch0.databinding.FragmentNotesBinding
+import app.launch0.helper.getColorFromAttr
 import app.launch0.helper.showToast
 import app.launch0.listener.OnSwipeTouchListener
 import kotlinx.coroutines.Dispatchers
@@ -300,7 +301,10 @@ class NotesFragment : androidx.fragment.app.Fragment() {
             }
             else -> binding.notesBanner.isVisible = false
         }
-        binding.notesSend.text =
+        binding.notesSend.setImageResource(
+            if (editing) R.drawable.ic_lucide_check else R.drawable.ic_lucide_send
+        )
+        binding.notesSend.contentDescription =
             getString(if (editing) R.string.notes_save else R.string.notes_send)
     }
 
@@ -518,13 +522,13 @@ class NotesFragment : androidx.fragment.app.Fragment() {
         binding.notesAttach.isVisible = !recording
         binding.notesSearch.isVisible = !recording
         binding.notesSend.isVisible = !recording
-        binding.notesRecord.text = getString(
-            if (recording) R.string.notes_stop_symbol else R.string.notes_record_symbol
+        binding.notesRecord.setImageResource(
+            if (recording) R.drawable.ic_lucide_square else R.drawable.ic_lucide_mic
         )
-        // Red while recording; otherwise the theme's primary colour (matching the Send button).
-        binding.notesRecord.setTextColor(
+        // Red while recording; otherwise the theme's primary colour.
+        binding.notesRecord.setColorFilter(
             if (recording) ContextCompat.getColor(requireContext(), R.color.notesUrgent)
-            else binding.notesSend.currentTextColor
+            else requireContext().getColorFromAttr(R.attr.primaryColor)
         )
     }
 

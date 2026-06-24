@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -38,6 +39,7 @@ import app.launch0.helper.getChangedAppTheme
 import app.launch0.helper.getNotificationCountDrawable
 import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.getUserHandleFromString
+import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.openAlarmApp
 import app.launch0.helper.pillTouchListener
@@ -80,6 +82,21 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
         initClickListeners()
+        initSwipeUpNudge()
+    }
+
+    /**
+     * Starts the gentle bobbing/pulse hint that swiping up opens the app list. The icon is left
+     * static on e-ink panels, where a perpetual animation would constantly redraw the screen.
+     */
+    private fun initSwipeUpNudge() {
+        if (requireContext().isEinkDisplay()) {
+            binding.swipeUpNudge.alpha = 0.5f
+            return
+        }
+        binding.swipeUpNudge.startAnimation(
+            AnimationUtils.loadAnimation(requireContext(), R.anim.swipe_up_nudge)
+        )
     }
 
     override fun onResume() {
@@ -240,6 +257,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
+        // Keep the date's (now multi-line, with the battery line) text aligned with the home edge.
+        binding.date.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity
         binding.homeApp2.gravity = horizontalGravity
         binding.homeApp3.gravity = horizontalGravity
