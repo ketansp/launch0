@@ -183,18 +183,34 @@
 
     </LinearLayout>
 
-    <!-- Animated swipe-up nudge: hints that swiping up opens the app list. Not clickable so the
-         gesture falls through to the home screen's swipe handler. -->
+    <!-- Animated swipe-up nudge: hints that swiping up opens the app list. Anchored to the bottom
+         center. Not clickable so the gesture falls through to the home screen's swipe handler. -->
     <ImageView
         android:id="@+id/swipeUpNudge"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_gravity="center"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
         android:clickable="false"
         android:contentDescription="@string/swipe_up_for_apps"
         android:focusable="false"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_lucide_chevrons_up"
+        app:tint="?attr/primaryColor" />
+
+    <!-- Animated swipe-left nudge: hints that swiping left (right-to-left) opens notes. Anchored to
+         the right edge. Not clickable so the gesture falls through to the home screen's swipe handler. -->
+    <ImageView
+        android:id="@+id/swipeLeftNudge"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_gravity="center_vertical|end"
+        android:layout_marginEnd="8dp"
+        android:clickable="false"
+        android:contentDescription="@string/swipe_left_for_notes"
+        android:focusable="false"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_lucide_chevrons_left"
         app:tint="?attr/primaryColor" />
 
     <!-- Set default launcher -->

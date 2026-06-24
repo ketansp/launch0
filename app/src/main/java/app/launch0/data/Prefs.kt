@@ -53,6 +53,8 @@ class Prefs(context: Context) {
     private val SCREEN_TIME_LAST_UPDATED = "SCREEN_TIME_LAST_UPDATED"
     private val LAUNCHER_RESTART_TIMESTAMP = "LAUNCHER_RECREATE_TIMESTAMP"
     private val SHOWN_ON_DAY_OF_YEAR = "SHOWN_ON_DAY_OF_YEAR"
+    private val APP_DRAWER_OPEN_COUNT = "APP_DRAWER_OPEN_COUNT"
+    private val NOTES_OPEN_COUNT = "NOTES_OPEN_COUNT"
 
     private val APP_NAME_1 = "APP_NAME_1"
     private val APP_NAME_2 = "APP_NAME_2"
@@ -241,6 +243,18 @@ class Prefs(context: Context) {
     var shownOnDayOfYear: Int
         get() = prefs.getInt(SHOWN_ON_DAY_OF_YEAR, 0)
         set(value) = prefs.edit { putInt(SHOWN_ON_DAY_OF_YEAR, value).apply() }
+
+    // How many times the app drawer has been opened; once it reaches NUDGE_DISMISS_AFTER the
+    // swipe-up hint stops showing.
+    var appDrawerOpenCount: Int
+        get() = prefs.getInt(APP_DRAWER_OPEN_COUNT, 0)
+        set(value) = prefs.edit { putInt(APP_DRAWER_OPEN_COUNT, value).apply() }
+
+    // How many times the notes page has been opened; once it reaches NUDGE_DISMISS_AFTER the
+    // swipe-left hint stops showing.
+    var notesOpenCount: Int
+        get() = prefs.getInt(NOTES_OPEN_COUNT, 0)
+        set(value) = prefs.edit { putInt(NOTES_OPEN_COUNT, value).apply() }
 
     var hiddenApps: MutableSet<String>
         get() = prefs.getStringSet(HIDDEN_APPS, mutableSetOf()) as MutableSet<String>

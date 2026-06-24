@@ -188,6 +188,7 @@
     <string name="notes_back_symbol" translatable="false">‹</string>
     <string name="swipe_left_for">Swipe left for</string>
     <string name="swipe_up_for_apps">Swipe up for apps</string>
+    <string name="swipe_left_for_notes">Swipe left for notes</string>
     <string name="notes_empty_hint">Jot anything here. Notes, links, images — like a chat with yourself.</string>
     <string name="notes_input_hint">Write something…</string>
     <string name="notes_send">Send</string>
