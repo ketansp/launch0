@@ -283,7 +283,10 @@ class AppDrawerFragment : Fragment() {
         val searching = binding.search.query?.isNotBlank() == true
         val sections = if (searching) emptyList() else adapter.getSections()
         binding.alphabetIndex.setSections(sections)
-        binding.alphabetIndex.visibility = if (sections.size > 1) View.VISIBLE else View.GONE
+        // Use INVISIBLE (not GONE) so the index column keeps reserving its width. Otherwise the
+        // RecyclerView (layout_weight=1) would expand into the freed space and right-aligned app
+        // names would shift right while a search is active.
+        binding.alphabetIndex.visibility = if (sections.size > 1) View.VISIBLE else View.INVISIBLE
     }
 
     private fun themeColor(attr: Int): Int {
