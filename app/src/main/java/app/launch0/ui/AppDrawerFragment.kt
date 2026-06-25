@@ -1,5 +1,6 @@
 package app.launch0.ui
 
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -26,6 +27,7 @@ import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentAppDrawerBinding
 import app.launch0.helper.NotificationDndService
+import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.deletePinnedShortcut
 import app.launch0.helper.dpToPx
 import app.launch0.helper.hideKeyboard
@@ -51,6 +53,11 @@ class AppDrawerFragment : Fragment() {
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentAppDrawerBinding? = null
     private val binding get() = _binding!!
+
+    /** Screen time is offered (and per-app capsules are shown) only when usage access is granted. */
+    private val screenTimeEnabled: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                requireContext().appUsagePermissionGranted()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -235,6 +242,10 @@ class AppDrawerFragment : Fragment() {
                 val position = adapter.appFilteredList.indexOf(appModel)
                 if (position >= 0) adapter.notifyItemChanged(position)
                 requireContext().showToast(getString(R.string.dnd_released))
+            },
+            screenTimeMinutes = { appPackage ->
+                val millis = if (screenTimeEnabled) viewModel.appScreenTimes.value?.get(appPackage) ?: 0L else 0L
+                Math.round(millis / 60000.0).toInt()
             }
         )
 
@@ -310,6 +321,14 @@ class AppDrawerFragment : Fragment() {
                     adapter.setAppList(appModels.toMutableList())
                     adapter.filter.filter(binding.search.query)
                 }
+            }
+        }
+
+        // Refresh today's per-app usage (throttled) and re-decorate rows when it arrives.
+        if (screenTimeEnabled) {
+            viewModel.getTodaysScreenTime()
+            viewModel.appScreenTimes.observe(viewLifecycleOwner) {
+                adapter.notifyDataSetChanged()
             }
         }
     }
