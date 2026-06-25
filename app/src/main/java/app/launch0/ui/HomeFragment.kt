@@ -223,9 +223,11 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                     prefs.hourlyWallpaper = false
                     viewModel.cancelWallpaperWorker()
                 }
-                prefs.homeBottomAlignment = false
-                setHomeAlignment()
             }
+            // Re-align whenever default-launcher status changes. While Launch0 isn't the
+            // default launcher we render apps centered (so they don't collide with the
+            // "Set as default" prompt at the bottom) without touching the saved preference.
+            setHomeAlignment()
             binding.setDefaultLauncher.isVisible = it.not() && prefs.hideSetDefaultLauncher.not()
 //            if (it) binding.setDefaultLauncher.visibility = View.GONE
 //            else binding.setDefaultLauncher.visibility = View.VISIBLE
@@ -281,7 +283,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun setHomeAlignment(horizontalGravity: Int = prefs.homeAlignment) {
-        val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
+        val bottomAligned = prefs.homeBottomAlignment && viewModel.isLaunch0Default.value == true
+        val verticalGravity = if (bottomAligned) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
         // Keep the date's (now multi-line, with the battery line) text aligned with the home edge.
