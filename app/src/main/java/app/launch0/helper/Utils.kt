@@ -32,6 +32,7 @@ import android.view.animation.LinearInterpolator
 import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.net.toUri
 import app.launch0.BuildConfig
@@ -469,15 +470,38 @@ fun Context.getColorFromAttr(
 
 /**
  * Builds the parked-notification count capsule shown next to an app name when DND has held
- * notifications back. Faithful to the launcher's monochrome register: a translucent capsule filled
- * with the foreground colour at low opacity, a bell glyph and the count drawn in the foreground
- * colour, and an inverse-colour text shadow so the number stays legible over any wallpaper. Counts
- * above 99 collapse to "99+". [compact] renders the slightly smaller drawer variant. The returned
- * drawable's bounds are already set to its intrinsic size, ready to be used as a compound drawable.
+ * notifications back. A bell glyph precedes the count; counts above 99 collapse to "99+".
+ * [compact] renders the slightly smaller drawer variant. The returned drawable's bounds are already
+ * set to its intrinsic size, ready to be used as a compound drawable.
  */
 fun Context.getNotificationCountDrawable(count: Int, compact: Boolean = false): Drawable {
-    val density = resources.displayMetrics.density
     val label = if (count > 99) "99+" else count.toString()
+    return buildCapsuleDrawable(label, R.drawable.ic_notif_bell, compact)
+}
+
+/**
+ * Builds the screen-time capsule shown next to a home app's name when the app has been used for an
+ * appreciable amount of time today. Shares the look of [getNotificationCountDrawable] — a translucent
+ * foreground-tinted capsule with the value in the foreground colour — but carries no glyph and reads
+ * as plain minutes, e.g. "7m", "35m", "125m".
+ */
+fun Context.getScreenTimeCapsuleDrawable(minutes: Int, compact: Boolean = false): Drawable {
+    return buildCapsuleDrawable("${minutes}m", null, compact)
+}
+
+/**
+ * Shared renderer for the launcher's monochrome capsules. Faithful to the launcher's register: a
+ * translucent capsule filled with the foreground colour at low opacity, an optional [glyphRes] and
+ * the [label] drawn in the foreground colour, and an inverse-colour text shadow so the value stays
+ * legible over any wallpaper. [compact] renders the slightly smaller drawer variant. The returned
+ * drawable's bounds are already set to its intrinsic size, ready to be used as a compound drawable.
+ */
+private fun Context.buildCapsuleDrawable(
+    label: String,
+    @DrawableRes glyphRes: Int?,
+    compact: Boolean,
+): Drawable {
+    val density = resources.displayMetrics.density
 
     val foreground = getColorFromAttr(R.attr.primaryColor)
     val inverse = getColorFromAttr(R.attr.primaryInverseColor)
@@ -487,7 +511,7 @@ fun Context.getNotificationCountDrawable(count: Int, compact: Boolean = false): 
     val foregroundIsLight = androidx.core.graphics.ColorUtils.calculateLuminance(foreground) > 0.5
     val fillAlpha = if (foregroundIsLight) 0.20f else 0.13f
 
-    val bellSizePx = (if (compact) 13f else 14f) * density
+    val glyphSizePx = (if (compact) 13f else 14f) * density
     val gapPx = 6f * density
     val horizontalPadding = (if (compact) 9f else 11f) * density
     val verticalPadding = (if (compact) 3f else 4f) * density
@@ -502,9 +526,11 @@ fun Context.getNotificationCountDrawable(count: Int, compact: Boolean = false): 
     val textWidth = textPaint.measureText(label)
     val fontMetrics = textPaint.fontMetrics
 
-    val contentHeight = maxOf(bellSizePx, fontMetrics.descent - fontMetrics.ascent)
+    val hasGlyph = glyphRes != null
+    val glyphSpace = if (hasGlyph) glyphSizePx + gapPx else 0f
+    val contentHeight = maxOf(if (hasGlyph) glyphSizePx else 0f, fontMetrics.descent - fontMetrics.ascent)
     val height = contentHeight + verticalPadding * 2f
-    val width = horizontalPadding * 2f + bellSizePx + gapPx + textWidth
+    val width = horizontalPadding * 2f + glyphSpace + textWidth
 
     val bitmap = android.graphics.Bitmap.createBitmap(
         kotlin.math.ceil(width).toInt(),
@@ -521,21 +547,54 @@ fun Context.getNotificationCountDrawable(count: Int, compact: Boolean = false): 
     val radius = height / 2f
     canvas.drawRoundRect(0f, 0f, width, height, radius, radius, fillPaint)
 
-    val bell = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_notif_bell)?.mutate()
-    if (bell != null) {
-        bell.setTint(foreground)
-        val bellTop = ((height - bellSizePx) / 2f).toInt()
-        val bellLeft = horizontalPadding.toInt()
-        bell.setBounds(bellLeft, bellTop, bellLeft + bellSizePx.toInt(), bellTop + bellSizePx.toInt())
-        bell.draw(canvas)
+    if (glyphRes != null) {
+        val glyph = androidx.core.content.ContextCompat.getDrawable(this, glyphRes)?.mutate()
+        if (glyph != null) {
+            glyph.setTint(foreground)
+            val glyphTop = ((height - glyphSizePx) / 2f).toInt()
+            val glyphLeft = horizontalPadding.toInt()
+            glyph.setBounds(glyphLeft, glyphTop, glyphLeft + glyphSizePx.toInt(), glyphTop + glyphSizePx.toInt())
+            glyph.draw(canvas)
+        }
     }
 
-    val textX = horizontalPadding + bellSizePx + gapPx
+    val textX = horizontalPadding + glyphSpace
     val baseline = height / 2f - (fontMetrics.ascent + fontMetrics.descent) / 2f
     canvas.drawText(label, textX, baseline, textPaint)
 
     return android.graphics.drawable.BitmapDrawable(resources, bitmap).apply {
         setBounds(0, 0, bitmap.width, bitmap.height)
+    }
+}
+
+/**
+ * Lays [drawables] out left-to-right with [gapPx] between them, vertically centred, and returns a
+ * single drawable whose bounds are set to the combined size. Used to place the notification-count
+ * pill and the screen-time capsule together in one compound-drawable slot.
+ */
+fun Context.combineDrawablesHorizontally(drawables: List<Drawable>, gapPx: Int): Drawable {
+    if (drawables.size == 1) return drawables[0]
+
+    val totalWidth = drawables.sumOf { it.bounds.width() } + gapPx * (drawables.size - 1)
+    val totalHeight = drawables.maxOf { it.bounds.height() }
+
+    val bitmap = android.graphics.Bitmap.createBitmap(totalWidth, totalHeight, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bitmap)
+
+    var left = 0
+    drawables.forEach { drawable ->
+        val w = drawable.bounds.width()
+        val h = drawable.bounds.height()
+        val top = (totalHeight - h) / 2
+        canvas.save()
+        canvas.translate(left.toFloat(), top.toFloat())
+        drawable.draw(canvas)
+        canvas.restore()
+        left += w + gapPx
+    }
+
+    return android.graphics.drawable.BitmapDrawable(resources, bitmap).apply {
+        setBounds(0, 0, totalWidth, totalHeight)
     }
 }
 

@@ -193,7 +193,9 @@ fun TextView.isTouchInsidePill(x: Float): Boolean {
     val isRtl = layoutDirection == View.LAYOUT_DIRECTION_RTL
     val onLeft = pillInStart != isRtl
     val pill = compoundDrawables[if (onLeft) 0 else 2] ?: return false
-    val pillWidth = pill.bounds.width()
+    // When the pill shares its slot with the screen-time capsule, only the pill (drawn on the slot's
+    // outer edge) is tappable, so prefer its stored width over the combined drawable's full width.
+    val pillWidth = (getTag(R.id.notif_pill_width) as? Int) ?: pill.bounds.width()
     val slop = 8.dpToPx()
     return if (onLeft) x <= paddingLeft + pillWidth + slop
     else x >= width - paddingRight - pillWidth - slop

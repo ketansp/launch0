@@ -5,4 +5,7 @@
     <item name="notif_pill_side" type="id" />
     <!-- Tracks an in-progress touch that started on the pill, so the whole gesture is consumed. -->
     <item name="notif_pill_down" type="id" />
+    <!-- Width (px, Int) of just the notification-count pill when it shares a compound-drawable slot
+         with the screen-time capsule, so hit-testing only covers the pill and not the capsule. -->
+    <item name="notif_pill_width" type="id" />
 </resources>

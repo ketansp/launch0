@@ -33,10 +33,12 @@ import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentHomeBinding
 import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
+import app.launch0.helper.combineDrawablesHorizontally
 import app.launch0.helper.dpToPx
 import app.launch0.helper.expandNotificationDrawer
 import app.launch0.helper.getChangedAppTheme
 import app.launch0.helper.getNotificationCountDrawable
+import app.launch0.helper.getScreenTimeCapsuleDrawable
 import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.getUserHandleFromString
 import app.launch0.helper.isEinkDisplay
@@ -57,12 +59,20 @@ import java.util.Locale
 
 class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener {
 
+    companion object {
+        // Only show a home app's usage capsule once it has been used for more than this many minutes.
+        private const val SCREEN_TIME_MIN_MINUTES = 5
+    }
+
     private lateinit var prefs: Prefs
     private lateinit var viewModel: MainViewModel
     private lateinit var deviceManager: DevicePolicyManager
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+
+    // Today's foreground time per package (millis); drives the per-app usage capsules on home apps.
+    private var appScreenTimes: Map<String, Long> = emptyMap()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
@@ -243,6 +253,11 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         }
         viewModel.screenTimeValue.observe(viewLifecycleOwner) {
             it?.let { binding.tvScreenTime.text = it }
+        }
+        viewModel.appScreenTimes.observe(viewLifecycleOwner) {
+            appScreenTimes = it ?: emptyMap()
+            // Re-decorate home apps so each name picks up its refreshed usage capsule.
+            populateHomeScreen(false)
         }
     }
 
@@ -487,10 +502,12 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     /**
-     * Decorates [textView] with the app icon (when enabled) and, when DND has parked notifications
-     * for the app, a count pill. The icon sits on the same side as the home layout alignment (right
-     * when right-aligned); the pill sits on the opposite side of the app name. Tags the view so the
-     * pill can be hit-tested for taps (which release the parked notifications).
+     * Decorates [textView] with the app icon (when enabled) and, on the side opposite the app name,
+     * any combination of a parked-notification count pill (when DND has held notifications back) and
+     * a screen-time usage capsule (when the app has been used for more than [SCREEN_TIME_MIN_MINUTES]
+     * today). The icon sits on the same side as the home layout alignment (right when right-aligned).
+     * Tags the view so the notification pill alone can be hit-tested for taps (which release the
+     * parked notifications), even when it shares the slot with the usage capsule.
      */
     private fun setHomeAppDecorations(textView: TextView, packageName: String, userString: String) {
         val sizePx = prefs.iconSize.dpToPx()
@@ -500,21 +517,46 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         icon?.setBounds(0, 0, sizePx, sizePx)
 
         val count = NotificationDndService.parkedCount(prefs, packageName)
-        val pill = if (count > 0) requireContext().getNotificationCountDrawable(count) else null
+        val notifPill = if (count > 0) requireContext().getNotificationCountDrawable(count) else null
 
-        if (icon == null && pill == null) {
+        val usageMinutes = screenTimeMinutes(packageName)
+        val timeCapsule = if (usageMinutes > SCREEN_TIME_MIN_MINUTES)
+            requireContext().getScreenTimeCapsuleDrawable(usageMinutes) else null
+
+        val iconOnEnd = prefs.homeAlignment == Gravity.END
+
+        // Both decorations share the slot opposite the name. The notification pill goes on the slot's
+        // outer edge so its tap target keeps lining up with that edge; the usage capsule sits inboard.
+        val opposite = when {
+            notifPill != null && timeCapsule != null ->
+                requireContext().combineDrawablesHorizontally(
+                    if (iconOnEnd) listOf(notifPill, timeCapsule) else listOf(timeCapsule, notifPill),
+                    6.dpToPx(),
+                )
+            else -> notifPill ?: timeCapsule
+        }
+
+        if (icon == null && opposite == null) {
             textView.setCompoundDrawables(null, null, null, null)
             textView.setTag(R.id.notif_pill_side, null)
+            textView.setTag(R.id.notif_pill_width, null)
             return
         }
 
-        // Icon on the alignment side, pill on the opposite (start) side when right-aligned.
-        val iconOnEnd = prefs.homeAlignment == Gravity.END
-        val startDrawable = if (iconOnEnd) pill else icon
-        val endDrawable = if (iconOnEnd) icon else pill
+        // Icon on the alignment side, decorations on the opposite (start) side when right-aligned.
+        val startDrawable = if (iconOnEnd) opposite else icon
+        val endDrawable = if (iconOnEnd) icon else opposite
         textView.setCompoundDrawablesRelative(startDrawable, null, endDrawable, null)
         textView.compoundDrawablePadding = 12.dpToPx()
-        textView.setTag(R.id.notif_pill_side, if (pill != null) iconOnEnd else null)
+        textView.setTag(R.id.notif_pill_side, if (notifPill != null) iconOnEnd else null)
+        textView.setTag(R.id.notif_pill_width, notifPill?.bounds?.width())
+    }
+
+    /** Rounded minutes of foreground time the app at [packageName] has had today, 0 if unknown. */
+    private fun screenTimeMinutes(packageName: String): Int {
+        if (packageName.isEmpty()) return 0
+        val millis = appScreenTimes[packageName] ?: return 0
+        return Math.round(millis / 60000.0).toInt()
     }
 
     private fun releaseNotificationsForHomeApp(location: Int) {
