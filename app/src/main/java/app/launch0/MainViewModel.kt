@@ -45,6 +45,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val launcherResetFailed = MutableLiveData<Boolean>()
     val homeAppAlignment = MutableLiveData<Int>()
     val screenTimeValue = MutableLiveData<String>()
+    // Today's foreground time per package (millis), used to decorate home apps with a usage capsule.
+    val appScreenTimes = MutableLiveData<Map<String, Long>>()
 
     val showDialog = SingleLiveEvent<String>()
     val checkForMessages = SingleLiveEvent<Unit?>()
@@ -417,13 +419,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val startTime = calendar.timeInMillis
         val endTime = System.currentTimeMillis()
 
-        val timeSpent = eventLogWrapper.aggregateSimpleUsageStats(
-            eventLogWrapper.aggregateForegroundStats(
-                eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
-            )
+        val simpleStats = eventLogWrapper.aggregateForegroundStats(
+            eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
         )
+        val timeSpent = eventLogWrapper.aggregateSimpleUsageStats(simpleStats)
         val viewTimeSpent = appContext.formattedTimeSpent(timeSpent)
         screenTimeValue.postValue(viewTimeSpent)
+
+        // Per-package totals (summed across components/users) for the per-app usage capsules.
+        val perApp = simpleStats
+            .groupBy { it.applicationId }
+            .mapValues { (_, stats) -> stats.sumOf { it.timeUsed } }
+        appScreenTimes.postValue(perApp)
+
         prefs.screenTimeLastUpdated = endTime
     }
 
