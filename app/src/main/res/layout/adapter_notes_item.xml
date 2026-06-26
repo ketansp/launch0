@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  One timeline entry. Everything is left-aligned and uses the full content width, like a
-  chat-with-yourself log: text notes are flat (shadowed text on the wallpaper, no bubble) with the
-  to-do toggles pinned to the far right; images and voice memos sit in their own left-aligned tiles;
-  every entry's timestamp sits bottom-left, consistent across all three types.
+  One timeline entry, left-aligned like a chat-with-yourself log. Text notes (which double as to-dos)
+  sit inside a neutral rounded "bubble" lifted off the wallpaper, WhatsApp-style: the note text on
+  top, then a footer row with the urgent/done toggles pinned bottom-right; an urgent note swaps the
+  bubble's hairline for a red outline and a completed one shows the done tick there. Images and voice
+  memos keep their own left-aligned tiles; every entry's timestamp sits bottom-left, consistent
+  across all three types.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,54 +16,58 @@
     android:paddingHorizontal="18dp"
     android:paddingVertical="7dp">
 
-    <!-- Text note (doubles as a to-do): text fills the width, toggles pin to the extreme right -->
+    <!-- Text note (doubles as a to-do): a neutral bubble; toggles pin to the bottom-right corner -->
     <LinearLayout
-        android:id="@+id/notesTextRow"
-        android:layout_width="match_parent"
+        android:id="@+id/notesTextBubble"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:gravity="top"
-        android:orientation="horizontal">
+        android:background="@drawable/notes_bubble"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="5dp">
 
         <TextView
             android:id="@+id/notesText"
             style="@style/TextSmall"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:lineSpacingMultiplier="1.25"
+            android:maxWidth="280dp"
             android:textColor="?attr/primaryColor"
             android:textIsSelectable="true"
             android:textSize="16sp"
             tools:text="Remember to buy milk and call the bank tomorrow." />
 
-        <!-- Urgent then done, pinned to the far right edge -->
+        <!-- Footer: urgent then done, pinned to the bottom-right edge of the bubble -->
         <LinearLayout
             android:id="@+id/notesToggles"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:gravity="center_vertical"
+            android:layout_marginTop="1dp"
+            android:gravity="end|center_vertical"
             android:orientation="horizontal">
 
             <ImageView
                 android:id="@+id/notesUrgent"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/notes_mark_urgent"
-                android:padding="6dp"
+                android:padding="5dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_lucide_flag"
                 app:tint="?attr/primaryColorTrans50" />
 
             <ImageView
                 android:id="@+id/notesDone"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="2dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/notes_mark_done"
-                android:padding="6dp"
+                android:padding="5dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_lucide_circle"
                 app:tint="?attr/primaryColorTrans50" />

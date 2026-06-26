@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Background for a text-note "bubble" on the notes page: a neutral, translucent card that lifts the
+  note off the wallpaper (WhatsApp-style). The activated state marks a high-priority/urgent note and
+  swaps the faint neutral hairline for the accent-red outline; the fill stays the same either way.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_activated="true">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/primaryShadeDarkColor" />
+            <corners android:radius="18dp" />
+            <stroke
+                android:width="1.5dp"
+                android:color="@color/notesUrgent" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/primaryShadeDarkColor" />
+            <corners android:radius="18dp" />
+            <stroke
+                android:width="0.8dp"
+                android:color="?attr/primaryColorTrans50" />
+        </shape>
+    </item>
+
+</selector>

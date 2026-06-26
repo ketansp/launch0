@@ -103,8 +103,8 @@ class NotesAdapter(
         ) = with(binding) {
             notesTime.text = timeFormat.format(Date(entry.timestamp))
 
-            // The text row (note + to-do toggles) only shows for text notes.
-            notesTextRow.isVisible = entry.isText
+            // The text bubble (note + to-do toggles) only shows for text notes.
+            notesTextBubble.isVisible = entry.isText
             if (entry.isText) bindTodoToggles(entry, onToggleDone, onToggleUrgent)
 
             when {
@@ -141,13 +141,9 @@ class NotesAdapter(
                         notesText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     }
                     notesText.alpha = if (entry.done) 0.5f else 1f
-                    // A still-open urgent note is drawn in the accent red; done takes precedence
-                    // (it dims to the plain foreground and strikes through instead).
-                    notesText.setTextColor(
-                        if (entry.urgent && !entry.done)
-                            ContextCompat.getColor(root.context, R.color.notesUrgent)
-                        else root.context.getColorFromAttr(R.attr.primaryColor)
-                    )
+                    // Urgency now reads from the bubble's red outline (see bindTodoToggles), so the
+                    // note text itself stays the plain foreground colour.
+                    notesText.setTextColor(root.context.getColorFromAttr(R.attr.primaryColor))
                     // Turn web/email URLs into tappable links while keeping the text selectable.
                     LinkifyCompat.addLinks(notesText, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
                     notesText.movementMethod = LinkAndSelectMovementMethod
@@ -166,6 +162,9 @@ class NotesAdapter(
             onToggleUrgent: (NotesEntry) -> Unit,
         ) = with(binding) {
             val ctx = root.context
+            // A still-open urgent note gets the accent-red outline on its bubble; a completed one
+            // relaxes back to the neutral outline (done takes precedence, matching the text styling).
+            notesTextBubble.isActivated = entry.urgent && !entry.done
             // Monochrome, in keeping with the launcher's no-third-colour rule: a completed to-do
             // turns the full foreground colour, an incomplete one stays dimmed.
             val dim = ctx.getColorFromAttr(R.attr.primaryColorTrans50)
