@@ -3,9 +3,9 @@
   One timeline entry, left-aligned like a chat-with-yourself log. Each entry sits in its own box that
   is lifted off the wallpaper with a hairline border: text notes (which double as to-dos), images and
   voice memos all share a fixed ~75%-of-width column so every box reads at one consistent width that
-  adapts across screen sizes. An urgent entry swaps its box outline for an accent-red one. Below every
-  box a shared footer carries the timestamp (bottom-left) and the urgent/done toggles (bottom-right),
-  outside the box, so the toggles read clearly against any note type.
+  adapts across screen sizes. An urgent entry swaps its box outline for an accent-red one. The
+  urgent/done toggles sit in the right-edge gutter, vertically centered against the active box so they
+  read clearly regardless of box height. A footer below carries the timestamp on its own line.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -102,15 +102,43 @@
 
         </LinearLayout>
 
-        <!-- Spacer: keeps the box column at ~75% width -->
-        <Space
+        <!-- Right-edge gutter (~25% width): holds the urgent/done toggles, vertically centered
+             against whichever box is showing on the left. -->
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical|end"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/notesUrgent"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/notes_mark_urgent"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_lucide_flag"
+                app:tint="?attr/primaryColorTrans50" />
+
+            <ImageView
+                android:id="@+id/notesDone"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginStart="2dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/notes_mark_done"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_lucide_square_outline"
+                app:tint="?attr/primaryColorTrans50" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Shared footer: timestamp bottom-left, urgent/done toggles bottom-right (outside the box) -->
+    <!-- Footer: timestamp under the box. -->
     <LinearLayout
         android:id="@+id/notesFooter"
         android:layout_width="match_parent"
@@ -122,35 +150,11 @@
         <TextView
             android:id="@+id/notesTime"
             style="@style/TextSmallLight"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:textColor="?attr/primaryColorTrans50"
             android:textSize="11sp"
             tools:text="9:41 AM" />
-
-        <ImageView
-            android:id="@+id/notesUrgent"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/notes_mark_urgent"
-            android:padding="5dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_lucide_flag"
-            app:tint="?attr/primaryColorTrans50" />
-
-        <ImageView
-            android:id="@+id/notesDone"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:layout_marginStart="2dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/notes_mark_done"
-            android:padding="5dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_lucide_square_outline"
-            app:tint="?attr/primaryColorTrans50" />
 
     </LinearLayout>
 
