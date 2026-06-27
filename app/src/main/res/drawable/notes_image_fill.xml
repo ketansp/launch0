@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fill behind an image note. The bitmap is clipped to these rounded corners (android:clipToOutline),
+  so this shows only while the image loads / at the rounded corners, and gives the view an opaque
+  outline so it can cast an elevation shadow like the other note boxes. The border itself is drawn on
+  top via the notes_box_border foreground.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/primaryShadeDarkColor" />
+    <corners android:radius="18dp" />
+</shape>

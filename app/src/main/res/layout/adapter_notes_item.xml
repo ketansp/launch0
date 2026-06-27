@@ -1,90 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  One timeline entry, left-aligned like a chat-with-yourself log. Text notes (which double as to-dos)
-  sit inside a neutral rounded "bubble" lifted off the wallpaper, WhatsApp-style: the note text on
-  top, then a footer row with the urgent/done toggles pinned bottom-right; an urgent note swaps the
-  bubble's hairline for a red outline and a completed one shows the done tick there. Images and voice
-  memos keep their own left-aligned tiles; every entry's timestamp sits bottom-left, consistent
-  across all three types.
+  One timeline entry, left-aligned like a chat-with-yourself log. Each entry sits in its own box that
+  is lifted off the wallpaper with a hairline border and a soft elevation shadow: text notes (which
+  double as to-dos) use a full-width bubble, images clip to a rounded bordered tile, and voice memos
+  use a compact chip. An urgent entry swaps its box outline for an accent-red one. Below every box a
+  shared footer carries the timestamp (bottom-left) and the urgent/done toggles (bottom-right),
+  outside the box, so the toggles read clearly against any note type.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
     android:paddingHorizontal="18dp"
     android:paddingVertical="7dp">
 
-    <!-- Text note (doubles as a to-do): a neutral bubble; toggles pin to the bottom-right corner -->
+    <!-- Text note (doubles as a to-do): a fixed full-width bubble so every note reads at one width -->
     <LinearLayout
         android:id="@+id/notesTextBubble"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/notes_bubble"
+        android:elevation="4dp"
         android:orientation="vertical"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
-        android:paddingTop="9dp"
-        android:paddingBottom="5dp">
+        android:paddingTop="11dp"
+        android:paddingBottom="11dp">
 
         <TextView
             android:id="@+id/notesText"
             style="@style/TextSmall"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:lineSpacingMultiplier="1.25"
-            android:maxWidth="280dp"
             android:textColor="?attr/primaryColor"
             android:textIsSelectable="true"
             android:textSize="16sp"
             tools:text="Remember to buy milk and call the bank tomorrow." />
 
-        <!-- Footer: urgent then done, pinned to the bottom-right edge of the bubble -->
-        <LinearLayout
-            android:id="@+id/notesToggles"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:gravity="end|center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/notesUrgent"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/notes_mark_urgent"
-                android:padding="5dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_lucide_flag"
-                app:tint="?attr/primaryColorTrans50" />
-
-            <ImageView
-                android:id="@+id/notesDone"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/notes_mark_done"
-                android:padding="5dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_lucide_circle"
-                app:tint="?attr/primaryColorTrans50" />
-
-        </LinearLayout>
-
     </LinearLayout>
 
-    <!-- Image attachment, left-aligned -->
+    <!-- Image attachment, left-aligned: rounded bordered tile with a soft shadow -->
     <ImageView
         android:id="@+id/notesImage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
-        android:background="@drawable/rounded_image_clip"
+        android:background="@drawable/notes_image_fill"
         android:clipToOutline="true"
         android:contentDescription="@string/notes_image_desc"
+        android:elevation="4dp"
+        android:foreground="@drawable/notes_box_border"
         android:maxWidth="280dp"
         android:maxHeight="360dp"
         android:scaleType="fitStart"
@@ -97,7 +67,8 @@
         android:id="@+id/notesAudio"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_rect_shade_color"
+        android:background="@drawable/notes_bubble"
+        android:elevation="4dp"
         android:gravity="center_vertical"
         android:minWidth="160dp"
         android:orientation="horizontal"
@@ -125,15 +96,48 @@
 
     </LinearLayout>
 
-    <!-- Timestamp: bottom-left for every entry type -->
-    <TextView
-        android:id="@+id/notesTime"
-        style="@style/TextSmallLight"
-        android:layout_width="wrap_content"
+    <!-- Shared footer: timestamp bottom-left, urgent/done toggles bottom-right (outside the box) -->
+    <LinearLayout
+        android:id="@+id/notesFooter"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:textColor="?attr/primaryColorTrans50"
-        android:textSize="11sp"
-        tools:text="9:41 AM" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/notesTime"
+            style="@style/TextSmallLight"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="?attr/primaryColorTrans50"
+            android:textSize="11sp"
+            tools:text="9:41 AM" />
+
+        <ImageView
+            android:id="@+id/notesUrgent"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/notes_mark_urgent"
+            android:padding="5dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_lucide_flag"
+            app:tint="?attr/primaryColorTrans50" />
+
+        <ImageView
+            android:id="@+id/notesDone"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginStart="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/notes_mark_done"
+            android:padding="5dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_lucide_square"
+            app:tint="?attr/primaryColorTrans50" />
+
+    </LinearLayout>
 
 </LinearLayout>

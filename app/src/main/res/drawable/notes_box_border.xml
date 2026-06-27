@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Background for a note "box" on the notes page (shared by text bubbles and voice chips): a neutral,
-  translucent card that lifts the note off the wallpaper (WhatsApp-style). The activated state marks a
-  high-priority/urgent note and swaps the faint neutral hairline for the accent-red outline; the fill
-  stays the same either way. Image notes draw the matching outline via notes_box_border instead.
+  Outline-only border for an image note, drawn as a foreground on top of the bitmap so the edge stays
+  visible. Matches the text/voice box outline: a faint neutral hairline by default that swaps to the
+  accent-red outline in the activated (urgent) state. The fill is transparent so the image shows
+  through.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_activated="true">
         <shape android:shape="rectangle">
-            <solid android:color="?attr/primaryShadeDarkColor" />
+            <solid android:color="@android:color/transparent" />
             <corners android:radius="18dp" />
             <stroke
                 android:width="1.5dp"
@@ -19,7 +19,7 @@
 
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="?attr/primaryShadeDarkColor" />
+            <solid android:color="@android:color/transparent" />
             <corners android:radius="18dp" />
             <stroke
                 android:width="0.8dp"
