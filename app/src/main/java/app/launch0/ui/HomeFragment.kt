@@ -304,14 +304,21 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.dateTimeLayout.gravity = horizontalGravity
         // Keep the date's (now multi-line, with the battery line) text aligned with the home edge.
         binding.date.gravity = horizontalGravity
-        binding.homeApp1.gravity = horizontalGravity
-        binding.homeApp2.gravity = horizontalGravity
-        binding.homeApp3.gravity = horizontalGravity
-        binding.homeApp4.gravity = horizontalGravity
-        binding.homeApp5.gravity = horizontalGravity
-        binding.homeApp6.gravity = horizontalGravity
-        binding.homeApp7.gravity = horizontalGravity
-        binding.homeApp8.gravity = horizontalGravity
+
+        // Left/right alignment stretches each row to the full width so the usage capsule and
+        // notification pill (drawn as the compound drawable opposite the name) land on the far edge,
+        // matching the app drawer. Centre keeps rows wrap-content so the icon stays beside the name.
+        val rowWidth = if (horizontalGravity == Gravity.CENTER)
+            ViewGroup.LayoutParams.WRAP_CONTENT else ViewGroup.LayoutParams.MATCH_PARENT
+        listOf(
+            binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
+            binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
+        ).forEach { homeApp ->
+            homeApp.gravity = horizontalGravity
+            if (homeApp.layoutParams.width != rowWidth) {
+                homeApp.layoutParams = homeApp.layoutParams.apply { width = rowWidth }
+            }
+        }
     }
 
     private fun populateDateTime() {
