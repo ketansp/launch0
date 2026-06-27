@@ -2,6 +2,7 @@ package app.launch0.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Outline
 import android.graphics.Paint
 import android.text.Spannable
 import android.text.method.ArrowKeyMovementMethod
@@ -9,7 +10,9 @@ import android.text.style.ClickableSpan
 import android.text.util.Linkify
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.text.util.LinkifyCompat
@@ -68,7 +71,14 @@ class NotesAdapter(
         return if (viewType == TYPE_DATE) {
             DateViewHolder(AdapterNotesDateBinding.inflate(inflater, parent, false))
         } else {
-            ItemViewHolder(AdapterNotesItemBinding.inflate(inflater, parent, false))
+            val binding = AdapterNotesItemBinding.inflate(inflater, parent, false)
+            // Give every box a full-alpha rounded outline so its elevation casts a crisp shadow even
+            // though the box fill is translucent (a translucent fill would otherwise fade the shadow).
+            val radius = BOX_CORNER_DP * parent.resources.displayMetrics.density
+            listOf(binding.notesTextBubble, binding.notesImage, binding.notesAudio).forEach { box ->
+                box.outlineProvider = roundedOutline(radius)
+            }
+            ItemViewHolder(binding)
         }
     }
 
@@ -103,20 +113,22 @@ class NotesAdapter(
         ) = with(binding) {
             notesTime.text = timeFormat.format(Date(entry.timestamp))
 
-            // The text bubble (note + to-do toggles) only shows for text notes.
-            notesTextBubble.isVisible = entry.isText
-            if (entry.isText) bindTodoToggles(entry, onToggleDone, onToggleUrgent)
+            // The urgent/done toggles now live in the shared footer below every box, so they apply to
+            // text, image and voice notes alike.
+            bindTodoToggles(entry, onToggleDone, onToggleUrgent)
 
-            when {
+            // Pick the single visible box for this entry; the others stay gone.
+            val activeBox: View = when {
                 entry.isImage && !entry.mediaPath.isNullOrEmpty() -> {
-                    notesText.isVisible = false
+                    notesTextBubble.isVisible = false
                     notesAudio.isVisible = false
                     notesImage.isVisible = true
                     loadImage(entry.mediaPath)
                     notesImage.setOnClickListener { onImageClick(entry) }
+                    notesImage
                 }
                 entry.isAudio -> {
-                    notesText.isVisible = false
+                    notesTextBubble.isVisible = false
                     notesImage.isVisible = false
                     notesImage.setImageDrawable(null)
                     notesAudio.isVisible = true
@@ -126,29 +138,35 @@ class NotesAdapter(
                         else R.string.notes_play_symbol
                     )
                     notesAudio.setOnClickListener { onAudioClick(entry) }
+                    notesAudio
                 }
                 else -> {
                     notesImage.isVisible = false
                     notesImage.setImageDrawable(null)
                     notesImage.setOnClickListener(null)
                     notesAudio.isVisible = false
-                    notesText.isVisible = true
+                    notesTextBubble.isVisible = true
                     notesText.text = entry.text
-                    // Strike through and dim completed to-dos.
+                    // Strike through completed to-dos (the box dim below handles the fade).
                     notesText.paintFlags = if (entry.done) {
                         notesText.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
                     } else {
                         notesText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     }
-                    notesText.alpha = if (entry.done) 0.5f else 1f
-                    // Urgency now reads from the bubble's red outline (see bindTodoToggles), so the
-                    // note text itself stays the plain foreground colour.
+                    // Urgency reads from the box's red outline (set below), so the note text itself
+                    // stays the plain foreground colour.
                     notesText.setTextColor(root.context.getColorFromAttr(R.attr.primaryColor))
                     // Turn web/email URLs into tappable links while keeping the text selectable.
                     LinkifyCompat.addLinks(notesText, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
                     notesText.movementMethod = LinkAndSelectMovementMethod
+                    notesTextBubble
                 }
             }
+
+            // A still-open urgent entry gets the accent-red outline on its box; a completed one relaxes
+            // back to the neutral outline (done takes precedence) and the whole box dims.
+            activeBox.isActivated = entry.urgent && !entry.done
+            activeBox.alpha = if (entry.done) 0.5f else 1f
 
             root.setOnLongClickListener {
                 onItemLongClick(entry)
@@ -162,14 +180,11 @@ class NotesAdapter(
             onToggleUrgent: (NotesEntry) -> Unit,
         ) = with(binding) {
             val ctx = root.context
-            // A still-open urgent note gets the accent-red outline on its bubble; a completed one
-            // relaxes back to the neutral outline (done takes precedence, matching the text styling).
-            notesTextBubble.isActivated = entry.urgent && !entry.done
             // Monochrome, in keeping with the launcher's no-third-colour rule: a completed to-do
             // turns the full foreground colour, an incomplete one stays dimmed.
             val dim = ctx.getColorFromAttr(R.attr.primaryColorTrans50)
             notesDone.setImageResource(
-                if (entry.done) R.drawable.ic_lucide_circle_check else R.drawable.ic_lucide_circle
+                if (entry.done) R.drawable.ic_lucide_square_check else R.drawable.ic_lucide_square
             )
             notesDone.setColorFilter(
                 if (entry.done) ctx.getColorFromAttr(R.attr.primaryColor) else dim
@@ -203,7 +218,16 @@ class NotesAdapter(
         private const val TYPE_ITEM = 0
         private const val TYPE_DATE = 1
         private const val MAX_IMAGE_DIMEN = 1080
+        // Matches the corner radius baked into notes_bubble / notes_image_fill / notes_box_border.
+        private const val BOX_CORNER_DP = 18f
         private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+
+        /** A rounded-rect outline provider with full alpha, so an elevated box casts a clean shadow. */
+        private fun roundedOutline(radiusPx: Float) = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, radiusPx)
+            }
+        }
 
         private fun formatDuration(ms: Long): String {
             val totalSeconds = (ms / 1000).coerceAtLeast(0)
