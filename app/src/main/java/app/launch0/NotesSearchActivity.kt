@@ -1,38 +1,38 @@
-package app.launch0.ui
+package app.launch0
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowManager
+import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import app.launch0.MainActivity
-import app.launch0.MainViewModel
-import app.launch0.R
 import app.launch0.data.NotesEntry
 import app.launch0.data.NotesStore
 import app.launch0.data.Prefs
-import app.launch0.databinding.FragmentNotesSearchBinding
+import app.launch0.databinding.ActivityNotesSearchBinding
 import app.launch0.helper.hideKeyboard
+import app.launch0.helper.isTablet
 import app.launch0.helper.showKeyboard
 import app.launch0.helper.showToast
 import app.launch0.listener.OnSwipeTouchListener
+import app.launch0.ui.NotesAdapter
+import app.launch0.ui.buildNotesRows
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,64 +40,64 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * A dedicated search page for [NotesFragment], reached by swiping left on the notes screen. Its
- * borderless, bottom-aligned search box mirrors the app drawer: typing filters the notes live (after
- * a short debounce), and swiping right returns to the notes screen.
+ * A standalone page for searching personal notes, reached by swiping left on the notes screen. It's
+ * its own activity (rather than a fragment) so more search-specific features can grow here later.
+ *
+ * The borderless, bottom-aligned search box mirrors the app drawer: typing filters notes live after
+ * a short debounce, and the screen starts empty until a term is entered. It slides in from the right
+ * and back out to the right, matching the home → notes transition.
  */
-class NotesSearchFragment : Fragment() {
+class NotesSearchActivity : AppCompatActivity() {
 
-    private val viewModel: MainViewModel by activityViewModels()
     private lateinit var prefs: Prefs
     private lateinit var notesStore: NotesStore
     private lateinit var adapter: NotesAdapter
+    private lateinit var binding: ActivityNotesSearchBinding
 
     private var query: String = ""
     private var searchJob: Job? = null
-    private var previousSoftInputMode: Int? = null
 
-    private var _binding: FragmentNotesSearchBinding? = null
-    private val binding get() = _binding!!
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
-        _binding = FragmentNotesSearchBinding.inflate(inflater, container, false)
-        return binding.root
+    override fun attachBaseContext(context: Context) {
+        val newConfig = Configuration(context.resources.configuration)
+        newConfig.fontScale = Prefs(context).textSizeScale
+        applyOverrideConfiguration(newConfig)
+        super.attachBaseContext(context)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        prefs = Prefs(requireContext())
-        notesStore = NotesStore(requireContext())
+    override fun onCreate(savedInstanceState: Bundle?) {
+        prefs = Prefs(this)
+        AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
+        super.onCreate(savedInstanceState)
+        binding = ActivityNotesSearchBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        window.addFlags(FLAG_LAYOUT_NO_LIMITS)
+        notesStore = NotesStore(this)
 
+        setupOrientation()
         applyWindowInsets()
         initRecyclerView()
         initBackSwipe()
         initSearch()
-        initObservers()
 
-        // Always arrive on a clean slate: empty query, full notes list.
+        // Start blank: no results are shown until the user enters a term.
         resetState()
     }
 
     override fun onStart() {
         super.onStart()
-        // Resize the window for the keyboard so the IME inset is dispatched to applyWindowInsets(),
-        // which lifts the list and search box above the keyboard. Restored in onStop.
-        requireActivity().window.let { window ->
-            previousSoftInputMode = window.attributes.softInputMode
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-        }
         // Focus the field and open the keyboard as soon as the page appears.
         binding.search.showKeyboard()
     }
 
     override fun onStop() {
         binding.search.hideKeyboard()
-        previousSoftInputMode?.let { requireActivity().window.setSoftInputMode(it) }
         super.onStop()
+    }
+
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun setupOrientation() {
+        if (isTablet(this) || Build.VERSION.SDK_INT == Build.VERSION_CODES.O) return
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     }
 
     /**
@@ -126,16 +126,16 @@ class NotesSearchFragment : Fragment() {
         )
         // Anchor results to the bottom so they sit right above the search box and keyboard.
         binding.recyclerView.layoutManager =
-            LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
+            LinearLayoutManager(this).apply { stackFromEnd = true }
         binding.recyclerView.adapter = adapter
     }
 
     /** Swiping right returns to the notes screen, the same way swipe-right works there for home. */
     private fun initBackSwipe() {
-        val swipeListener = object : OnSwipeTouchListener(requireContext()) {
+        val swipeListener = object : OnSwipeTouchListener(this) {
             override fun onSwipeRight() {
                 super.onSwipeRight()
-                goBack()
+                closeScreen()
             }
         }
         binding.notesSearchRoot.setOnTouchListener(swipeListener)
@@ -170,18 +170,9 @@ class NotesSearchFragment : Fragment() {
         })
     }
 
-    private fun initObservers() {
-        viewModel.notesUpdated.observe(viewLifecycleOwner) { runSearch() }
-    }
-
-    private fun goBack() {
-        if (_binding == null) return
+    private fun closeScreen() {
         binding.search.hideKeyboard()
-        try {
-            findNavController().popBackStack()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        finish()
     }
 
     private fun resetState() {
@@ -195,21 +186,20 @@ class NotesSearchFragment : Fragment() {
     private fun scheduleSearch(newText: String) {
         query = newText.trim()
         searchJob?.cancel()
-        searchJob = viewLifecycleOwner.lifecycleScope.launch {
+        searchJob = lifecycleScope.launch {
             delay(SEARCH_DEBOUNCE_MS)
             runSearch()
         }
     }
 
     private fun runSearch() {
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
             val q = query
-            val matches = withContext(Dispatchers.IO) {
-                val all = notesStore.getEntries()
-                if (q.isEmpty()) all else all.filter { it.text.contains(q, ignoreCase = true) }
+            // Nothing is shown until the user types something to match against.
+            val matches = if (q.isEmpty()) emptyList() else withContext(Dispatchers.IO) {
+                notesStore.getEntries().filter { it.text.contains(q, ignoreCase = true) }
             }
-            if (_binding == null) return@launch
-            val rows = buildNotesRows(requireContext(), matches)
+            val rows = buildNotesRows(this@NotesSearchActivity, matches)
             adapter.submitList(rows) {
                 if (rows.isNotEmpty()) binding.recyclerView.scrollToPosition(rows.size - 1)
             }
@@ -217,7 +207,7 @@ class NotesSearchFragment : Fragment() {
     }
 
     private fun updateEntry(entry: NotesEntry) {
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
             withContext(Dispatchers.IO) { notesStore.update(entry) }
             runSearch()
         }
@@ -226,7 +216,7 @@ class NotesSearchFragment : Fragment() {
     private fun onItemLongClick(entry: NotesEntry) {
         if (!entry.isText) return
         val items = arrayOf(getString(R.string.notes_copy), getString(R.string.notes_share))
-        AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(this)
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> copyText(entry.text)
@@ -237,10 +227,9 @@ class NotesSearchFragment : Fragment() {
     }
 
     private fun copyText(text: String) {
-        val clipboard =
-            requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("note", text))
-        requireContext().showToast(getString(R.string.notes_copied))
+        showToast(getString(R.string.notes_copied))
     }
 
     private fun shareText(text: String) {
@@ -248,14 +237,19 @@ class NotesSearchFragment : Fragment() {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
         }
-        (activity as? MainActivity)?.setAwaitingActivityResult()
         startActivity(Intent.createChooser(intent, getString(R.string.notes_share)))
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    @Suppress("DEPRECATION")
+    override fun finish() {
+        super.finish()
+        // Slide back out to the right, mirroring the notes → home pop transition.
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         searchJob?.cancel()
-        _binding = null
     }
 
     companion object {
