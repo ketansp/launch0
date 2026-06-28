@@ -58,11 +58,11 @@ shot() {
 
   thumb="$(mktemp --suffix=.jpg)"
   if command -v convert >/dev/null 2>&1 \
-     && convert "$file" -resize 320x -quality 55 "$thumb" 2>/dev/null; then
+     && convert "$file" -resize 480x -quality 60 "$thumb" 2>/dev/null; then
     {
       echo "### ${idx}. ${caption}"
       echo ""
-      echo "<img alt=\"${caption}\" width=\"300\" src=\"data:image/jpeg;base64,$(base64 -w0 "$thumb")\" />"
+      echo "<img alt=\"${caption}\" width=\"320\" src=\"data:image/jpeg;base64,$(base64 -w0 "$thumb")\" />"
       echo ""
     } >> "$GITHUB_STEP_SUMMARY"
   else
@@ -73,38 +73,49 @@ shot() {
   rm -f "$thumb"
 }
 
-swipe_up()    { adb shell input swipe "$CX" "$(pct_y 80)" "$CX" "$(pct_y 20)" 350; }
-swipe_down()  { adb shell input swipe "$CX" "$(pct_y 18)" "$CX" "$(pct_y 75)" 350; }
-swipe_left()  { adb shell input swipe "$(pct_x 85)" "$(pct_y 50)" "$(pct_x 15)" "$(pct_y 50)" 350; }
-long_press()  { adb shell input swipe "$CX" "$(pct_y 45)" "$CX" "$(pct_y 46)" 900; }
-press_home()  { adb shell input keyevent KEYCODE_HOME; }
-press_back()  { adb shell input keyevent KEYCODE_BACK; }
+# Gestures. Swipes start/end in the empty middle band of the screen so they
+# land on the home layout's gesture listener rather than on a home-app row, and
+# clear the 100px / 100vel fling threshold in OnSwipeTouchListener.
+swipe_up()    { adb shell input swipe "$CX" "$(pct_y 70)" "$CX" "$(pct_y 20)" 200; }
+swipe_left()  { adb shell input swipe "$(pct_x 90)" "$(pct_y 45)" "$(pct_x 10)" "$(pct_y 45)" 200; }
+long_press()  { adb shell input swipe "$CX" "$(pct_y 40)" "$CX" "$(pct_y 40)" 1000; }
+
+# Return to a clean home screen. MainActivity is singleTask and its onNewIntent
+# calls backToHomeScreen(), so re-launching it reliably pops back to the home
+# fragment from anywhere — without triggering the system "Select a Home app"
+# chooser that the HOME key would.
+return_home() {
+  adb shell am start -n "${APP_ID}/${MAIN_ACTIVITY}" >/dev/null 2>&1 || true
+  settle 2
+}
 
 # ---- install -----------------------------------------------------------------
 echo "Installing $APK_PATH ..."
 adb install -r -t "$APK_PATH"
 
-# Make Launch0 the default home so HOME/back resolve to it.
-adb shell cmd package set-home-activity "${APP_ID}/${MAIN_ACTIVITY}" || true
+# Make Launch0 the default home too (best-effort; the walkthrough uses am start
+# so it doesn't depend on this succeeding).
+echo "set-home-activity: $(adb shell cmd package set-home-activity "${APP_ID}/${MAIN_ACTIVITY}" 2>&1 | tr -d '\r')"
 
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-  echo "## Launch0 UI walkthrough screenshots" >> "$GITHUB_STEP_SUMMARY"
-  echo "" >> "$GITHUB_STEP_SUMMARY"
-  echo "Captured on an Android emulator from the debug APK built in this run." >> "$GITHUB_STEP_SUMMARY"
-  echo "" >> "$GITHUB_STEP_SUMMARY"
+  {
+    echo "## Launch0 UI walkthrough screenshots"
+    echo ""
+    echo "Captured on an Android emulator from the debug APK built in this run."
+    echo "No download needed — the screenshots are embedded below."
+    echo ""
+  } >> "$GITHUB_STEP_SUMMARY"
 fi
 
 # ---- walkthrough -------------------------------------------------------------
 
 # 1. Home screen
-adb shell monkey -p "$APP_ID" -c android.intent.category.HOME 1 >/dev/null 2>&1 || \
-  adb shell am start -n "${APP_ID}/${MAIN_ACTIVITY}" >/dev/null 2>&1 || true
-press_home
-settle 3
+return_home
+settle 1
+echo "focus: $(adb shell dumpsys window 2>/dev/null | grep -m1 'mCurrentFocus' | tr -d '\r')"
 shot 1 home "Home screen"
 
 # 2. App drawer (swipe up)
-press_home; settle 1
 swipe_up
 settle 2
 shot 2 app-drawer "App drawer (swipe up)"
@@ -114,21 +125,20 @@ adb shell input text "settings"
 settle 2
 shot 3 app-search "App drawer search for \"settings\""
 
-# 4. Settings (long-press on home)
-press_home; settle 2
+# 4. Settings (long-press on empty area of home)
+return_home
 long_press
 settle 2
 shot 4 settings "Settings (long-press home)"
 
 # 5. Notes page (swipe left)
-press_back; settle 1
-press_home; settle 1
+return_home
 swipe_left
 settle 2
 shot 5 notes "Notes page (swipe left)"
 
 # back to a clean home for good measure
-press_home; settle 1
+return_home
 
 echo "Done. Screenshots in $OUT_DIR:"
 ls -la "$OUT_DIR"
