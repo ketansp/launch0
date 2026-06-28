@@ -78,7 +78,9 @@
                 z-index: -1;
                 pointer-events: none;
                 --gradient-size: 128px;
-                background-image: linear-gradient(to bottom, transparent, var(--vp-c-bg-soft) var(--gradient-size), var(--vp-c-bg-soft) calc(100% - var(--gradient-size)), transparent);
+                /* Translucent tint so the starfield behind stays visible */
+                --band-color: rgba(255, 255, 255, 0.03);
+                background-image: linear-gradient(to bottom, transparent, var(--band-color) var(--gradient-size), var(--band-color) calc(100% - var(--gradient-size)), transparent);
             }
         }
     }
@@ -170,7 +172,7 @@
                 display: block;
                 padding: 12px 16px;
                 border-radius: 12px;
-                background-color: var(--vp-c-bg);
+                background-color: var(--vp-c-bg-soft);
                 margin: 0px;
                 white-space: pre;
 
