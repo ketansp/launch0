@@ -16,11 +16,6 @@
       <stop offset="50%" stop-color="#f97316"/>
       <stop offset="100%" stop-color="#f9731600"/>
     </linearGradient>
-    <!-- Cuts a transparent hole through the zero body so the starfield shows through -->
-    <mask id="zeroHole">
-      <ellipse cx="256" cy="222" rx="74" ry="120" fill="#fff"/>
-      <ellipse cx="256" cy="222" rx="50" ry="90" fill="#000"/>
-    </mask>
   </defs>
 
   <!-- Flame -->
@@ -32,8 +27,9 @@
   <path d="M196 298 L170 358 L210 334 Z" fill="#d4d4d8"/>
   <path d="M316 298 L342 358 L302 334 Z" fill="#d4d4d8"/>
 
-  <!-- Zero body (ring with a transparent hole) -->
-  <ellipse cx="256" cy="222" rx="74" ry="120" fill="url(#bodyGrad)" mask="url(#zeroHole)"/>
+  <!-- Zero body -->
+  <ellipse cx="256" cy="222" rx="74" ry="120" fill="url(#bodyGrad)"/>
+  <ellipse cx="256" cy="222" rx="50" ry="90" fill="#000"/>
 
   <!-- Nozzle -->
   <rect x="236" y="337" width="40" height="14" rx="4" fill="#a1a1aa"/>
