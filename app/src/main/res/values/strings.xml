@@ -201,9 +201,6 @@
 
     <!-- Notes: search, recording, message actions, to-dos -->
     <string name="notes_search">Search</string>
-    <string name="notes_search_title">Search</string>
-    <string name="notes_search_hint">Search your notes…</string>
-    <string name="notes_search_prompt">Type a word, then tap search</string>
     <string name="notes_copy">Copy</string>
     <string name="notes_share">Share</string>
     <string name="notes_edit">Edit</string>
