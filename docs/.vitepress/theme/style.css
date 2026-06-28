@@ -43,11 +43,7 @@
   --vp-home-hero-image-filter: none;
 }
 
-/* ─── Hero image ─── */
-.VPHero .VPImage {
-  border-radius: 21%;
-  background-color: #000;
-}
+/* ─── Hero image: transparent rocket on the page starfield (no black square) ─── */
 
 /* Remove the blurred glow element behind the hero icon entirely */
 .VPHero .image-bg {
