@@ -1,6 +1,7 @@
 name: Android UI Screenshots
 
-# On every pull request (opened / new commits pushed) and on manual dispatch:
+# On every pull request (opened / new commits pushed), on merge/push to
+# main/master, and on manual dispatch:
 #   1. Build the debug APK.
 #   2. Boot an Android emulator (virtual device) on the runner.
 #   3. Install the APK, drive a few screens with real gestures, and screenshot
@@ -18,7 +19,12 @@ name: Android UI Screenshots
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  # Allow manual runs too (no PR comment in that case, just the job summary).
+  # Also run on merge/push to main or master (no PR to comment on, so the
+  # screenshots land in the job summary — which now renders them via the
+  # ci-screenshots branch URLs, no download needed).
+  push:
+    branches: [main, master]
+  # Allow manual runs too (job summary only).
   workflow_dispatch:
 
 # contents: write  -> push screenshots to the ci-screenshots branch
