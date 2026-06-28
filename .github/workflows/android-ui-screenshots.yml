@@ -1,27 +1,31 @@
 name: Android UI Screenshots
 
-# On every merge/push to main or master:
+# On every pull request (opened / new commits pushed) and on manual dispatch:
 #   1. Build the debug APK.
 #   2. Boot an Android emulator (virtual device) on the runner.
 #   3. Install the APK, drive a few screens with real gestures, and screenshot
 #      each step (see .github/scripts/ui_screenshots.sh).
-#   4. Publish the screenshots so they render INLINE on the run page's Job
-#      Summary (no download needed). Because GitHub strips base64 images from
-#      summaries, the PNGs are pushed to an orphan `ci-screenshots` branch and
-#      the summary references their raw.githubusercontent.com URLs.
+#   4. Publish the screenshots so they render INLINE:
+#        - as a sticky comment in the PR thread, and
+#        - in the run page's Job Summary.
+#      Because GitHub renders images only from a URL (and strips base64 data:
+#      images), the PNGs are pushed to an orphan `ci-screenshots` branch and
+#      referenced via their raw.githubusercontent.com URLs.
 #
 #   Note: the plain-text Actions console log cannot render images; the
-#   screenshots appear in the Job Summary on the run page.
+#   screenshots appear in the PR comment and the Job Summary.
 
 on:
-  push:
-    branches: [main, master]
-  # Allow manual runs too, so you can test without merging.
+  pull_request:
+    types: [opened, synchronize, reopened]
+  # Allow manual runs too (no PR comment in that case, just the job summary).
   workflow_dispatch:
 
-# contents: write is needed to push screenshots to the ci-screenshots branch.
+# contents: write  -> push screenshots to the ci-screenshots branch
+# pull-requests: write -> post/update the sticky PR comment
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   ui-screenshots:
@@ -63,8 +67,9 @@ jobs:
           disable-animations: true
           script: bash .github/scripts/ui_screenshots.sh
 
-      - name: Publish screenshots to run summary
+      - name: Publish screenshots (PR comment + run summary)
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bash .github/scripts/publish_screenshots.sh

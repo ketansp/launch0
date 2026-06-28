@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 #
 # Publishes the screenshots captured by ui_screenshots.sh so they render
-# *inline on the workflow run page* — no artifact download needed.
+# *inline* — in the PR thread and in the run's job summary — with no download.
 #
-# GitHub's job-summary renderer strips base64 `data:` images, so inline images
-# need a real https URL. This pushes the PNGs to an orphan `ci-screenshots`
-# branch (kept out of the main history) under runs/<run_id>/, then writes the
-# job summary referencing their raw.githubusercontent.com URLs.
+# GitHub renders images only from a URL (base64 data: images are stripped from
+# both summaries and comments, and there's no API to upload to user-attachments).
+# So the PNGs are pushed to an orphan `ci-screenshots` branch under runs/<run_id>/
+# and referenced via their raw.githubusercontent.com URLs.
 #
-# Requires: GH_TOKEN env (the workflow's GITHUB_TOKEN) and `contents: write`.
+# Posts/updates a single sticky PR comment (matched by a hidden marker) when run
+# on a pull request; always writes the job summary too.
+#
+# Requires: GH_TOKEN (the workflow GITHUB_TOKEN), `contents: write` and, for the
+# comment, `pull-requests: write`. PR_NUMBER is set only on pull_request runs.
 set -euo pipefail
 
 REPO="${GITHUB_REPOSITORY:?}"
@@ -18,16 +22,18 @@ BRANCH="ci-screenshots"
 DEST="runs/${RUN_ID}"
 OUT_DIR="${OUT_DIR:-screenshots}"
 MANIFEST="$OUT_DIR/manifest.tsv"
+MARKER="<!-- launch0-ui-screenshots -->"
+API="https://api.github.com"
 
 if [[ ! -s "$MANIFEST" ]]; then
   echo "No screenshots manifest at $MANIFEST — nothing to publish." >&2
   exit 0
 fi
 
+# ---- push PNGs to the ci-screenshots branch ----------------------------------
 TMP="$(mktemp -d)"
 REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
 
-# Check out the existing screenshots branch, or start a fresh orphan one.
 if git clone --quiet --depth 1 --branch "$BRANCH" "$REMOTE" "$TMP" 2>/dev/null; then
   echo "Reusing existing $BRANCH branch."
 else
@@ -49,12 +55,15 @@ for i in 1 2 3 4; do
   git -C "$TMP" push -q origin "$BRANCH" && break || { echo "push retry $i"; sleep $((2**i)); }
 done
 
-# ---- job summary -------------------------------------------------------------
+# ---- build the markdown body -------------------------------------------------
 RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${DEST}"
+RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${REPO}/actions/runs/${RUN_ID}"
+BODY="$(mktemp)"
 {
-  echo "## Launch0 UI walkthrough"
+  echo "$MARKER"
+  echo "## 📱 Launch0 UI walkthrough"
   echo ""
-  echo "Captured on an Android emulator from the debug APK built in this run (commit \`${SHA}\`)."
+  echo "Screens captured on an Android emulator from the debug APK built for commit \`${SHA}\` ([run](${RUN_URL}))."
   echo ""
   while IFS=$'\t' read -r file caption; do
     [[ -n "$file" ]] || continue
@@ -63,6 +72,35 @@ RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${DEST}"
     echo "<img alt=\"${caption}\" width=\"300\" src=\"${RAW}/${file}\" />"
     echo ""
   done < "$MANIFEST"
-} >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+} > "$BODY"
 
-echo "Published ${DEST} to $BRANCH and wrote the job summary."
+# ---- job summary -------------------------------------------------------------
+cat "$BODY" >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+
+# ---- sticky PR comment -------------------------------------------------------
+if [[ -z "${PR_NUMBER:-}" ]]; then
+  echo "No PR_NUMBER (not a pull_request run) — skipping PR comment."
+  exit 0
+fi
+
+auth=(-H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json")
+payload="$(jq -Rs '{body: .}' < "$BODY")"
+
+# Find an existing sticky comment by its marker.
+existing_id="$(curl -fsSL "${auth[@]}" \
+  "${API}/repos/${REPO}/issues/${PR_NUMBER}/comments?per_page=100" \
+  | jq -r --arg m "$MARKER" 'map(select(.body|contains($m))) | (.[0].id // empty)')"
+
+if [[ -n "$existing_id" ]]; then
+  echo "Updating existing PR comment $existing_id."
+  curl -fsSL -X PATCH "${auth[@]}" \
+    "${API}/repos/${REPO}/issues/comments/${existing_id}" \
+    -d "$payload" >/dev/null
+else
+  echo "Creating new PR comment."
+  curl -fsSL -X POST "${auth[@]}" \
+    "${API}/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+    -d "$payload" >/dev/null
+fi
+
+echo "Published ${DEST} to $BRANCH; updated job summary and PR #${PR_NUMBER} comment."
