@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.launch0.MainActivity
 import app.launch0.MainViewModel
+import app.launch0.NotesSearchActivity
 import app.launch0.R
 import app.launch0.data.NotesEntry
 import app.launch0.data.NotesStore
@@ -175,10 +176,15 @@ class NotesFragment : androidx.fragment.app.Fragment() {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun openSearch() {
         if (_binding == null) return
         try {
-            findNavController().navigate(R.id.action_notesFragment_to_notesSearchFragment)
+            // Keep the launcher from snapping back to home while the search activity is in front.
+            (activity as? MainActivity)?.setAwaitingActivityResult()
+            startActivity(Intent(requireContext(), NotesSearchActivity::class.java))
+            // Slide in from the right, matching the home → notes transition.
+            requireActivity().overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         } catch (e: Exception) {
             e.printStackTrace()
         }
