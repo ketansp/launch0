@@ -489,8 +489,21 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
     private fun togglePlayback(entry: NotesEntry) {
         val path = entry.mediaPath ?: return
-        if (player != null && currentPlayingId == entry.id) {
-            stopPlayback()
+        val activePlayer = player
+        // Tapping the note that's already loaded pauses or resumes it rather than restarting.
+        if (activePlayer != null && currentPlayingId == entry.id) {
+            try {
+                if (activePlayer.isPlaying) {
+                    activePlayer.pause()
+                    adapter.setPlaybackState(entry.id, paused = true)
+                } else {
+                    activePlayer.start()
+                    adapter.setPlaybackState(entry.id, paused = false)
+                }
+            } catch (e: IllegalStateException) {
+                e.printStackTrace()
+                stopPlayback()
+            }
             return
         }
         stopPlayback()
@@ -508,14 +521,14 @@ class NotesFragment : androidx.fragment.app.Fragment() {
         }
         player = newPlayer
         currentPlayingId = entry.id
-        adapter.setPlayingId(entry.id)
+        adapter.setPlaybackState(entry.id, paused = false)
     }
 
     private fun stopPlayback() {
         player?.let { runCatching { it.release() } }
         player = null
         currentPlayingId = null
-        if (_binding != null) adapter.setPlayingId(null)
+        if (_binding != null) adapter.setPlaybackState(null, paused = false)
     }
 
     private var currentPlayingId: Long? = null

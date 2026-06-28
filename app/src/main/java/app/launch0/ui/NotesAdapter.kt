@@ -48,13 +48,17 @@ class NotesAdapter(
     private val onToggleUrgent: (NotesEntry) -> Unit,
 ) : ListAdapter<NotesRow, RecyclerView.ViewHolder>(DIFF_CALLBACK) {
 
-    /** Id of the voice note currently playing, or null. Drives the play/stop glyph. */
+    /** Id of the voice note currently loaded in the player, or null. Drives the play/pause glyph. */
     private var playingId: Long? = null
 
-    fun setPlayingId(id: Long?) {
-        if (playingId == id) return
+    /** Whether the loaded note is paused (vs. actively playing); a paused note shows the play glyph. */
+    private var paused: Boolean = false
+
+    fun setPlaybackState(id: Long?, paused: Boolean) {
+        if (playingId == id && this.paused == paused) return
         val previous = playingId
         playingId = id
+        this.paused = paused
         currentList.forEachIndexed { index, row ->
             if (row is NotesRow.Item && (row.entry.id == previous || row.entry.id == id)) {
                 notifyItemChanged(index)
@@ -78,7 +82,7 @@ class NotesAdapter(
         when (val row = getItem(position)) {
             is NotesRow.DateHeader -> (holder as DateViewHolder).bind(row)
             is NotesRow.Item -> (holder as ItemViewHolder).bind(
-                row.entry, playingId, onItemLongClick, onImageClick, onAudioClick,
+                row.entry, playingId, paused, onItemLongClick, onImageClick, onAudioClick,
                 onToggleDone, onToggleUrgent,
             )
         }
@@ -97,6 +101,7 @@ class NotesAdapter(
         fun bind(
             entry: NotesEntry,
             playingId: Long?,
+            paused: Boolean,
             onItemLongClick: (NotesEntry) -> Unit,
             onImageClick: (NotesEntry) -> Unit,
             onAudioClick: (NotesEntry) -> Unit,
@@ -126,7 +131,7 @@ class NotesAdapter(
                     notesAudio.isVisible = true
                     notesAudioDuration.text = formatDuration(entry.durationMs)
                     notesAudioIcon.text = root.context.getString(
-                        if (entry.id == playingId) R.string.notes_stop_play_symbol
+                        if (entry.id == playingId && !paused) R.string.notes_pause_symbol
                         else R.string.notes_play_symbol
                     )
                     notesAudio.setOnClickListener { onAudioClick(entry) }
