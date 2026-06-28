@@ -223,5 +223,5 @@
     <string name="notes_mark_done">Mark as done</string>
     <string name="notes_mark_urgent">Mark as urgent</string>
     <string name="notes_play_symbol" translatable="false">▶</string>
-    <string name="notes_stop_play_symbol" translatable="false">⏹</string>
+    <string name="notes_pause_symbol" translatable="false">⏸</string>
 </resources>
