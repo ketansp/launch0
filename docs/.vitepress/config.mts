@@ -4,6 +4,9 @@ export default defineConfig({
   title: 'Launch0',
   description: 'Minimal & Productive Android Launcher',
 
+  // Dark mode only — hides the appearance toggle in the nav bar
+  appearance: 'force-dark',
+
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     ['meta', { name: 'theme-color', content: '#f97316' }],

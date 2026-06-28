@@ -22,6 +22,13 @@
 
   --theme-color-1: #fb923c;
   --theme-color-2: #fca5a5;
+
+  /* ─── Pitch-black background to match the icon (#000) ─── */
+  --vp-c-bg: #000;
+  --vp-c-bg-alt: #000;
+  /* Subtle elevation for cards/code blocks so they read against pure black */
+  --vp-c-bg-soft: #111114;
+  --vp-c-bg-elv: #111114;
 }
 
 /* ─── Hero gradient text ─── */
@@ -31,28 +38,32 @@
     120deg, var(--theme-color-2) 16%, var(--theme-color-1)
   ) 0% 0% / 200% 100%;
 
-  --vp-home-hero-image-background-image: linear-gradient(
-    120deg, var(--theme-color-1) 50%, var(--theme-color-2) 50%
-  );
-  --vp-home-hero-image-filter: blur(40px);
-}
-
-@media (min-width: 640px) {
-  :root {
-    --vp-home-hero-image-filter: blur(56px);
-  }
-}
-
-@media (min-width: 960px) {
-  :root {
-    --vp-home-hero-image-filter: blur(72px);
-  }
+  /* No orange glow behind the hero icon */
+  --vp-home-hero-image-background-image: none;
+  --vp-home-hero-image-filter: none;
 }
 
 /* ─── Hero image ─── */
 .VPHero .VPImage {
   border-radius: 21%;
   background-color: #000;
+}
+
+/* Remove the blurred glow element behind the hero icon entirely */
+.VPHero .image-bg {
+  display: none;
+}
+
+/* ─── Starfield background — same stars as the icon, across the whole page ─── */
+.starfield-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #000;
+  background-image: url('/stars.svg');
+  background-repeat: repeat;
+  background-size: 512px 512px;
 }
 
 /* ─── Hide logo on home page ─── */
