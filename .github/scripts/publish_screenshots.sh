@@ -6,7 +6,8 @@
 # GitHub's job-summary renderer strips base64 `data:` images, so inline images
 # need a real https URL. This pushes the PNGs to an orphan `ci-screenshots`
 # branch (kept out of the main history) under runs/<run_id>/, then writes the
-# job summary referencing their raw.githubusercontent.com URLs.
+# job summary referencing their raw.githubusercontent.com URLs, grouped into the
+# sections recorded in the manifest.
 #
 # Requires: GH_TOKEN env (the workflow's GITHUB_TOKEN) and `contents: write`.
 set -euo pipefail
@@ -51,18 +52,26 @@ done
 
 # ---- job summary -------------------------------------------------------------
 RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${DEST}"
+COUNT="$(grep -c . "$MANIFEST" || echo 0)"
 {
   echo "## Launch0 UI walkthrough"
   echo ""
-  echo "Captured on an Android emulator from the debug APK built in this run (commit \`${SHA}\`)."
+  echo "${COUNT} screens captured on an Android emulator from the debug APK built in this run (commit \`${SHA}\`), seeded with realistic data."
   echo ""
-  while IFS=$'\t' read -r file caption; do
+  last_section=""
+  while IFS=$'\t' read -r file section caption; do
     [[ -n "$file" ]] || continue
-    echo "### ${caption}"
-    echo ""
+    if [[ "$section" != "$last_section" ]]; then
+      echo ""
+      echo "## ${section}"
+      echo ""
+      last_section="$section"
+    fi
     echo "<img alt=\"${caption}\" width=\"300\" src=\"${RAW}/${file}\" />"
+    echo ""
+    echo "*${caption}*"
     echo ""
   done < "$MANIFEST"
 } >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
 
-echo "Published ${DEST} to $BRANCH and wrote the job summary."
+echo "Published ${DEST} to $BRANCH and wrote the job summary (${COUNT} screens)."
