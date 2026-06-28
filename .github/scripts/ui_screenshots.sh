@@ -51,11 +51,13 @@ shot() {
   echo "Captured: $file  ($caption)  [$(current_focus)]"
 }
 
-# Fast swipes: a slow `input swipe` decelerates at the end, so the terminal
-# velocity falls under OnSwipeTouchListener's fling threshold and onSwipe* never
-# fires. Keep the duration short so the gesture stays fast throughout.
-swipe_up()   { adb shell input swipe "$CX" "$(pct_y 68)" "$CX" "$(pct_y 22)" 120; }
-swipe_left() { adb shell input swipe "$(pct_x 92)" "$(pct_y 45)" "$(pct_x 8)" "$(pct_y 45)" 120; }
+# Swipes drive OnSwipeTouchListener.onFling, which needs both distance > 100px
+# and velocity > 100. `adb input swipe` can end with a near-zero terminal
+# velocity, so use a long travel with a moderate (~250ms) duration that still
+# yields several thousand px/s, and start/end in the empty middle band so the
+# gesture lands on the home layout rather than a home-app row.
+swipe_up()   { adb shell input swipe "$CX" "$(pct_y 60)" "$CX" "$(pct_y 10)" 250; }
+swipe_left() { adb shell input swipe "$(pct_x 95)" "$(pct_y 40)" "$(pct_x 5)" "$(pct_y 40)" 250; }
 # Long-press: onLongPress fires at ~500ms, then a further 500ms delay before
 # onLongClick(), so hold well past 1s.
 long_press() { adb shell input swipe "$CX" "$(pct_y 38)" "$CX" "$(pct_y 38)" 1800; }
@@ -70,9 +72,18 @@ go_home() { adb shell input keyevent KEYCODE_HOME; settle 2; }
 echo "Installing $APK_PATH ..."
 adb install -r -t "$APK_PATH"
 
-# Set Launch0 as the default home and give the system a moment to register it,
-# so the very first HOME press doesn't pop the "Select a Home app" chooser.
+# Force Launch0 to actually be the home app. On API 30 `set-home-activity`
+# reports Success but the system still falls back to the stock Pixel Launcher
+# and pops the home-role chooser. Belt-and-suspenders: assign the HOME role
+# (needs root, available on the google_apis AVD) and disable the stock
+# launchers so HOME resolves only to Launch0 — no chooser.
+adb root >/dev/null 2>&1 || true
+adb wait-for-device
 echo "set-home-activity: $(adb shell cmd package set-home-activity "${APP_ID}/${MAIN_ACTIVITY}" 2>&1 | tr -d '\r')"
+adb shell cmd role add-role-holder android.app.role.HOME "$APP_ID" 2>/dev/null || true
+for L in com.google.android.apps.nexuslauncher com.android.launcher3; do
+  adb shell pm disable-user --user 0 "$L" >/dev/null 2>&1 || true
+done
 settle 3
 
 # ---- walkthrough -------------------------------------------------------------
