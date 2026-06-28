@@ -41,21 +41,36 @@ pct_y() { echo $(( H * $1 / 100 )); }
 settle() { sleep "${1:-2}"; }
 
 # screenshot <index> <slug> <caption>
+#
+# Saves a full-resolution PNG (collected into the uploaded artifact) and, for
+# the job summary, embeds a small downscaled JPEG thumbnail. The summary is
+# capped at 1 MB total by GitHub, so full PNGs (a few MB each) can't be
+# embedded inline — the thumbnail keeps every screenshot visible on the run
+# page while the artifact carries the originals.
 shot() {
   local idx="$1" slug="$2" caption="$3"
-  local file
+  local file thumb
   file="$(printf '%s/%02d-%s.png' "$OUT_DIR" "$idx" "$slug")"
   adb exec-out screencap -p > "$file"
   echo "Captured: $file  ($caption)"
 
-  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+  [[ -n "${GITHUB_STEP_SUMMARY:-}" ]] || return 0
+
+  thumb="$(mktemp --suffix=.jpg)"
+  if command -v convert >/dev/null 2>&1 \
+     && convert "$file" -resize 320x -quality 55 "$thumb" 2>/dev/null; then
     {
       echo "### ${idx}. ${caption}"
       echo ""
-      echo "<img alt=\"${caption}\" width=\"280\" src=\"data:image/png;base64,$(base64 -w0 "$file")\" />"
+      echo "<img alt=\"${caption}\" width=\"300\" src=\"data:image/jpeg;base64,$(base64 -w0 "$thumb")\" />"
       echo ""
     } >> "$GITHUB_STEP_SUMMARY"
+  else
+    # No ImageMagick available — list the step; the image is in the artifact.
+    echo "### ${idx}. ${caption} — see the \`ui-screenshots\` artifact" >> "$GITHUB_STEP_SUMMARY"
+    echo "" >> "$GITHUB_STEP_SUMMARY"
   fi
+  rm -f "$thumb"
 }
 
 swipe_up()    { adb shell input swipe "$CX" "$(pct_y 80)" "$CX" "$(pct_y 20)" 350; }
