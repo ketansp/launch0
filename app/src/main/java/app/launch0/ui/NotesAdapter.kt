@@ -1,5 +1,6 @@
 package app.launch0.ui
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.text.Spannable
@@ -24,6 +25,7 @@ import app.launch0.databinding.AdapterNotesDateBinding
 import app.launch0.databinding.AdapterNotesItemBinding
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -245,6 +247,41 @@ internal object LinkAndSelectMovementMethod : ArrowKeyMovementMethod() {
             }
         }
         return super.onTouchEvent(widget, buffer, event)
+    }
+}
+
+/** Groups chronological [entries] into rows, inserting a date divider when the day changes. */
+internal fun buildNotesRows(context: Context, entries: List<NotesEntry>): List<NotesRow> {
+    val rows = ArrayList<NotesRow>(entries.size + 4)
+    var lastDay = Long.MIN_VALUE
+    for (entry in entries) {
+        val dayStart = startOfDay(entry.timestamp)
+        if (dayStart != lastDay) {
+            rows.add(NotesRow.DateHeader(dayStart, dateLabel(context, dayStart)))
+            lastDay = dayStart
+        }
+        rows.add(NotesRow.Item(entry))
+    }
+    return rows
+}
+
+private fun startOfDay(millis: Long): Long = Calendar.getInstance().apply {
+    timeInMillis = millis
+    set(Calendar.HOUR_OF_DAY, 0)
+    set(Calendar.MINUTE, 0)
+    set(Calendar.SECOND, 0)
+    set(Calendar.MILLISECOND, 0)
+}.timeInMillis
+
+private val notesDateFormat = SimpleDateFormat("d MMM yyyy", Locale.getDefault())
+
+private fun dateLabel(context: Context, dayStart: Long): String {
+    val today = startOfDay(System.currentTimeMillis())
+    val dayMs = 24L * 60 * 60 * 1000
+    return when (dayStart) {
+        today -> context.getString(R.string.notes_today)
+        today - dayMs -> context.getString(R.string.notes_yesterday)
+        else -> notesDateFormat.format(Date(dayStart))
     }
 }
 

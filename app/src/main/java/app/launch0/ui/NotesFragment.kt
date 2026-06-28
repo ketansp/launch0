@@ -43,9 +43,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 /**
@@ -60,7 +57,6 @@ class NotesFragment : androidx.fragment.app.Fragment() {
     private lateinit var adapter: NotesAdapter
     private var imageViewerBackCallback: OnBackPressedCallback? = null
 
-    private var searchQuery: String? = null
     private var editingId: Long? = null
 
     // Recording state
@@ -112,7 +108,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
     override fun onResume() {
         super.onResume()
         // Reflect anything added via the share sheet while we were away.
-        loadEntries(scrollToBottom = searchQuery == null)
+        loadEntries(scrollToBottom = true)
     }
 
     private fun applyWindowInsets() {
@@ -142,14 +138,20 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
     /**
      * Notes slides in from the right (swipe-left on home), so swiping back to the right returns
-     * home. The same gesture listener is fed the list's touches via an item-touch listener so the
-     * swipe also works while the finger is over the (otherwise touch-consuming) RecyclerView.
+     * home. Swiping further left opens the dedicated notes search page. The same gesture listener is
+     * fed the list's touches via an item-touch listener so the swipes also work while the finger is
+     * over the (otherwise touch-consuming) RecyclerView.
      */
     private fun initBackSwipe() {
         val swipeListener = object : OnSwipeTouchListener(requireContext()) {
             override fun onSwipeRight() {
                 super.onSwipeRight()
                 goHome()
+            }
+
+            override fun onSwipeLeft() {
+                super.onSwipeLeft()
+                openSearch()
             }
         }
         binding.notesRoot.setOnTouchListener(swipeListener)
@@ -168,6 +170,15 @@ class NotesFragment : androidx.fragment.app.Fragment() {
         if (_binding == null) return
         try {
             findNavController().popBackStack()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun openSearch() {
+        if (_binding == null) return
+        try {
+            findNavController().navigate(R.id.action_notesFragment_to_notesSearchFragment)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -210,8 +221,8 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
     private fun initInput() {
         binding.notesBack.setOnClickListener { goHome() }
+        binding.notesSearch.setOnClickListener { openSearch() }
         binding.notesSend.setOnClickListener { onSend() }
-        binding.notesSearch.setOnClickListener { onSearch() }
         binding.notesRecord.setOnClickListener { onRecordTapped() }
         binding.notesBannerClear.setOnClickListener { clearBanner() }
         binding.notesAttach.setOnClickListener {
@@ -224,7 +235,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
     private fun initObservers() {
         viewModel.notesUpdated.observe(viewLifecycleOwner) {
-            loadEntries(scrollToBottom = searchQuery == null)
+            loadEntries(scrollToBottom = true)
         }
     }
 
@@ -246,7 +257,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
             }
             editingId = null
             updateBanner()
-            loadEntries(scrollToBottom = searchQuery == null)
+            loadEntries(scrollToBottom = true)
         }
     }
 
@@ -267,40 +278,19 @@ class NotesFragment : androidx.fragment.app.Fragment() {
 
     // endregion
 
-    // region Search
-
-    private fun onSearch() {
-        val query = binding.notesInput.text?.toString().orEmpty().trim()
-        // Searching cancels any in-progress edit so the banner stays unambiguous.
-        editingId = null
-        searchQuery = query.ifEmpty { null }
-        updateBanner()
-        loadEntries(scrollToBottom = true)
-    }
+    // region Editing banner
 
     private fun clearBanner() {
         editingId = null
-        searchQuery = null
         binding.notesInput.setText("")
         updateBanner()
-        loadEntries(scrollToBottom = true)
     }
 
     private fun updateBanner() {
         if (_binding == null) return
         val editing = editingId != null
-        val query = searchQuery
-        when {
-            editing -> {
-                binding.notesBanner.isVisible = true
-                binding.notesBannerText.text = getString(R.string.notes_editing)
-            }
-            query != null -> {
-                binding.notesBanner.isVisible = true
-                binding.notesBannerText.text = getString(R.string.notes_search_results, query)
-            }
-            else -> binding.notesBanner.isVisible = false
-        }
+        binding.notesBanner.isVisible = editing
+        if (editing) binding.notesBannerText.text = getString(R.string.notes_editing)
         binding.notesSend.setImageResource(
             if (editing) R.drawable.ic_lucide_check else R.drawable.ic_lucide_send
         )
@@ -316,7 +306,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
             if (entry == null) {
                 requireContext().showToast(getString(R.string.couldnt_add_image))
             } else {
-                loadEntries(scrollToBottom = searchQuery == null)
+                loadEntries(scrollToBottom = true)
             }
         }
     }
@@ -327,52 +317,13 @@ class NotesFragment : androidx.fragment.app.Fragment() {
             if (_binding == null) return@launch
             binding.notesCount.text =
                 resources.getQuantityString(R.plurals.notes_entry_count, all.size, all.size)
-            val query = searchQuery
-            val entries = if (query == null) all else all.filter {
-                it.text.contains(query, ignoreCase = true)
-            }
-            val rows = buildRows(entries)
-            binding.notesEmpty.isVisible = entries.isEmpty()
-            binding.notesEmpty.text = getString(
-                if (query != null) R.string.notes_no_results else R.string.notes_empty_hint
-            )
+            val rows = buildNotesRows(requireContext(), all)
+            binding.notesEmpty.isVisible = all.isEmpty()
+            binding.notesEmpty.text = getString(R.string.notes_empty_hint)
             adapter.submitList(rows) {
                 if (scrollToBottom && rows.isNotEmpty())
                     binding.recyclerView.scrollToPosition(rows.size - 1)
             }
-        }
-    }
-
-    /** Groups chronological [entries] into rows, inserting a date divider when the day changes. */
-    private fun buildRows(entries: List<NotesEntry>): List<NotesRow> {
-        val rows = ArrayList<NotesRow>(entries.size + 4)
-        var lastDay = Long.MIN_VALUE
-        for (entry in entries) {
-            val dayStart = startOfDay(entry.timestamp)
-            if (dayStart != lastDay) {
-                rows.add(NotesRow.DateHeader(dayStart, dateLabel(dayStart)))
-                lastDay = dayStart
-            }
-            rows.add(NotesRow.Item(entry))
-        }
-        return rows
-    }
-
-    private fun startOfDay(millis: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = millis
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-
-    private fun dateLabel(dayStart: Long): String {
-        val today = startOfDay(System.currentTimeMillis())
-        val dayMs = 24L * 60 * 60 * 1000
-        return when (dayStart) {
-            today -> getString(R.string.notes_today)
-            today - dayMs -> getString(R.string.notes_yesterday)
-            else -> dateFormat.format(Date(dayStart))
         }
     }
 
@@ -487,7 +438,7 @@ class NotesFragment : androidx.fragment.app.Fragment() {
                 if (entry == null) {
                     requireContext().showToast(getString(R.string.notes_recording_failed))
                 } else {
-                    loadEntries(scrollToBottom = searchQuery == null)
+                    loadEntries(scrollToBottom = true)
                 }
             }
         } else if (file?.exists() == true) {
@@ -607,6 +558,5 @@ class NotesFragment : androidx.fragment.app.Fragment() {
     companion object {
         private const val FULL_IMAGE_DIMEN = 2048
         private const val MIN_RECORDING_MS = 500L
-        private val dateFormat = SimpleDateFormat("d MMM yyyy", Locale.getDefault())
     }
 }
