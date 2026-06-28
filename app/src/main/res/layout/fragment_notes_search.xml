@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/notesSearchRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    android:background="?attr/primaryShadeDarkColor"
+    android:orientation="vertical">
+
+    <!-- Matching notes fill the height above the bottom-aligned search box. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:fadingEdgeLength="24dp"
+        android:requiresFadingEdge="vertical"
+        tools:listitem="@layout/adapter_notes_item" />
+
+    <!-- Borderless search field, styled exactly like the app drawer's. -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginBottom="32dp"
+        android:gravity="end"
+        android:imeOptions="actionSearch"
+        android:paddingHorizontal="3dp"
+        android:paddingVertical="0dp"
+        android:textCursorDrawable="@null"
+        app:closeIcon="@null"
+        app:iconifiedByDefault="false"
+        app:queryBackground="@null"
+        app:queryHint="___"
+        app:searchIcon="@null"
+        app:theme="@style/AppSearchText" />
+
+</LinearLayout>
