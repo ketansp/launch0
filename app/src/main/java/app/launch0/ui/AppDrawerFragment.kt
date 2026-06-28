@@ -273,11 +273,6 @@ class AppDrawerFragment : Fragment() {
     }
 
     private fun initAlphabetIndex() {
-        // The list (and the index beside it) span exactly half of the screen height.
-        binding.listContainer.layoutParams = binding.listContainer.layoutParams.apply {
-            height = resources.displayMetrics.heightPixels / 2
-        }
-
         // The index always sits in its own column on the right (see the layout); the app
         // names follow the home screen alignment independently of it.
         binding.alphabetIndex.setTextColor(themeColor(R.attr.primaryColor))
