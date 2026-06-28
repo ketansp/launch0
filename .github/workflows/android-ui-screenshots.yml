@@ -1,0 +1,72 @@
+name: Android UI Screenshots
+
+# On every merge/push to main or master:
+#   1. Build the debug APK.
+#   2. Boot an Android emulator (virtual device) on the runner.
+#   3. Install the APK, drive a few screens with real gestures, and screenshot
+#      each step (see .github/scripts/ui_screenshots.sh).
+#   4. Surface the screenshots two ways:
+#        - inline in the run's Job Summary (rendered on the run page), and
+#        - as a downloadable "ui-screenshots" artifact.
+#
+#   Note: the plain-text Actions console log cannot render images, so the
+#   screenshots appear in the Job Summary (Actions run page) and the artifact
+#   rather than in the raw log stream.
+
+on:
+  push:
+    branches: [main, master]
+  # Allow manual runs too, so you can test without merging.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ui-screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      # The emulator needs hardware acceleration (KVM) to boot in reasonable
+      # time on the GitHub-hosted Linux runners.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run UI walkthrough on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash .github/scripts/ui_screenshots.sh
+
+      - name: Upload screenshots artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: screenshots/
+          if-no-files-found: warn
+          retention-days: 14
