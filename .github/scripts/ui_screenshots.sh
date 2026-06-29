@@ -66,12 +66,16 @@ shot() {
   echo "Captured: $file  [$SECTION] $caption  [$(current_focus)]"
 }
 
+# ---- writing into the app's private storage ----------------------------------
+# adb flattens argv into one string and the *device* shell re-parses it, so a
+# `>` outside single quotes is performed by the device shell (uid shell, cwd /)
+# instead of by run-as inside the app's data dir. Passing the whole run-as
+# invocation as ONE double-quoted arg keeps the redirect inside the single
+# quotes, so the app-context `sh -c` performs it (cwd = the app data dir).
+appwrite()     { adb shell "run-as $APP_ID sh -c 'cat > $1'"; }       # stdin -> file
+appwrite_b64() { adb shell "run-as $APP_ID sh -c 'base64 -d > $1'"; } # base64 stdin -> file
+
 # ---- gestures ----------------------------------------------------------------
-# Fast swipes: a slow `input swipe` decelerates at the end so the terminal
-# velocity drops under OnSwipeTouchListener's fling threshold and onSwipe* never
-# fires. Keep the duration short so the gesture stays fast throughout.
-swipe_up()    { adb shell input swipe "$CX" "$(pct_y 68)" "$CX" "$(pct_y 22)" 120; }
-swipe_left()  { adb shell input swipe "$(pct_x 92)" "$(pct_y 45)" "$(pct_x 8)" "$(pct_y 45)" 120; }
 long_press()  { adb shell input swipe "$CX" "$(pct_y 38)" "$CX" "$(pct_y 38)" 1800; }
 # A controlled (non-fling) drag, for scrolling lists/the settings page.
 scroll_down() { adb shell input swipe "$CX" "$(pct_y 72)" "$CX" "$(pct_y 30)" 400; settle 1; }
@@ -97,14 +101,12 @@ ui_dump() {
 }
 locate() { printf '%s' "$UIX" | python3 "$SCRIPT_DIR/find_node.py" "$@"; }
 
-# tap <find_node args...> — refresh UI, locate, tap. Returns non-zero (logs) on miss.
 tap() {
   ui_dump || { echo "  [tap] ui dump failed for: $*"; return 1; }
   local xy; xy="$(locate "$@")" || { echo "  [tap] not found: $*"; return 1; }
   echo "  tap ($*) -> $xy"
   adb shell input tap $xy; return 0
 }
-# longpress <find_node args...>
 longpress() {
   ui_dump || { echo "  [longpress] ui dump failed for: $*"; return 1; }
   local xy; xy="$(locate "$@")" || { echo "  [longpress] not found: $*"; return 1; }
@@ -113,8 +115,49 @@ longpress() {
   adb shell input swipe "$1" "$2" "$1" "$2" 1800; return 0
 }
 present() { ui_dump || return 1; locate "$@" >/dev/null 2>&1; }
+type_text() { adb shell input text "$(echo "$1" | sed 's/ /%s/g')"; }
 
-# Scroll the current (settings) page until <text> appears, then it's tap-able.
+# ---- navigation (fling-detection on this emulator is finicky, so verify+retry).
+drawer_is_open() { ui_dump || return 1; locate id appTitle >/dev/null 2>&1 || locate id search >/dev/null 2>&1; }
+notes_is_open()  { ui_dump || return 1; locate id notesInput >/dev/null 2>&1 || locate id notesTitle >/dev/null 2>&1; }
+
+open_drawer() {
+  drawer_is_open && return 0
+  local d
+  for d in 300 180 450 130; do
+    echo "  swipe up -> drawer (dur=${d}ms)"
+    adb shell input swipe "$CX" "$(pct_y 80)" "$CX" "$(pct_y 20)" "$d"
+    settle 2
+    drawer_is_open && return 0
+  done
+  echo "  [open_drawer] drawer did not open"; return 1
+}
+open_notes() {
+  notes_is_open && return 0
+  local d
+  for d in 300 180 450 130; do
+    echo "  swipe left -> notes (dur=${d}ms)"
+    adb shell input swipe "$(pct_x 90)" "$(pct_y 50)" "$(pct_x 6)" "$(pct_y 50)" "$d"
+    settle 2
+    notes_is_open && return 0
+  done
+  echo "  [open_notes] notes did not open"; return 1
+}
+
+# Scroll the settings page until <text> sits in the upper part, so the inline
+# options it expands render on-screen below it (not clipped off the bottom).
+reveal_row() {
+  local text="$1" n cy
+  scroll_to_text "$text" >/dev/null 2>&1
+  for n in 1 2 3 4 5; do
+    ui_dump || break
+    cy="$(locate text "$text" --contains 2>/dev/null | awk '{print $2}')"
+    [ -z "$cy" ] && break
+    [ "$cy" -lt "$(pct_y 45)" ] && break
+    scroll_down
+  done
+}
+# Scroll the settings page until <text> appears at all, then it's tap-able.
 scroll_to_text() {
   local text="$1" n=0
   while [ $n -lt 8 ]; do
@@ -124,7 +167,6 @@ scroll_to_text() {
   done
   present text "$text" --contains
 }
-type_text() { adb shell input text "$(echo "$1" | sed 's/ /%s/g')"; }
 
 # =============================================================================
 # 1. Install + make default home
@@ -132,8 +174,6 @@ type_text() { adb shell input text "$(echo "$1" | sed 's/ /%s/g')"; }
 echo "Installing $APK_PATH ..."
 adb install -r -t "$APK_PATH" || { echo "APK install failed"; exit 1; }
 echo "set-home-activity: $(adb shell cmd package set-home-activity "${APP_ID}/${MAIN_ACTIVITY}" 2>&1 | tr -d '\r')"
-# Usage-access powers the on-home screen-time label and the Settings "Screen
-# time" row; granting it exercises that wiring (best-effort).
 adb shell appops set "$APP_ID" GET_USAGE_STATS allow >/dev/null 2>&1 || true
 
 # A tidy, deterministic status bar for the screens that show one.
@@ -182,21 +222,30 @@ if command -v convert >/dev/null 2>&1; then
 fi
 SEED_IMG_PATH=""; [ -n "$HOST_IMG" ] && SEED_IMG_PATH="$IMG_DEST"
 
-# Build the two prefs XML files on the host.
+# Build the two prefs XML files on the host, then write them in the app's context.
 NOW_MS="$(date +%s)000"
 MAIN_XML="$(mktemp)"; NOTES_XML="$(mktemp)"
 python3 "$SCRIPT_DIR/seed_data.py" "$MAIN_XML" "$NOTES_XML" "$INSTALLED" "$NOW_MS" "$SEED_IMG_PATH" "$AUDIO_DEST"
 
-# Write everything in the app's own security context (piped through run-as) so
-# there are no SELinux / ownership surprises.
-adb shell run-as "$APP_ID" sh -c 'cat > shared_prefs/app.launch0.xml'        < "$MAIN_XML"
-adb shell run-as "$APP_ID" sh -c 'cat > shared_prefs/app.launch0.notes.xml'  < "$NOTES_XML"
-adb shell run-as "$APP_ID" sh -c ': > files/notes_audio/audio_seed.m4a'      || true
+appwrite shared_prefs/app.launch0.xml        < "$MAIN_XML"
+appwrite shared_prefs/app.launch0.notes.xml  < "$NOTES_XML"
+adb shell "run-as $APP_ID sh -c ': > files/notes_audio/audio_seed.m4a'" >/dev/null 2>&1 || true
 if [ -n "$HOST_IMG" ]; then
-  base64 -w0 "$HOST_IMG" | adb shell run-as "$APP_ID" sh -c 'base64 -d > files/notes_images/img_seed.png' || true
+  base64 -w0 "$HOST_IMG" | appwrite_b64 files/notes_images/img_seed.png || true
 fi
-echo "Seed files written. shared_prefs now:"
-adb shell run-as "$APP_ID" ls -la shared_prefs files/notes_images 2>&1 | tr -d '\r' || true
+echo "Seed files written. App storage now:"
+adb shell run-as "$APP_ID" ls -la shared_prefs files/notes_images files/notes_audio 2>&1 | tr -d '\r' || true
+
+# Re-seed just the main prefs with appearance overrides, then restart the app.
+#   seed_main <theme> <alignment> <apps_num>   (theme 2=dark 1=light; align END=8388613 CENTER=17)
+seed_main() {
+  local out; out="$(mktemp)"
+  python3 "$SCRIPT_DIR/seed_data.py" "$out" /dev/null "$INSTALLED" "$NOW_MS" "$SEED_IMG_PATH" "$AUDIO_DEST" "$1" "$2" "${3:-}"
+  adb shell am force-stop "$APP_ID" >/dev/null 2>&1 || true
+  appwrite shared_prefs/app.launch0.xml < "$out"
+  adb shell am start -n "${APP_ID}/${MAIN_ACTIVITY}" >/dev/null 2>&1
+  settle 4; rm -f "$out"
+}
 
 # =============================================================================
 # 3. Walkthrough
@@ -211,7 +260,7 @@ shot 1 home "Home — clock, date, year-progress widget and your apps (dark them
 
 # ---- App drawer -------------------------------------------------------------
 section "App drawer"
-swipe_up; settle 2
+open_drawer
 shot 2 app-drawer "App drawer — every installed app as plain text, with the A–Z fast-scroll index"
 
 # Live search: type a query, watch the list filter.
@@ -220,12 +269,11 @@ type_text "ca"; settle 2
 shot 3 app-search "Search filters the drawer live as you type (\"ca\")"
 
 # Reopen a fresh, unfiltered drawer for the long-press demo.
-go_home; swipe_up; settle 2
+go_home; open_drawer
 
 # Long-press an app row → the per-app action menu (rename / hide / info / uninstall).
 longpress id appTitle --index 1; settle 2
 shot 4 app-menu "Long-press any app for actions: uninstall, rename, hide, app info"
-# Open the inline rename editor.
 tap text "Rename"; settle 2
 shot 5 app-rename "Rename an app inline, without leaving the drawer"
 back; settle 1; back; settle 1
@@ -235,29 +283,30 @@ section "Settings"
 go_home; long_press; settle 2
 shot 6 settings-home "Settings — Home screen section (apps count, date/time, widgets, icons)"
 
+reveal_row "Apps on home screen"
 tap text "Apps on home screen" --contains; settle 1
 shot 7 settings-apps-num "Pick how many apps (0–8) appear on the home screen"
 
-scroll_to_text "Show date time" >/dev/null 2>&1
+reveal_row "Show date time"
 tap text "Show date time" --contains; settle 1
 shot 8 settings-datetime "Date & time display: On / Off / Date only"
 
-scroll_to_text "Icon shape" >/dev/null 2>&1
+reveal_row "Icon shape"
 tap text "Icon shape" --contains; settle 1
 shot 9 settings-icon-shape "Icon shapes — default, circle, square, squircle, teardrop"
 
-scroll_to_text "App alignment" >/dev/null 2>&1
+reveal_row "App alignment"
 tap text "App alignment" --contains; settle 1
 shot 10 settings-alignment "Home layout alignment — left / center / right and bottom toggle"
 
 # Appearance section.
-scroll_to_text "Theme mode" >/dev/null 2>&1
+reveal_row "Theme mode"
 shot 11 settings-appearance "Appearance — keyboard, hourly wallpaper, status bar, theme, text size"
 tap text "Theme mode" --contains; settle 1
 shot 12 settings-theme "Theme — Light / Dark / System"
 
 # Do Not Disturb section.
-scroll_to_text "Hold duration" >/dev/null 2>&1
+reveal_row "Hold duration"
 shot 13 settings-dnd "Do Not Disturb — hold notifications and release them on your terms"
 tap text "Hold duration" --contains; settle 1
 shot 14 settings-dnd-duration "How long to hold notifications — 30 / 45 / 60 / 90 / 120 / 180 min"
@@ -265,26 +314,29 @@ shot 14 settings-dnd-duration "How long to hold notifications — 30 / 45 / 60 /
 # Gestures section (revealed by tapping its header).
 scroll_to_text "Gestures" >/dev/null 2>&1
 tap text "Gestures"; settle 1
-scroll_to_text "Swipe left for" >/dev/null 2>&1
+reveal_row "Swipe left for"
 shot 15 settings-gestures "Gestures — swipe and double-tap actions"
 tap text "Swipe left for" --contains; settle 1
 shot 16 settings-swipe-left "Swipe-left action — open Notes or launch an app"
 
 # ---- Notes ------------------------------------------------------------------
 section "Notes"
-go_home; swipe_left; settle 2
+go_home; open_notes
 shot 17 notes "Notes — a private chat with yourself: text, to-dos, an image and a voice memo"
 
 # Per-note actions menu on a text note.
 longpress text "Grocery run" --contains; settle 2
 shot 18 notes-menu "Note actions — copy, share, edit, delete"
-# Edit the note: input bar pre-fills and an editing banner appears.
 tap text "Edit"; settle 2
 shot 19 notes-edit "Editing a note inline — the banner shows you're editing"
 tap desc "Cancel"; settle 1            # clear the editing banner
 
 # Full-screen image viewer.
-tap id notesImage; settle 2
+if ! tap id notesImage; then
+  adb shell input swipe "$CX" "$(pct_y 35)" "$CX" "$(pct_y 70)" 400; settle 1   # reveal older notes
+  tap id notesImage
+fi
+settle 2
 shot 20 notes-image "Tap an image note to view it full screen"
 tap id notesFullImage 2>/dev/null || adb shell input tap "$CX" "$(pct_y 50)"; settle 1
 
@@ -296,34 +348,24 @@ shot 21 notes-search "Search your notes (\"launch\")"
 back; settle 1
 
 # ---- Variations -------------------------------------------------------------
-# Flip the theme to light and re-alignment via the real Settings UI, then show
-# the home screen reacting — exercising those controls end to end.
+# Re-seed appearance and restart so the home screen renders the variation cleanly
+# (driving the inline selectors is unreliable when options fall below the fold).
 section "Variations"
-go_home; long_press; settle 2
-scroll_to_text "Theme mode" >/dev/null 2>&1
-tap text "Theme mode" --contains; settle 1
-tap text "Light"; settle 2
+seed_main 1 8388613 ""        # light theme, right-aligned, default count
 go_home
-shot 22 home-light "Home — light theme (changed live from Settings)"
+shot 22 home-light "Home — light theme"
 
-go_home; long_press; settle 2
-scroll_to_text "App alignment" >/dev/null 2>&1
-tap text "App alignment" --contains; settle 1
-tap text "Center"; settle 1
-scroll_to_text "Apps on home screen" >/dev/null 2>&1
-tap text "Apps on home screen" --contains; settle 1
-tap text "4"; settle 1                    # 4 of the 6 seeded apps — no blank slots
+seed_main 1 17 4              # light theme, centred, 4 apps
 go_home
-shot 23 home-center "Home — center-aligned app names (light theme)"
+shot 23 home-center "Home — light theme, centre-aligned, fewer apps"
 
-# Notes empty-state for completeness: clear seeded notes and reopen.
+# Notes empty-state: clear the seeded notes and reopen.
 section "Notes"
-adb shell run-as "$APP_ID" sh -c ': > shared_prefs/app.launch0.notes.xml' 2>/dev/null || true
-printf "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map></map>\n" \
-  | adb shell run-as "$APP_ID" sh -c 'cat > shared_prefs/app.launch0.notes.xml' || true
+printf "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map />\n" \
+  | appwrite shared_prefs/app.launch0.notes.xml || true
 adb shell am force-stop "$APP_ID" >/dev/null 2>&1 || true
 adb shell am start -n "${APP_ID}/${MAIN_ACTIVITY}" >/dev/null 2>&1; settle 3
-go_home; swipe_left; settle 2
+go_home; open_notes
 shot 24 notes-empty "Notes — empty state inviting your first jot"
 
 go_home

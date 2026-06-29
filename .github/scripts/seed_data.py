@@ -79,7 +79,9 @@ def b(name, val):
     return f'    <boolean name="{escape(name)}" value="{"true" if val else "false"}" />'
 
 
-def build_main(home_apps):
+def build_main(home_apps, theme=2, alignment=8388613, apps_num=None):
+    if apps_num is None:
+        apps_num = len(home_apps)
     lines = ["<?xml version='1.0' encoding='utf-8' standalone='yes' ?>", "<map>"]
     # Onboarding / first-run state: suppress dialogs and the "set default" prompt.
     lines += [
@@ -90,15 +92,15 @@ def build_main(home_apps):
     ]
     # Layout & appearance.
     lines += [
-        i("HOME_APPS_NUM", len(home_apps)),
+        i("HOME_APPS_NUM", apps_num),
         i("DATE_TIME_VISIBILITY", 1),       # On (clock + date)
         b("SHOW_YEAR_WIDGET", True),
         b("SHOW_APP_ICONS", True), b("SHOW_APP_NAMES", True),
         i("ICON_SIZE", 28), i("ICON_SHAPE", 0),
-        i("HOME_ALIGNMENT", 8388613),        # Gravity.END (right-aligned)
+        i("HOME_ALIGNMENT", alignment),       # Gravity.END=8388613, CENTER=17, START=8388611
         b("HOME_BOTTOM_ALIGNMENT", True),
         b("AUTO_SHOW_KEYBOARD", False),       # keep the drawer list unobscured
-        i("APP_THEME", 2),                    # AppCompatDelegate.MODE_NIGHT_YES
+        i("APP_THEME", theme),                # MODE_NIGHT_YES=2 (dark), MODE_NIGHT_NO=1 (light)
     ]
     # Gestures.
     lines += [
@@ -152,11 +154,15 @@ def build_notes(now_ms, image_path, audio_path):
 
 def main():
     out_main, out_notes, installed_file, now_ms, image_path, audio_path = sys.argv[1:7]
+    # Optional appearance overrides (used to re-seed for the variation screenshots).
+    theme = int(sys.argv[7]) if len(sys.argv) > 7 else 2
+    alignment = int(sys.argv[8]) if len(sys.argv) > 8 else 8388613
+    apps_num = int(sys.argv[9]) if len(sys.argv) > 9 and sys.argv[9] else None
     with open(installed_file) as fh:
         installed = [ln.strip() for ln in fh if ln.strip()]
     home_apps = select_home_apps(installed)
     with open(out_main, "w") as fh:
-        fh.write(build_main(home_apps))
+        fh.write(build_main(home_apps, theme, alignment, apps_num))
     with open(out_notes, "w") as fh:
         fh.write(build_notes(int(now_ms), image_path, audio_path))
     # Echo the chosen home apps so the CI log records what was seeded.
