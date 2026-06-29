@@ -8,13 +8,20 @@
     android:background="?attr/primaryShadeDarkColor"
     android:orientation="vertical">
 
-    <!-- Scrolling app list with the alphabet index in its own column on the right; it fills the
-         full available height above the search bar. -->
+    <!-- Top spacer takes 10% of the space above the search bar so the list below fills the
+         remaining 90%, leaving a small gap at the top. -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Scrolling app list with the alphabet index in its own column on the right; it fills 90%
+         of the available height above the search bar (see the spacer above). -->
     <LinearLayout
         android:id="@+id/listContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="9"
         android:orientation="horizontal">
 
         <androidx.recyclerview.widget.RecyclerView
