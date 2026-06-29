@@ -43,6 +43,7 @@ import app.launch0.data.Prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.Collator
+import java.text.Normalizer
 import kotlin.math.pow
 import kotlin.math.sqrt
 import androidx.core.graphics.createBitmap
@@ -54,6 +55,25 @@ fun Context.showToast(message: String?, duration: Int = Toast.LENGTH_SHORT) {
 
 fun Context.showToast(stringResource: Int, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(this, getString(stringResource), duration).show()
+}
+
+/**
+ * Accent-stripped form of a label, so "Ärzte" sorts (and sections) alongside "A".
+ * Mirrors the normalization used by the app drawer's alphabet index (see AppDrawerAdapter).
+ */
+private fun normalizeLabel(label: String): String =
+    Normalizer.normalize(label.trim(), Normalizer.Form.NFD)
+        .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+
+/**
+ * Sort rank that keeps the alphabet index and the list in sync: names starting with a digit,
+ * symbol, or non-Latin character all collapse into the leading "#" bucket (rank 0); everything
+ * A–Z follows (rank 1). Without this, digits/ASCII symbols sort above 'A' while emoji/CJK names
+ * sort below 'Z', splitting the "#" section into two groups — only one of which the index can reach.
+ */
+private fun drawerSectionRank(label: String): Int {
+    val first = normalizeLabel(label).firstOrNull() ?: return 0
+    return if (first.uppercaseChar() in 'A'..'Z') 1 else 0
 }
 
 suspend fun getAppsList(
@@ -109,7 +129,13 @@ suspend fun getAppsList(
                 appList.addAll(getPinnedShortcuts(context, prefs))
             }
 
-            appList.sortBy { it.appLabel.lowercase() }
+            appList.sortWith(
+                compareBy(
+                    { drawerSectionRank(it.appLabel) },
+                    { normalizeLabel(it.appLabel).lowercase() },
+                    { it.appLabel.lowercase() },
+                )
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         }
