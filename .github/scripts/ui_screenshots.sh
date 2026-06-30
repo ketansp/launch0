@@ -137,17 +137,36 @@ fresh_home() {
 drawer_is_open() { ui_dump || return 1; locate id appTitle >/dev/null 2>&1 || locate id search >/dev/null 2>&1; }
 notes_is_open()  { ui_dump || return 1; locate id notesInput >/dev/null 2>&1 || locate id notesTitle >/dev/null 2>&1; }
 
-# Swipe up to the app drawer. Fling detection is finicky, so verify and retry.
+# Open the app list. Try the real swipe-up-to-drawer fling first (finicky, so
+# verify+retry); if that won't register, fall back to long-pressing a home app,
+# which opens the same searchable app list (in "pick an app" mode) reliably.
 open_drawer() {
   drawer_is_open && return 0
   local d
-  for d in 300 180 450 130; do
+  for d in 300 180 450; do
     echo "  swipe up -> drawer (dur=${d}ms)"
     adb shell input swipe "$CX" "$(pct_y 80)" "$CX" "$(pct_y 20)" "$d"
     settle 2
     drawer_is_open && return 0
   done
-  echo "  [open_drawer] drawer did not open"; diag "open_drawer"; return 1
+  echo "  swipe-up didn't register; long-pressing a home app to open the app list"
+  longpress id homeApp1; settle 2
+  drawer_is_open && return 0
+  echo "  [open_drawer] app list did not open"; diag "open_drawer"; return 1
+}
+
+# Long-press a text note to raise its action dialog (Copy/Share/Edit/Delete).
+# The note text is textIsSelectable, so pressing it starts text selection; the
+# row's long-click lives on the root view, so press the gap just right of the
+# bubble instead.
+longpress_note() {  # <text-substring-of-a-text-note>
+  ui_dump || return 1
+  local b; b="$(locate text "$1" --contains --bounds)" || { echo "  [longpress_note] not found: $1"; return 1; }
+  set -- $b                        # x1 y1 x2 y2
+  local x=$(( $3 + 45 )) y=$(( ($2 + $4) / 2 ))
+  [ "$x" -gt "$(pct_x 82)" ] && x=$(( $3 + 20 ))   # stay left of the flag/checkbox
+  echo "  long-press note gap at ($x,$y)"
+  adb shell input swipe "$x" "$y" "$x" "$y" 1800
 }
 
 # Open the Notes page deterministically: a swipe-left fling does not register on
@@ -232,19 +251,11 @@ fi
 echo "Launchable packages found: $(wc -l < "$INSTALLED")"
 sort "$INSTALLED" | head -40 | tr '\n' ' '; echo
 
-# A sample image for the image note (ImageMagick is present on GitHub runners;
-# fall back to no image note if it isn't).
-HOST_IMG=""
-if command -v convert >/dev/null 2>&1; then
-  HOST_IMG="$(mktemp --suffix=.png)"
-  convert -size 1000x720 gradient:'#0ea5e9'-'#7c3aed' \
-    -gravity center -pointsize 54 -fill white \
-    -annotate +0-30 'Trailhead' -pointsize 30 -annotate +0+40 'Sat 6:41am · 12°C' \
-    "$HOST_IMG" 2>/dev/null \
-    || convert -size 1000x720 xc:'#334155' "$HOST_IMG" 2>/dev/null \
-    || HOST_IMG=""
-fi
-SEED_IMG_PATH=""; [ -n "$HOST_IMG" ] && SEED_IMG_PATH="$IMG_DEST"
+# A sample image for the image note, generated with pure-stdlib Python (no
+# ImageMagick dependency — `convert` isn't reliably present on the runner).
+HOST_IMG="$(mktemp --suffix=.png)"
+python3 "$SCRIPT_DIR/make_png.py" "$HOST_IMG" 1000 700 || HOST_IMG=""
+SEED_IMG_PATH=""; [ -n "$HOST_IMG" ] && [ -s "$HOST_IMG" ] && SEED_IMG_PATH="$IMG_DEST"
 
 # Build the two prefs XML files on the host, then write them in the app's context.
 NOW_MS="$(date +%s)000"
@@ -254,8 +265,9 @@ python3 "$SCRIPT_DIR/seed_data.py" "$MAIN_XML" "$NOTES_XML" "$INSTALLED" "$NOW_M
 appwrite shared_prefs/app.launch0.xml        < "$MAIN_XML"
 appwrite shared_prefs/app.launch0.notes.xml  < "$NOTES_XML"
 adb shell "run-as $APP_ID sh -c ': > files/notes_audio/audio_seed.m4a'" >/dev/null 2>&1 || true
-if [ -n "$HOST_IMG" ]; then
+if [ -n "$SEED_IMG_PATH" ]; then
   base64 -w0 "$HOST_IMG" | appwrite_b64 files/notes_images/img_seed.png || true
+  echo "Pushed image note: $(adb shell run-as "$APP_ID" wc -c files/notes_images/img_seed.png 2>&1 | tr -d '\r') (host $(wc -c < "$HOST_IMG") bytes)"
 fi
 echo "Seed files written. App storage now:"
 adb shell run-as "$APP_ID" ls -la shared_prefs files/notes_images files/notes_audio 2>&1 | tr -d '\r' || true
@@ -346,7 +358,7 @@ go_home; open_notes
 shot 17 notes "Notes — a private chat with yourself: text, to-dos, an image and a voice memo"
 
 # Per-note actions menu on a text note near the bottom (guaranteed in view).
-longpress text "Standup" --contains; settle 2
+longpress_note "Standup"; settle 2
 shot 18 notes-menu "Note actions — copy, share, edit, delete"
 tap text "Edit"; settle 2
 shot 19 notes-edit "Editing a note inline — the banner shows you're editing"

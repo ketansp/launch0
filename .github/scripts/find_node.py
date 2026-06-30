@@ -26,7 +26,7 @@ ATTR_MAP = {"text": "text", "desc": "content-desc", "id": "resource-id", "class"
 
 def main() -> int:
     args = sys.argv[1:]
-    contains = clickable = False
+    contains = clickable = want_bounds = False
     index = 0
     positional = []
     i = 0
@@ -36,6 +36,8 @@ def main() -> int:
             contains = True
         elif a == "--clickable":
             clickable = True
+        elif a == "--bounds":
+            want_bounds = True
         elif a == "--index":
             i += 1
             index = int(args[i])
@@ -87,7 +89,10 @@ def main() -> int:
     if not m:
         return 1
     x1, y1, x2, y2 = map(int, m.groups())
-    print((x1 + x2) // 2, (y1 + y2) // 2)
+    if want_bounds:
+        print(x1, y1, x2, y2)
+    else:
+        print((x1 + x2) // 2, (y1 + y2) // 2)
     return 0
 
 
