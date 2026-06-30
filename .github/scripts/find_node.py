@@ -57,17 +57,24 @@ def main() -> int:
         data = re.sub(r"&(?!amp;|lt;|gt;|quot;|apos;|#)", "&amp;", data)
         root = ET.fromstring(data)
 
-    matches = []
+    matches, exact = [], []
     for node in root.iter("node"):
         av = node.get(xml_attr, "")
         if xml_attr == "resource-id":
-            ok = av == value or av.endswith("/" + value) or value in av
+            is_exact = av == value or av.endswith("/" + value)
+            ok = is_exact or value in av
         elif contains:
+            is_exact = av == value
             ok = value in av
         else:
-            ok = av == value
+            is_exact = ok = av == value
         if ok and (not clickable or node.get("clickable") == "true"):
             matches.append(node)
+            if is_exact:
+                exact.append(node)
+    # Prefer exact id/text matches (e.g. id "alignment" over "alignmentLeft").
+    if exact:
+        matches = exact
 
     if not matches:
         return 1

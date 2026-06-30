@@ -117,10 +117,27 @@ longpress() {
 present() { ui_dump || return 1; locate "$@" >/dev/null 2>&1; }
 type_text() { adb shell input text "$(echo "$1" | sed 's/ /%s/g')"; }
 
-# ---- navigation (fling-detection on this emulator is finicky, so verify+retry).
+# Log what's actually on screen when navigation doesn't land where expected.
+diag() {
+  echo "  [diag] $1 | focus: $(current_focus)"
+  ui_dump && echo "  [diag] ids on screen:$(printf '%s' "$UIX" \
+    | grep -oE 'id/(appTitle|recyclerView|notesTitle|notesInput|search|homeApp1|mainLayout)' | sort -u | tr '\n' ' ')"
+}
+
+# Cold-restart the app to a clean home. A fresh launch is the one state where the
+# swipe-up-to-drawer fling reliably registers (later swipes after a round-trip do
+# not), so we restart before each drawer open.
+fresh_home() {
+  adb shell am force-stop "$APP_ID" >/dev/null 2>&1 || true
+  adb shell am start -n "${APP_ID}/${MAIN_ACTIVITY}" >/dev/null 2>&1
+  settle 4; go_home
+}
+
+# ---- navigation -------------------------------------------------------------
 drawer_is_open() { ui_dump || return 1; locate id appTitle >/dev/null 2>&1 || locate id search >/dev/null 2>&1; }
 notes_is_open()  { ui_dump || return 1; locate id notesInput >/dev/null 2>&1 || locate id notesTitle >/dev/null 2>&1; }
 
+# Swipe up to the app drawer. Fling detection is finicky, so verify and retry.
 open_drawer() {
   drawer_is_open && return 0
   local d
@@ -130,18 +147,25 @@ open_drawer() {
     settle 2
     drawer_is_open && return 0
   done
-  echo "  [open_drawer] drawer did not open"; return 1
+  echo "  [open_drawer] drawer did not open"; diag "open_drawer"; return 1
 }
+
+# Open the Notes page deterministically: a swipe-left fling does not register on
+# this emulator, but MainActivity's ACTION_SEND handler drops shared text onto the
+# notes page and navigates there. This also adds one note (a realistic extra).
 open_notes() {
   notes_is_open && return 0
-  local d
-  for d in 300 180 450 130; do
-    echo "  swipe left -> notes (dur=${d}ms)"
-    adb shell input swipe "$(pct_x 90)" "$(pct_y 50)" "$(pct_x 6)" "$(pct_y 50)" "$d"
-    settle 2
-    notes_is_open && return 0
-  done
-  echo "  [open_notes] notes did not open"; return 1
+  adb shell "am start -n ${APP_ID}/${MAIN_ACTIVITY} -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT 'Reminder: water the plants and refill the bird feeder'" >/dev/null 2>&1
+  settle 3
+  notes_is_open && return 0
+  echo "  [open_notes] notes did not open"; diag "open_notes"; return 1
+}
+
+# Expand a Settings inline selector. The click target is the row's *value* view
+# (e.g. id "appThemeText"), not its label — tapping the label does nothing.
+expand_setting() {  # <label-to-locate> <value-resource-id>
+  reveal_row "$1"
+  tap id "$2"; settle 1
 }
 
 # Scroll the settings page until <text> sits in the upper part, so the inline
@@ -263,15 +287,14 @@ section "App drawer"
 open_drawer
 shot 2 app-drawer "App drawer — every installed app as plain text, with the A–Z fast-scroll index"
 
-# Live search: type a query, watch the list filter.
+# Live search. Use a query that matches several apps: a single match would
+# auto-launch that app (AppDrawerAdapter.autoLaunch) and leave the drawer.
 tap id search; settle 1
-type_text "ca"; settle 2
-shot 3 app-search "Search filters the drawer live as you type (\"ca\")"
+type_text "c"; settle 2
+shot 3 app-search "Search filters the drawer live as you type (\"c\")"
 
-# Reopen a fresh, unfiltered drawer for the long-press demo.
-go_home; open_drawer
-
-# Long-press an app row → the per-app action menu (rename / hide / info / uninstall).
+# Fresh restart → clean unfiltered drawer (keeps the swipe-up fling reliable).
+fresh_home; open_drawer
 longpress id appTitle --index 1; settle 2
 shot 4 app-menu "Long-press any app for actions: uninstall, rename, hide, app info"
 tap text "Rename"; settle 2
@@ -279,44 +302,42 @@ shot 5 app-rename "Rename an app inline, without leaving the drawer"
 back; settle 1; back; settle 1
 
 # ---- Settings ---------------------------------------------------------------
+# Each row's inline selector is opened by tapping the row's *value* view (its id),
+# not the label — tapping the label does nothing.
 section "Settings"
 go_home; long_press; settle 2
 shot 6 settings-home "Settings — Home screen section (apps count, date/time, widgets, icons)"
 
-reveal_row "Apps on home screen"
-tap text "Apps on home screen" --contains; settle 1
-shot 7 settings-apps-num "Pick how many apps (0–8) appear on the home screen"
+expand_setting "Apps on home screen" homeAppsNum
+shot 7 settings-apps-num "Choose how many apps (0–8) show on the home screen"
 
-reveal_row "Show date time"
-tap text "Show date time" --contains; settle 1
+expand_setting "Show date time" dateTime
 shot 8 settings-datetime "Date & time display: On / Off / Date only"
 
-reveal_row "Icon shape"
-tap text "Icon shape" --contains; settle 1
+expand_setting "Icon shape" iconShape
 shot 9 settings-icon-shape "Icon shapes — default, circle, square, squircle, teardrop"
 
-reveal_row "App alignment"
-tap text "App alignment" --contains; settle 1
-shot 10 settings-alignment "Home layout alignment — left / center / right and bottom toggle"
+expand_setting "App alignment" alignment
+shot 10 settings-alignment "Home app alignment — left / center / right, plus a bottom toggle"
 
 # Appearance section.
 reveal_row "Theme mode"
 shot 11 settings-appearance "Appearance — keyboard, hourly wallpaper, status bar, theme, text size"
-tap text "Theme mode" --contains; settle 1
+expand_setting "Theme mode" appThemeText
 shot 12 settings-theme "Theme — Light / Dark / System"
 
 # Do Not Disturb section.
 reveal_row "Hold duration"
 shot 13 settings-dnd "Do Not Disturb — hold notifications and release them on your terms"
-tap text "Hold duration" --contains; settle 1
+expand_setting "Hold duration" dndDuration
 shot 14 settings-dnd-duration "How long to hold notifications — 30 / 45 / 60 / 90 / 120 / 180 min"
 
-# Gestures section (revealed by tapping its header).
+# Gestures section (its swipe-down row is revealed by tapping the header).
 scroll_to_text "Gestures" >/dev/null 2>&1
-tap text "Gestures"; settle 1
+tap id tvGestures; settle 1
 reveal_row "Swipe left for"
 shot 15 settings-gestures "Gestures — swipe and double-tap actions"
-tap text "Swipe left for" --contains; settle 1
+expand_setting "Swipe left for" swipeLeftAction
 shot 16 settings-swipe-left "Swipe-left action — open Notes or launch an app"
 
 # ---- Notes ------------------------------------------------------------------
@@ -324,23 +345,23 @@ section "Notes"
 go_home; open_notes
 shot 17 notes "Notes — a private chat with yourself: text, to-dos, an image and a voice memo"
 
-# Per-note actions menu on a text note.
-longpress text "Grocery run" --contains; settle 2
+# Per-note actions menu on a text note near the bottom (guaranteed in view).
+longpress text "Standup" --contains; settle 2
 shot 18 notes-menu "Note actions — copy, share, edit, delete"
 tap text "Edit"; settle 2
 shot 19 notes-edit "Editing a note inline — the banner shows you're editing"
 tap desc "Cancel"; settle 1            # clear the editing banner
 
-# Full-screen image viewer.
+# Full-screen image viewer (scroll the notes list up if the image note isn't in view).
 if ! tap id notesImage; then
-  adb shell input swipe "$CX" "$(pct_y 35)" "$CX" "$(pct_y 70)" 400; settle 1   # reveal older notes
+  adb shell input swipe "$CX" "$(pct_y 30)" "$CX" "$(pct_y 75)" 500; settle 1
   tap id notesImage
 fi
 settle 2
 shot 20 notes-image "Tap an image note to view it full screen"
 tap id notesFullImage 2>/dev/null || adb shell input tap "$CX" "$(pct_y 50)"; settle 1
 
-# Notes search.
+# Notes search (opens a dedicated search activity).
 tap desc "Search"; settle 2
 tap id search 2>/dev/null || true        # focus the search field if not already
 type_text "launch"; settle 2
@@ -348,25 +369,15 @@ shot 21 notes-search "Search your notes (\"launch\")"
 back; settle 1
 
 # ---- Variations -------------------------------------------------------------
-# Re-seed appearance and restart so the home screen renders the variation cleanly
-# (driving the inline selectors is unreliable when options fall below the fold).
+# Re-seed appearance and restart so the home screen renders the variation cleanly.
 section "Variations"
 seed_main 1 8388613 ""        # light theme, right-aligned, default count
 go_home
 shot 22 home-light "Home — light theme"
 
-seed_main 1 17 4              # light theme, centred, 4 apps
+seed_main 1 17 4              # light theme, centred (Gravity.CENTER), 4 apps
 go_home
 shot 23 home-center "Home — light theme, centre-aligned, fewer apps"
-
-# Notes empty-state: clear the seeded notes and reopen.
-section "Notes"
-printf "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map />\n" \
-  | appwrite shared_prefs/app.launch0.notes.xml || true
-adb shell am force-stop "$APP_ID" >/dev/null 2>&1 || true
-adb shell am start -n "${APP_ID}/${MAIN_ACTIVITY}" >/dev/null 2>&1; settle 3
-go_home; open_notes
-shot 24 notes-empty "Notes — empty state inviting your first jot"
 
 go_home
 echo

@@ -29,17 +29,18 @@ PREFERRED = [
     ("Phone", ["com.google.android.dialer", "com.android.dialer"]),
     ("Messages", ["com.google.android.apps.messaging", "com.android.messaging"]),
     ("Chrome", ["com.android.chrome"]),
-    ("Camera", ["com.android.camera2", "com.google.android.GoogleCamera"]),
     ("Photos", ["com.google.android.apps.photos", "com.android.gallery3d"]),
     ("Calendar", ["com.google.android.calendar", "com.android.calendar"]),
     ("Clock", ["com.google.android.deskclock", "com.android.deskclock"]),
-    ("Calculator", ["com.android.calculator2", "com.google.android.calculator"]),
     ("Contacts", ["com.google.android.contacts", "com.android.contacts"]),
     ("Files", ["com.android.documentsui"]),
-    ("Settings", ["com.android.settings"]),
     ("Maps", ["com.google.android.apps.maps"]),
     ("Gmail", ["com.google.android.gm"]),
+    ("Settings", ["com.android.settings"]),
+    ("Calculator", ["com.android.calculator2", "com.google.android.calculator"]),
     ("YouTube", ["com.google.android.youtube"]),
+    # Camera is intentionally omitted: the CI emulator runs with -camera-back none,
+    # so com.android.camera2 has no launchable activity and would blank its slot.
 ]
 
 
