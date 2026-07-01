@@ -28,6 +28,14 @@ You can also share an image from another app straight into Notes using Android's
 
 Do Not Disturb lets you park notifications from distracting apps so they don't interrupt you. In **Settings**, turn on **Hold notifications**, choose how long to hold them (30 minutes to 3 hours), and pick which apps to hold. Held notifications show up as a small count next to the app on your home screen and in the app drawer — tap it to release them, or they'll arrive automatically when the window ends. This requires granting notification access, and ongoing notifications like calls and music are never held.
 
+## Can I show app icons?
+
+Yes. Launch0 is text-first, but icons are optional. In **Settings**, turn on **Show app icons** to display icons in the app drawer, and adjust their **size** and **shape** (default, circle, square, squircle, or teardrop). You can also turn off **Show app names** for an icons-only grid — you just can't hide both icons and names at once.
+
+## How do I change which apps show on the home screen?
+
+In **Settings**, set the number of home apps (0–8). Then long-press any slot on the home screen to pick or change the app it points to. You can also adjust alignment (left, center, right, and an optional bottom position) from Settings.
+
 ## Double tap to lock doesn't work
 
 This feature requires the accessibility service to be enabled. Go to **Settings > Gestures > Double tap to lock** and follow the prompts to enable it.

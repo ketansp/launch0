@@ -1,76 +1,89 @@
 # Features
 
+Launch0 replaces your home screen with a clean, text-first interface and pairs it with focused productivity features. Everything below is built in — no accounts, no add-ons, and no internet connection required.
+
 ## Home Screen
 
-- **Text-based app shortcuts** — up to 8 apps displayed as text on the home screen for instant access
-- **Date, time & battery** — show the date and time (with battery level), date only, or hide it completely
-- **Days-left widget** — an optional grid that shows how much of the year is left, right on your home screen
-- **Screen time** — see how long you've spent in each home app today, shown as a small capsule beside the app name
-- **App alignment** — left, center, or right alignment, with optional bottom positioning
-- **Held-notification pill** — when Do Not Disturb is holding notifications for an app, a count appears next to it; tap to release them
+- **Text-based app shortcuts** — pin 0 to 8 apps as plain text for instant, icon-free access. Long-press a slot to assign or change its app.
+- **Date, time & battery** — a `time` line and a `date` line (which also shows your current battery level). Tap the time to open your clock app and the date to open your calendar; long-press either to choose which app it launches. You can show the time and date, show the **date only**, or hide both.
+- **Days-left widget** — an optional grid that visualizes how much of the current year remains.
+- **Screen time** — see how long you've spent in each home app today, shown as a small capsule beside the app's name. It appears once an app has been used for at least 5 minutes and needs usage-access permission (Android 10+).
+- **Held-notification pill** — when Do Not Disturb is holding notifications for an app, a count appears next to it; tap it to release them immediately.
+- **Alignment** — align home text to the left, center, or right, with an optional **bottom** position (available once Launch0 is your default launcher).
 
 ## Notes
 
-Launch0 includes a built-in **Notes** page — like a private chat with yourself. Swipe left on the home screen to open it (this is the default swipe-left action).
+Launch0 includes a built-in **Notes** page — like a private chat with yourself. Swipe left on the home screen to open it (the default swipe-left action), and swipe left again inside Notes to search. Everything is stored locally on your device.
 
-- **Text notes** — jot down anything; type and send, like a messaging app
-- **To-dos** — mark any note as **done** (with a checkbox) or flag it as **urgent**
-- **Voice notes** — record audio memos, then play, pause, and resume them inline
-- **Images** — attach images from the picker or share them into Notes from any app, and tap to view full-screen
-- **Clickable links** — URLs and emails in notes become tappable automatically
-- **Message actions** — long-press a note to copy, share, edit, or delete it
-- **Date dividers** — notes are grouped by day with Today / Yesterday labels
-- **Search** — swipe left again inside Notes to open a dedicated search page and find any note as you type
+- **Text notes** — type and send a thought, link, or reminder, messaging-app style. A running count of your entries is shown at the top.
+- **To-dos** — mark any note as **done** (with a checkbox) or flag it as **urgent** to make it stand out.
+- **Voice notes** — record an audio memo, then play, pause, and resume it inline. Each shows its duration. Requires microphone permission.
+- **Images** — attach an image from the picker, or **share an image into Notes** from any other app via Android's share sheet. Tap an image to view it full-screen.
+- **Clickable links** — URLs and email addresses in your notes become tappable automatically, and note text stays selectable.
+- **Message actions** — long-press any note to **copy**, **share**, **edit**, or **delete** it.
+- **Date dividers** — notes are grouped by day with Today / Yesterday labels and full dates for older entries.
+- **Search** — a dedicated search page filters your notes as you type, with results anchored next to the keyboard for quick reach.
 
 ## App Drawer
 
-- **Instant search** — start typing to filter apps; the top match auto-launches
-- **Smart ranking** — apps whose names *start* with your query rank above mid-word matches
-- **Alphabet fast-scroll** — an A–Z index down the edge to jump straight to a letter
-- **App icons** — optionally show app icons in the drawer, with adjustable size and shape (circle, square, squircle, or teardrop)
-- **Icons-only or names-only** — hide app names for an icon grid, or hide icons for the classic text list
-- **Screen time** — see today's usage per app right in the drawer
-- **Rename apps** — give apps custom names that make sense to you
-- **Hide apps** — remove apps from the drawer without uninstalling them
-- **Web search** — start your query with `!` to search the web instead
+- **Instant search** — swipe up and start typing to filter your apps. The top match launches automatically; begin your query with a **space** if you'd rather it didn't auto-launch.
+- **Smart ranking** — apps whose names *start* with your query rank above mid-word matches, so the app you mean is usually first.
+- **Alphabet fast-scroll** — an A–Z index down the edge of the list lets you jump straight to a letter.
+- **App icons** — optionally show app icons in the drawer, with an adjustable **size** (16–48 dp) and **shape** (default, circle, square, squircle, or teardrop).
+- **Icons-only or names-only** — hide app names for a compact icon grid, or hide icons for the classic text list. (You can't hide both.)
+- **Screen time** — see today's per-app usage right in the drawer, alongside any held-notification count.
+- **Rename apps** — give any app a custom label that makes sense to you.
+- **Hide apps** — remove apps from the drawer without uninstalling them; unhide them later from **Settings → hidden apps**.
+- **App info & uninstall** — long-press an app for quick access to its system info or to uninstall it (system apps can be hidden but not removed).
+- **Pinned shortcuts** — app shortcuts appear alongside apps and can be launched or removed.
+- **Web search** — start your query with `!` to search the web instead of your apps.
+- **Work profile aware** — work-profile and dual-app entries are listed and launched correctly.
 
 ## Gestures
 
-- **Swipe up** — open the app drawer
-- **Swipe left** — open Notes (default) or a favorite app
-- **Swipe right** — launch a favorite app
-- **Swipe down** — open notifications (default) or search
-- **Double tap** — lock the screen (requires accessibility permission)
-- **Long press** — open settings from anywhere on the home screen
+| Gesture | Action |
+|---------|--------|
+| Swipe up | Open the app drawer |
+| Swipe left | Open Notes *(default)* or a favorite app |
+| Swipe right | Open a favorite app |
+| Swipe down | Open notifications *(default)* or search |
+| Double tap | Lock the screen |
+| Long press | Open settings |
 
-Swipe-left and swipe-down actions are configurable in **Settings > Gestures**.
+- **Configurable** — the swipe-left action (Notes or an app) and the swipe-down action (notifications or search) are set in **Settings → Gestures**. You can assign apps to swipe-left and swipe-right, and long-press those rows to enable or disable them.
+- **Double tap to lock** — locks the screen instantly. On Android 9+ this uses an accessibility service; on older versions it uses the device-admin API. Either way it's optional and off by default.
 
 ## Do Not Disturb
 
-Hold back notifications from distracting apps so you can focus.
+Hold back notifications from distracting apps so you can focus, then get them all at once when you're ready.
 
-- **Hold notifications** — pick which apps' notifications get parked instead of interrupting you
-- **Choose a duration** — hold for 30, 45, 60, 90, 120, or 180 minutes
-- **Release on your terms** — a count pill appears next to the app on the home screen and in the drawer; tap it to release the held notifications, or let them arrive automatically when the window ends
-- Requires notification access (granted from Settings). Ongoing notifications like calls and music are never held.
+- **Hold notifications** — choose which apps' notifications get parked instead of interrupting you.
+- **Choose a duration** — hold for 30, 45, 60, 90, 120, or 180 minutes.
+- **Release on your terms** — a count pill appears beside the app on the home screen and in the drawer; tap it to release the held notifications, or let them arrive automatically when the window ends.
+- **Requires notification access**, which you grant from Settings. Ongoing notifications such as calls and music are never held.
 
 ## Appearance
 
-- **Dark and light themes** — plus a system-default option
-- **Text size** — adjustable text scaling across the app
-- **App icons** — toggle icons in the drawer and set their size and shape
-- **Status bar** — show or hide the system status bar
-- **Auto-generated wallpapers** — a fresh, abstract gradient wallpaper every hour, generated on your device (no download, no internet). Matches your light/dark theme, and works while Launch0 is your default launcher.
+- **Themes** — dark, light, or follow the system setting.
+- **Text size** — scale text across the app from 0.5× to 1.5× (up to 2.0× on tablets) in small steps.
+- **App icons** — toggle icons in the drawer and set their size and shape (see [App Drawer](#app-drawer)).
+- **Status bar** — show or hide the system status bar.
+- **Auto-show keyboard** — automatically raise the keyboard when you open the app drawer, so you can start typing right away.
+- **Auto-generated wallpapers** — turn on a fresh, abstract gradient wallpaper that regenerates every hour, created entirely on your device (no download, no internet). It matches your light/dark theme and works while Launch0 is your default launcher.
+
+## Localization
+
+Launch0 is translated into 20 languages, including English, Arabic, German, Spanish, French, Hebrew, Croatian, Hungarian, Indonesian, Italian, Japanese, Dutch, Polish, Portuguese (Brazil), Russian, Swedish, Turkish, Ukrainian, and Chinese.
 
 ## Privacy
 
 - No ads
 - No data collection
 - No tracking
-- **Works fully offline** — no internet permission at all
+- **Works fully offline** — Launch0 doesn't even request internet permission
 - Notes, voice memos, and images stay on your device
 - Open source under GPLv3
 
 ## Work Profile
 
-Launch0 supports Android work profiles and dual apps, so your work and personal apps are handled correctly.
+Launch0 supports Android work profiles and dual apps, so your work and personal apps are listed, labeled, and launched correctly throughout the launcher.
