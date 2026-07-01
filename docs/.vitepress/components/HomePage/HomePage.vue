@@ -28,6 +28,24 @@
         <div class="container">
             <div class="panels vp-doc">
                 <div class="panel">
+                    <h2>Notes &amp; To-Dos</h2>
+                    <p>A private chat with yourself, one swipe from home</p>
+                    <div class="steps">
+                        <slot name="notes" />
+                    </div>
+                </div>
+                <div class="panel">
+                    <h2>Do Not Disturb</h2>
+                    <p>Hold notifications from distracting apps until you're ready</p>
+                    <div class="steps">
+                        <slot name="do-not-disturb" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container other-color">
+            <div class="panels vp-doc">
+                <div class="panel">
                     <h2>Screen Time Awareness</h2>
                     <p>Stay informed about your phone usage — right on your home screen</p>
                     <div class="steps">
@@ -35,15 +53,15 @@
                     </div>
                 </div>
                 <div class="panel">
-                    <h2>Daily Wallpapers</h2>
-                    <p>A fresh look every day, automatically</p>
+                    <h2>Auto-Generated Wallpapers</h2>
+                    <p>A fresh look every hour, generated right on your device</p>
                     <div class="steps">
                         <slot name="wallpapers" />
                     </div>
                 </div>
             </div>
         </div>
-        <div class="container other-color">
+        <div class="container">
             <div class="panels vp-doc">
                 <div class="panel center-panel">
                     <h2>Privacy as a Feature</h2>

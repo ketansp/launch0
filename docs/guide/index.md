@@ -10,7 +10,8 @@ The average person checks their phone 96 times a day. A minimal home screen remo
 
 - **Minimal home screen** — no icons, no widgets, just the apps you need as text
 - **Launch apps faster** with instant search and auto-launch
-- **Stay focused** by removing the visual noise that pulls you into apps
+- **Stay focused** by removing the visual noise that pulls you into apps, and by holding notifications when you need to concentrate
+- **Capture thoughts** in built-in Notes — text, to-dos, voice memos, and images
 - **Track your screen time** to stay aware of your usage
 - **Use gesture shortcuts** to access apps and controls in a single swipe
 
@@ -19,7 +20,8 @@ The average person checks their phone 96 times a day. A minimal home screen remo
 1. Install Launch0 from the Play Store or build from source
 2. Set it as your default launcher
 3. Swipe up to see all apps
-4. Long press anywhere for settings
+4. Swipe left for Notes
+5. Long press anywhere for settings
 
 ::: tip
 Start typing an app name in the app drawer to auto-launch it.
@@ -30,8 +32,10 @@ Start typing an app name in the app drawer to auto-launch it.
 | Gesture | Action |
 |---------|--------|
 | Swipe up | Open app drawer |
-| Swipe left | Open left app |
+| Swipe left | Open Notes (or an app) |
 | Swipe right | Open right app |
 | Swipe down | Notifications or search |
 | Double tap | Lock screen |
 | Long press | Open settings |
+
+Swipe-left and swipe-down actions are configurable in **Settings > Gestures**.
