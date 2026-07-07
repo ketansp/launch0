@@ -1,6 +1,6 @@
 # Features
 
-Launch0 replaces your home screen with a clean, text-first interface and pairs it with focused productivity features. Everything below is built in — no accounts, no add-ons, and no internet connection required.
+Launch0 replaces your home screen with a fast, text-only command layer and pairs it with focused productivity features. Everything below is built in — no accounts, no add-ons, and no internet connection required.
 
 ## Home Screen
 
