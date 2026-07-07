@@ -1,10 +1,10 @@
-# Launch0 | Minimal & Productive Launcher
+# Launch0 | Operating System for the busy
 
 > **This project is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher) by [tanujnotes](https://github.com/tanujnotes).** All credit for the original design and implementation goes to the Olauncher team. Launch0 builds on top of that foundation.
 
 ## About
 
-Launch0 is a minimal, productivity-focused Android launcher. A clean, clutter-free home screen that helps you launch apps faster, stay focused, and get things done. No icons, no ads, no data collection.
+Launch0 is an operating system for the busy — a fast, text-only home screen that becomes the command layer for your phone. Launch apps, capture notes, hold distracting notifications, and track your time, all from one calm surface. No icons, no ads, no data collection.
 
 - Website: [launch0.app](https://launch0.app)
 

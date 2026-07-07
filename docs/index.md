@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Launch0
-  text: Minimal & Productive Launcher
-  tagline: A minimal, open-source Android launcher built for productivity. Clean home screen, instant app access, powerful gestures. No ads, no data collection.
+  text: Operating System for the busy
+  tagline: A fast, text-only home screen that becomes the command layer for your phone — launch apps, capture notes, hold distractions, and track your time. No ads, no data collection.
   actions:
     - theme: brand
       text: Get Started
@@ -25,8 +25,8 @@ features:
     link: /guide/features#home-screen
     linkText: Learn more
   - icon: ⚡
-    title: Built for Productivity
-    details: Instant search, gesture shortcuts, notes, and screen time tracking help you get things done faster.
+    title: Your Command Center
+    details: Instant search, gesture shortcuts, notes, and screen time tracking put your whole day in one place.
     link: /guide/features#gestures
     linkText: Learn more
   - icon: 📝
