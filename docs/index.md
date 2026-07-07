@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Launch0
   text: OS for the busy
-  tagline: A fast, text-only Android launcher that becomes the command layer for your phone — launch apps, capture notes, hold distractions, and track your time. No ads, no data collection.
+  tagline: A fast, text-only home screen that becomes the command layer for your phone — launch apps, capture notes, hold distractions, and track your time. No ads, no data collection.
   actions:
     - theme: brand
       text: Get Started

@@ -1,6 +1,6 @@
 # What is Launch0?
 
-Launch0 is an OS for the busy — an open-source Android launcher that replaces your home screen with a fast, text-only command layer. Launch apps, capture notes, hold distractions, and track your time, so you can move through your day without the phone getting in the way.
+Launch0 is an OS for the busy — it replaces your home screen with a fast, text-only command layer. Launch apps, capture notes, hold distractions, and track your time, so you can move through your day without the phone getting in the way.
 
 It is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher) by [tanujnotes](https://github.com/tanujnotes). All credit for the original design and implementation goes to the Olauncher team.
 
