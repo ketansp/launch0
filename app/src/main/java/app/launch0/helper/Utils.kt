@@ -516,6 +516,14 @@ fun Context.getScreenTimeCapsuleDrawable(minutes: Int, compact: Boolean = false)
 }
 
 /**
+ * Builds the distraction-timer capsule shown next to a flagged app's name on the home screen,
+ * reading the wait its next open would incur, e.g. "40s wait". Same register as the other capsules.
+ */
+fun Context.getWaitCapsuleDrawable(seconds: Int, compact: Boolean = false): Drawable {
+    return buildCapsuleDrawable(getString(R.string.dt_wait_capsule, seconds), null, compact)
+}
+
+/**
  * Shared renderer for the launcher's monochrome capsules. Faithful to the launcher's register: a
  * translucent capsule filled with the foreground colour at low opacity, an optional [glyphRes] and
  * the [label] drawn in the foreground colour, and an inverse-colour text shadow so the value stays

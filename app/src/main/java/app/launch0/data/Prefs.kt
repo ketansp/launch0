@@ -46,6 +46,11 @@ class Prefs(context: Context) {
     private val DND_WINDOW_END = "DND_WINDOW_END"
     private val DND_HELD_KEYS = "DND_HELD_KEYS"
     private val DND_RELEASED_KEYS = "DND_RELEASED_KEYS"
+    private val DISTRACTION_APPS = "DISTRACTION_APPS"
+    private val DISTRACTION_WAIT_ESCALATING = "DISTRACTION_WAIT_ESCALATING"
+    private val DISTRACTION_COUNTS_DAY = "DISTRACTION_COUNTS_DAY"
+    private val DISTRACTION_OPEN_COUNTS = "DISTRACTION_OPEN_COUNTS"
+    private val DISTRACTION_LAST_OPENS = "DISTRACTION_LAST_OPENS"
     private val SWIPE_LEFT_ACTION = "SWIPE_LEFT_ACTION"
     private val TEXT_SIZE_SCALE = "TEXT_SIZE_SCALE"
     private val PRO_MESSAGE_SHOWN = "PRO_MESSAGE_SHOWN"
@@ -316,6 +321,31 @@ class Prefs(context: Context) {
     var dndReleasedKeys: MutableSet<String>
         get() = prefs.getStringSet(DND_RELEASED_KEYS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
         set(value) = prefs.edit { putStringSet(DND_RELEASED_KEYS, value).apply() }
+
+    // Distraction timer (wait screen before opening flagged apps)
+    var distractionApps: MutableSet<String>
+        get() = prefs.getStringSet(DISTRACTION_APPS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        set(value) = prefs.edit { putStringSet(DISTRACTION_APPS, value).apply() }
+
+    // true = waits double with each open (10s..60s); false = fixed 30s wait.
+    var distractionWaitEscalating: Boolean
+        get() = prefs.getBoolean(DISTRACTION_WAIT_ESCALATING, true)
+        set(value) = prefs.edit { putBoolean(DISTRACTION_WAIT_ESCALATING, value).apply() }
+
+    // Local midnight (millis) the open counts belong to; counts reset when the day changes.
+    var distractionCountsDay: Long
+        get() = prefs.getLong(DISTRACTION_COUNTS_DAY, 0L)
+        set(value) = prefs.edit { putLong(DISTRACTION_COUNTS_DAY, value).apply() }
+
+    // Serialized "package:count" pairs of today's opens, ";"-separated.
+    var distractionOpenCounts: String
+        get() = prefs.getString(DISTRACTION_OPEN_COUNTS, "").toString()
+        set(value) = prefs.edit { putString(DISTRACTION_OPEN_COUNTS, value).apply() }
+
+    // Serialized "package:millis" pairs of each app's last open time, ";"-separated.
+    var distractionLastOpens: String
+        get() = prefs.getString(DISTRACTION_LAST_OPENS, "").toString()
+        set(value) = prefs.edit { putString(DISTRACTION_LAST_OPENS, value).apply() }
 
     var swipeLeftAction: Int
         get() = prefs.getInt(SWIPE_LEFT_ACTION, Constants.SwipeLeftAction.NOTES)

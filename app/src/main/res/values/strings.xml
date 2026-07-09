@@ -182,6 +182,35 @@
     <string name="dnd_120" translatable="false">120</string>
     <string name="dnd_180" translatable="false">180</string>
 
+    <!-- Distraction timer -->
+    <string name="distraction_timer">Distraction timer</string>
+    <string name="dt_wait">Wait</string>
+    <string name="dt_wait_escalating">Escalating · 10–60s</string>
+    <string name="dt_wait_fixed">Fixed · 30s</string>
+    <string name="dt_leave_mid_wait">Leave mid-wait</string>
+    <string name="dt_timer_resets">Timer resets</string>
+    <string name="dt_apps">Distracting apps</string>
+    <string name="dt_select_apps_hint">Tap apps to mark as distracting</string>
+    <string name="dt_seconds_until">seconds until %1$s opens</string>
+    <string name="dt_open_app">Open %1$s</string>
+    <string name="dt_you_waited">You waited. Tap to open.</string>
+    <string name="dt_opens_today">Opens today</string>
+    <string name="dt_last_open">Last open</string>
+    <string name="dt_next_wait">Next wait</string>
+    <string name="dt_waits_double">Waits double with every open today.</string>
+    <string name="dt_fixed_wait_note">Every open waits %1$ds today.</string>
+    <string name="dt_turn_back">Turn back</string>
+    <string name="dt_turn_back_caption">Going back resets the timer</string>
+    <string name="dt_timer_reset_toast">Timer reset. The next open waits longer.</string>
+    <string name="dt_timer_reset_toast_fixed">Timer reset.</string>
+    <string name="dt_aphorism">Are you using your phone,\nor is your phone using you?</string>
+    <string name="dt_wait_capsule" translatable="false">%1$ds wait</string>
+    <string name="dt_seconds_value" translatable="false">%1$ds</string>
+    <string name="dt_minutes_ago">%1$dm ago</string>
+    <string name="dt_hours_ago">%1$dh ago</string>
+    <string name="dt_days_ago">%1$dd ago</string>
+    <string name="dt_none" translatable="false">—</string>
+
     <!-- Personal notes page -->
     <string name="notes_title">Notes</string>
     <string name="notes_back">Back</string>

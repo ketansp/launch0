@@ -31,10 +31,12 @@ import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentHomeBinding
+import app.launch0.helper.DistractionTimer
 import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.combineDrawablesHorizontally
 import app.launch0.helper.dpToPx
+import app.launch0.helper.getWaitCapsuleDrawable
 import app.launch0.helper.expandNotificationDrawer
 import app.launch0.helper.getChangedAppTheme
 import app.launch0.helper.getNotificationCountDrawable
@@ -530,17 +532,25 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         val timeCapsule = if (usageMinutes > SCREEN_TIME_MIN_MINUTES)
             requireContext().getScreenTimeCapsuleDrawable(usageMinutes) else null
 
+        // Distracting apps read recessed on home: name dimmed, next wait shown beside it.
+        val isDistracting = DistractionTimer.isDistractingApp(prefs, packageName)
+        val waitCapsule = if (isDistracting)
+            requireContext().getWaitCapsuleDrawable(DistractionTimer.nextWaitSeconds(prefs, packageName))
+        else null
+        textView.alpha = if (isDistracting) 0.5f else 1f
+
         val iconOnEnd = prefs.homeAlignment == Gravity.END
 
-        // Both decorations share the slot opposite the name. The notification pill goes on the slot's
-        // outer edge so its tap target keeps lining up with that edge; the usage capsule sits inboard.
+        // All decorations share the slot opposite the name. The notification pill goes on the slot's
+        // outer edge so its tap target keeps lining up with that edge; the capsules sit inboard.
+        val inwards = listOfNotNull(notifPill, timeCapsule, waitCapsule)
         val opposite = when {
-            notifPill != null && timeCapsule != null ->
+            inwards.size > 1 ->
                 requireContext().combineDrawablesHorizontally(
-                    if (iconOnEnd) listOf(notifPill, timeCapsule) else listOf(timeCapsule, notifPill),
+                    if (iconOnEnd) inwards else inwards.reversed(),
                     6.dpToPx(),
                 )
-            else -> notifPill ?: timeCapsule
+            else -> inwards.firstOrNull()
         }
 
         if (icon == null && opposite == null) {
@@ -599,6 +609,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             showLongPressToast()
             return
         }
+        if (DistractionTimer.isDistractingApp(prefs, packageName)) {
+            openDistractionWait(appName, packageName, activityClassName, shortcutId, isShortcut, userString)
+            return
+        }
         if (isShortcut && !shortcutId.isNullOrEmpty()) {
             launchShortcut(
                 packageName = packageName,
@@ -644,6 +658,32 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             ),
             Constants.FLAG_LAUNCH_APP
         )
+    }
+
+    /** Routes a distracting app through the wait screen instead of opening it straight away. */
+    private fun openDistractionWait(
+        appName: String,
+        packageName: String,
+        activityClassName: String?,
+        shortcutId: String?,
+        isShortcut: Boolean,
+        userString: String,
+    ) {
+        try {
+            findNavController().navigate(
+                R.id.action_mainFragment_to_distractionWaitFragment,
+                bundleOf(
+                    Constants.Key.APP_NAME to appName,
+                    Constants.Key.APP_PACKAGE to packageName,
+                    Constants.Key.APP_ACTIVITY_CLASS to activityClassName,
+                    Constants.Key.SHORTCUT_ID to shortcutId,
+                    Constants.Key.IS_SHORTCUT to isShortcut,
+                    Constants.Key.APP_USER to userString,
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun homeAppClicked(location: Int) {

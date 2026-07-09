@@ -46,6 +46,7 @@ class AppDrawerAdapter(
     private val appHideListener: (AppModel, Int) -> Unit,
     private val appRenameListener: (AppModel, String) -> Unit,
     private val isDndApp: (String) -> Boolean = { false },
+    private val isDistractionApp: (String) -> Boolean = { false },
     private val parkedNotificationCount: (String) -> Int = { 0 },
     private val onReleaseNotifications: (AppModel) -> Unit = {},
     private val screenTimeMinutes: (String) -> Int = { 0 },
@@ -110,6 +111,7 @@ class AppDrawerAdapter(
                 appHideListener,
                 appRenameListener,
                 isDndApp,
+                isDistractionApp,
                 parkedNotificationCount,
                 onReleaseNotifications,
                 screenTimeMinutes
@@ -247,6 +249,7 @@ class AppDrawerAdapter(
             appHideListener: (AppModel, Int) -> Unit,
             appRenameListener: (AppModel, String) -> Unit,
             isDndApp: (String) -> Boolean,
+            isDistractionApp: (String) -> Boolean,
             parkedNotificationCount: (String) -> Int,
             onReleaseNotifications: (AppModel) -> Unit,
             screenTimeMinutes: (String) -> Int,
@@ -259,10 +262,11 @@ class AppDrawerAdapter(
             val showNames = showAppNames || !showAppIcons
             // Show indicators in title based on app type and state
             appTitle.text = if (showNames) buildString {
-                if (flag == Constants.FLAG_SET_DND_APPS
-                    && appModel.appPackage.isNotEmpty()
-                    && isDndApp(appModel.appPackage)
-                ) append("✓ ")
+                val selectionMarked = appModel.appPackage.isNotEmpty() && (
+                        (flag == Constants.FLAG_SET_DND_APPS && isDndApp(appModel.appPackage))
+                                || (flag == Constants.FLAG_SET_DISTRACTION_APPS
+                                && isDistractionApp(appModel.appPackage)))
+                if (selectionMarked) append("✓ ")
                 append(appModel.appLabel)
                 if (appModel.isNew) append(" ✦")
             } else ""
