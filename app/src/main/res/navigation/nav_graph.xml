@@ -31,7 +31,20 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_mainFragment_to_distractionWaitFragment"
+            app:destination="@id/distractionWaitFragment"
+            app:enterAnim="@anim/fade_enter"
+            app:exitAnim="@anim/fade_exit"
+            app:popEnterAnim="@anim/fade_enter"
+            app:popExitAnim="@anim/fade_exit" />
     </fragment>
+
+    <fragment
+        android:id="@+id/distractionWaitFragment"
+        android:name="app.launch0.ui.DistractionWaitFragment"
+        android:label="distraction_wait_fragment"
+        tools:layout="@layout/fragment_distraction_wait" />
 
     <fragment
         android:id="@+id/notesFragment"
@@ -47,6 +60,15 @@
         <action
             android:id="@+id/action_appListFragment_to_settingsFragment2"
             app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/fade_enter"
+            app:exitAnim="@anim/fade_exit"
+            app:popEnterAnim="@anim/fade_enter"
+            app:popExitAnim="@anim/fade_exit"
+            app:popUpTo="@+id/appListFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_appListFragment_to_distractionWaitFragment"
+            app:destination="@id/distractionWaitFragment"
             app:enterAnim="@anim/fade_enter"
             app:exitAnim="@anim/fade_exit"
             app:popEnterAnim="@anim/fade_enter"

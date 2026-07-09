@@ -11,6 +11,7 @@ import android.view.animation.AnimationUtils
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -26,6 +27,7 @@ import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentAppDrawerBinding
+import app.launch0.helper.DistractionTimer
 import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.deletePinnedShortcut
@@ -108,6 +110,8 @@ class AppDrawerFragment : Fragment() {
             binding.search.queryHint = getString(R.string.hidden_apps)
         else if (flag == Constants.FLAG_SET_DND_APPS)
             binding.search.queryHint = getString(R.string.dnd_select_apps_hint)
+        else if (flag == Constants.FLAG_SET_DISTRACTION_APPS)
+            binding.search.queryHint = getString(R.string.dt_select_apps_hint)
         else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_CALENDAR_APP)
             binding.search.queryHint = "Please select an app"
         try {
@@ -161,6 +165,12 @@ class AppDrawerFragment : Fragment() {
             appClickListener = { appModel ->
                 if (flag == Constants.FLAG_SET_DND_APPS) {
                     toggleDndApp(appModel)
+                } else if (flag == Constants.FLAG_SET_DISTRACTION_APPS) {
+                    toggleDistractionApp(appModel)
+                } else if ((flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
+                    && DistractionTimer.isDistractingApp(prefs, appModel.appPackage)
+                ) {
+                    openDistractionWait(appModel)
                 } else {
                     viewModel.selectedApp(appModel, flag)
                     if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
@@ -234,6 +244,7 @@ class AppDrawerFragment : Fragment() {
                 viewModel.getAppList()
             },
             isDndApp = { appPackage -> prefs.dndApps.contains(appPackage) },
+            isDistractionApp = { appPackage -> prefs.distractionApps.contains(appPackage) },
             parkedNotificationCount = { appPackage ->
                 NotificationDndService.parkedCount(prefs, appPackage)
             },
@@ -385,6 +396,38 @@ class AppDrawerFragment : Fragment() {
         prefs.dndApps = dndApps
         val position = adapter.appFilteredList.indexOf(appModel)
         if (position >= 0) adapter.notifyItemChanged(position)
+    }
+
+    private fun toggleDistractionApp(appModel: AppModel) {
+        if (appModel.appPackage.isBlank()) return
+        val distractionApps = prefs.distractionApps
+        if (!distractionApps.add(appModel.appPackage)) distractionApps.remove(appModel.appPackage)
+        prefs.distractionApps = distractionApps
+        val position = adapter.appFilteredList.indexOf(appModel)
+        if (position >= 0) adapter.notifyItemChanged(position)
+    }
+
+    /** Routes a distracting app through the wait screen; the drawer leaves the back stack. */
+    private fun openDistractionWait(appModel: AppModel) {
+        val (activityClassName, shortcutId, isShortcut) = when (appModel) {
+            is AppModel.App -> Triple(appModel.activityClassName, "", false)
+            is AppModel.PinnedShortcut -> Triple(null, appModel.shortcutId, true)
+        }
+        try {
+            findNavController().navigate(
+                R.id.action_appListFragment_to_distractionWaitFragment,
+                bundleOf(
+                    Constants.Key.APP_NAME to appModel.appLabel,
+                    Constants.Key.APP_PACKAGE to appModel.appPackage,
+                    Constants.Key.APP_ACTIVITY_CLASS to activityClassName,
+                    Constants.Key.SHORTCUT_ID to shortcutId,
+                    Constants.Key.IS_SHORTCUT to isShortcut,
+                    Constants.Key.APP_USER to appModel.user.toString(),
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun checkMessageAndExit() {

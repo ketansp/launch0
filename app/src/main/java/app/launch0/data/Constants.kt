@@ -5,6 +5,12 @@ object Constants {
     object Key {
         const val FLAG = "flag"
         const val RENAME = "rename"
+        const val APP_NAME = "appName"
+        const val APP_PACKAGE = "appPackage"
+        const val APP_ACTIVITY_CLASS = "appActivityClass"
+        const val APP_USER = "appUser"
+        const val IS_SHORTCUT = "isShortcut"
+        const val SHORTCUT_ID = "shortcutId"
     }
 
     object Dialog {
@@ -47,6 +53,13 @@ object Constants {
     object Dnd {
         const val DEFAULT_DURATION_MINUTES = 60
         val DURATION_OPTIONS = intArrayOf(30, 45, 60, 90, 120, 180)
+    }
+
+    object DistractionTimer {
+        // Escalating mode: wait = BASE * 2^(opens today), capped at MAX. Fixed mode: FIXED.
+        const val BASE_WAIT_SECONDS = 10
+        const val MAX_WAIT_SECONDS = 60
+        const val FIXED_WAIT_SECONDS = 30
     }
 
     object SwipeLeftAction {
@@ -110,6 +123,7 @@ object Constants {
     const val FLAG_SET_CALENDAR_APP = 14
 
     const val FLAG_SET_DND_APPS = 20
+    const val FLAG_SET_DISTRACTION_APPS = 21
 
     const val REQUEST_CODE_ENABLE_ADMIN = 666
     const val REQUEST_CODE_LAUNCHER_SELECTOR = 678

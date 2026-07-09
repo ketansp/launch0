@@ -86,6 +86,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateSwipeApps()
         populateSwipeDownAction()
         populateDnd()
+        populateDistractionTimer()
         populateSwipeLeftAction()
         populateActionHints()
         initClickListeners()
@@ -95,7 +96,11 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     override fun onResume() {
         super.onResume()
         // Refresh notification-access status after returning from system settings.
-        if (_binding != null) populateDnd()
+        if (_binding != null) {
+            populateDnd()
+            // Refresh the count after returning from the distracting-apps picker.
+            populateDistractionTimer()
+        }
     }
 
     override fun onClick(view: View) {
@@ -195,6 +200,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.dndDur180 -> updateDndDuration(180)
             R.id.dndApps -> showDndApps()
 
+            R.id.distractionWaitMode -> toggleDistractionWaitMode()
+            R.id.distractionAppsNum -> showDistractionApps()
+
             R.id.aboutLaunch0 -> {
                 prefs.aboutClicked = true
                 requireContext().openUrl(Constants.URL_ABOUT)
@@ -266,6 +274,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.dndDur120.setOnClickListener(this)
         binding.dndDur180.setOnClickListener(this)
         binding.dndApps.setOnClickListener(this)
+        binding.distractionWaitMode.setOnClickListener(this)
+        binding.distractionAppsNum.setOnClickListener(this)
         binding.swipeLeftAction.setOnClickListener(this)
         binding.swipeLeftNotes.setOnClickListener(this)
         binding.swipeLeftAppOption.setOnClickListener(this)
@@ -766,6 +776,28 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         findNavController().navigate(
             R.id.action_settingsFragment_to_appListFragment,
             bundleOf(Constants.Key.FLAG to Constants.FLAG_SET_DND_APPS)
+        )
+    }
+
+    private fun populateDistractionTimer() {
+        binding.distractionWaitMode.text = getString(
+            if (prefs.distractionWaitEscalating) R.string.dt_wait_escalating
+            else R.string.dt_wait_fixed
+        )
+        binding.distractionAppsNum.text = prefs.distractionApps.size.toString()
+    }
+
+    private fun toggleDistractionWaitMode() {
+        prefs.distractionWaitEscalating = !prefs.distractionWaitEscalating
+        populateDistractionTimer()
+        viewModel.refreshHome(false)
+    }
+
+    private fun showDistractionApps() {
+        viewModel.getAppList(true)
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_appListFragment,
+            bundleOf(Constants.Key.FLAG to Constants.FLAG_SET_DISTRACTION_APPS)
         )
     }
 
