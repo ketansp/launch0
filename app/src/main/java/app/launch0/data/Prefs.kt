@@ -22,10 +22,13 @@ class Prefs(context: Context) {
     private val HOURLY_WALLPAPER_SEED = "DAILY_WALLPAPER_URL"
     private val HOME_ALIGNMENT = "HOME_ALIGNMENT"
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
-    private val APP_LABEL_ALIGNMENT = "APP_LABEL_ALIGNMENT"
     private val STATUS_BAR = "STATUS_BAR"
     private val DATE_TIME_VISIBILITY = "DATE_TIME_VISIBILITY"
     private val SHOW_YEAR_WIDGET = "SHOW_YEAR_WIDGET"
+    private val SHOW_APP_ICONS = "SHOW_APP_ICONS"
+    private val SHOW_APP_NAMES = "SHOW_APP_NAMES"
+    private val ICON_SIZE = "ICON_SIZE"
+    private val ICON_SHAPE = "ICON_SHAPE"
     private val SWIPE_LEFT_ENABLED = "SWIPE_LEFT_ENABLED"
     private val SWIPE_RIGHT_ENABLED = "SWIPE_RIGHT_ENABLED"
     private val HIDDEN_APPS = "HIDDEN_APPS"
@@ -42,6 +45,12 @@ class Prefs(context: Context) {
     private val DND_APPS = "DND_APPS"
     private val DND_WINDOW_END = "DND_WINDOW_END"
     private val DND_HELD_KEYS = "DND_HELD_KEYS"
+    private val DND_RELEASED_KEYS = "DND_RELEASED_KEYS"
+    private val DISTRACTION_APPS = "DISTRACTION_APPS"
+    private val DISTRACTION_WAIT_ESCALATING = "DISTRACTION_WAIT_ESCALATING"
+    private val DISTRACTION_COUNTS_DAY = "DISTRACTION_COUNTS_DAY"
+    private val DISTRACTION_OPEN_COUNTS = "DISTRACTION_OPEN_COUNTS"
+    private val DISTRACTION_LAST_OPENS = "DISTRACTION_LAST_OPENS"
     private val SWIPE_LEFT_ACTION = "SWIPE_LEFT_ACTION"
     private val TEXT_SIZE_SCALE = "TEXT_SIZE_SCALE"
     private val PRO_MESSAGE_SHOWN = "PRO_MESSAGE_SHOWN"
@@ -49,6 +58,8 @@ class Prefs(context: Context) {
     private val SCREEN_TIME_LAST_UPDATED = "SCREEN_TIME_LAST_UPDATED"
     private val LAUNCHER_RESTART_TIMESTAMP = "LAUNCHER_RECREATE_TIMESTAMP"
     private val SHOWN_ON_DAY_OF_YEAR = "SHOWN_ON_DAY_OF_YEAR"
+    private val APP_DRAWER_OPEN_COUNT = "APP_DRAWER_OPEN_COUNT"
+    private val NOTES_OPEN_COUNT = "NOTES_OPEN_COUNT"
 
     private val APP_NAME_1 = "APP_NAME_1"
     private val APP_NAME_2 = "APP_NAME_2"
@@ -174,10 +185,6 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean(HOME_BOTTOM_ALIGNMENT, true)
         set(value) = prefs.edit { putBoolean(HOME_BOTTOM_ALIGNMENT, value).apply() }
 
-    var appLabelAlignment: Int
-        get() = prefs.getInt(APP_LABEL_ALIGNMENT, Gravity.START)
-        set(value) = prefs.edit { putInt(APP_LABEL_ALIGNMENT, value).apply() }
-
     var showStatusBar: Boolean
         get() = prefs.getBoolean(STATUS_BAR, false)
         set(value) = prefs.edit { putBoolean(STATUS_BAR, value).apply() }
@@ -189,6 +196,22 @@ class Prefs(context: Context) {
     var showYearWidget: Boolean
         get() = prefs.getBoolean(SHOW_YEAR_WIDGET, true)
         set(value) = prefs.edit { putBoolean(SHOW_YEAR_WIDGET, value).apply() }
+
+    var showAppIcons: Boolean
+        get() = prefs.getBoolean(SHOW_APP_ICONS, true)
+        set(value) = prefs.edit { putBoolean(SHOW_APP_ICONS, value).apply() }
+
+    var showAppNames: Boolean
+        get() = prefs.getBoolean(SHOW_APP_NAMES, true)
+        set(value) = prefs.edit { putBoolean(SHOW_APP_NAMES, value).apply() }
+
+    var iconSize: Int
+        get() = prefs.getInt(ICON_SIZE, Constants.ICON_SIZE_DEFAULT)
+        set(value) = prefs.edit { putInt(ICON_SIZE, value).apply() }
+
+    var iconShape: Int
+        get() = prefs.getInt(ICON_SHAPE, Constants.IconShape.DEFAULT)
+        set(value) = prefs.edit { putInt(ICON_SHAPE, value).apply() }
 
     var swipeLeftEnabled: Boolean
         get() = prefs.getBoolean(SWIPE_LEFT_ENABLED, true)
@@ -225,6 +248,18 @@ class Prefs(context: Context) {
     var shownOnDayOfYear: Int
         get() = prefs.getInt(SHOWN_ON_DAY_OF_YEAR, 0)
         set(value) = prefs.edit { putInt(SHOWN_ON_DAY_OF_YEAR, value).apply() }
+
+    // How many times the app drawer has been opened; once it reaches NUDGE_DISMISS_AFTER the
+    // swipe-up hint stops showing.
+    var appDrawerOpenCount: Int
+        get() = prefs.getInt(APP_DRAWER_OPEN_COUNT, 0)
+        set(value) = prefs.edit { putInt(APP_DRAWER_OPEN_COUNT, value).apply() }
+
+    // How many times the notes page has been opened; once it reaches NUDGE_DISMISS_AFTER the
+    // swipe-left hint stops showing.
+    var notesOpenCount: Int
+        get() = prefs.getInt(NOTES_OPEN_COUNT, 0)
+        set(value) = prefs.edit { putInt(NOTES_OPEN_COUNT, value).apply() }
 
     var hiddenApps: MutableSet<String>
         get() = prefs.getStringSet(HIDDEN_APPS, mutableSetOf()) as MutableSet<String>
@@ -280,6 +315,37 @@ class Prefs(context: Context) {
     var dndHeldKeys: MutableSet<String>
         get() = prefs.getStringSet(DND_HELD_KEYS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
         set(value) = prefs.edit { putStringSet(DND_HELD_KEYS, value).apply() }
+
+    // Notification keys the user has explicitly released early; the service lets these pass
+    // through (instead of re-holding them) when they are re-posted.
+    var dndReleasedKeys: MutableSet<String>
+        get() = prefs.getStringSet(DND_RELEASED_KEYS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        set(value) = prefs.edit { putStringSet(DND_RELEASED_KEYS, value).apply() }
+
+    // Distraction timer (wait screen before opening flagged apps)
+    var distractionApps: MutableSet<String>
+        get() = prefs.getStringSet(DISTRACTION_APPS, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        set(value) = prefs.edit { putStringSet(DISTRACTION_APPS, value).apply() }
+
+    // true = waits double with each open (10s..60s); false = fixed 30s wait.
+    var distractionWaitEscalating: Boolean
+        get() = prefs.getBoolean(DISTRACTION_WAIT_ESCALATING, true)
+        set(value) = prefs.edit { putBoolean(DISTRACTION_WAIT_ESCALATING, value).apply() }
+
+    // Local midnight (millis) the open counts belong to; counts reset when the day changes.
+    var distractionCountsDay: Long
+        get() = prefs.getLong(DISTRACTION_COUNTS_DAY, 0L)
+        set(value) = prefs.edit { putLong(DISTRACTION_COUNTS_DAY, value).apply() }
+
+    // Serialized "package:count" pairs of today's opens, ";"-separated.
+    var distractionOpenCounts: String
+        get() = prefs.getString(DISTRACTION_OPEN_COUNTS, "").toString()
+        set(value) = prefs.edit { putString(DISTRACTION_OPEN_COUNTS, value).apply() }
+
+    // Serialized "package:millis" pairs of each app's last open time, ";"-separated.
+    var distractionLastOpens: String
+        get() = prefs.getString(DISTRACTION_LAST_OPENS, "").toString()
+        set(value) = prefs.edit { putString(DISTRACTION_LAST_OPENS, value).apply() }
 
     var swipeLeftAction: Int
         get() = prefs.getInt(SWIPE_LEFT_ACTION, Constants.SwipeLeftAction.NOTES)

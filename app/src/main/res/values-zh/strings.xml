@@ -4,7 +4,6 @@
     <string name="set_as_default_launcher">设置为默认启动器</string>
     <string name="set_as_default_launcher_u"><u>设置为默认启动器</u></string>
     <string name="set_as_default_launcher_first">设置为默认启动器</string>
-    <string name="app_drawer_tips">提示：输入应用程序名称以查找并启动它</string>
     <string name="okay">好的</string>
     <string name="cool">非常棒！</string>
     <string name="tip_start_typing_for_rename">提示：开始输入应用程序重命名选项</string>
@@ -58,7 +57,6 @@
     <string name="email">电子邮件</string>
 
     <string name="donate">捐赠</string>
-    <string name="swipe_up_for_apps">1. 向上滑动查看所有应用\n2.长按任意位置进行设置</string>
     <string name="apps_on_home_screen">主屏幕上的应用程序</string>
     <string name="hourly_wallpaper_update">每小时新壁纸</string>
     <string name="left">左对齐</string>

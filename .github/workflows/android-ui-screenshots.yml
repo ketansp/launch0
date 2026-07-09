@@ -1,0 +1,78 @@
+name: Android UI Screenshots
+
+# On every merge/push to main or master:
+#   1. Build the debug APK.
+#   2. Boot an Android emulator (virtual device) on the runner.
+#   3. Install the APK, pre-seed realistic data (home apps + a notes history)
+#      straight into the app's storage, then drive every screen, sub-menu and a
+#      couple of theme/layout variations with real gestures, screenshotting each
+#      step (see .github/scripts/ui_screenshots.sh). This doubles as verification
+#      testing — the gallery shows each feature actually rendering with data.
+#   4. Publish the screenshots so they render INLINE on the run page's Job
+#      Summary (no download needed), grouped by section. Because GitHub strips
+#      base64 images from summaries, the PNGs are pushed to an orphan
+#      `ci-screenshots` branch and the summary references their
+#      raw.githubusercontent.com URLs.
+#
+#   Note: the plain-text Actions console log cannot render images; the
+#   screenshots appear in the Job Summary on the run page.
+
+on:
+  push:
+    branches: [main, master]
+  # Run the walkthrough as verification on PRs into main/master too, so the
+  # gallery shows up on the PR while features are under review.
+  pull_request:
+    branches: [main, master]
+  # Allow manual runs too (any branch), so you can test without merging.
+  workflow_dispatch:
+
+# contents: write is needed to push screenshots to the ci-screenshots branch.
+permissions:
+  contents: write
+
+jobs:
+  ui-screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      # The emulator needs hardware acceleration (KVM) to boot in reasonable
+      # time on the GitHub-hosted Linux runners.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run UI walkthrough on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash .github/scripts/ui_screenshots.sh
+
+      - name: Publish screenshots to run summary
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/publish_screenshots.sh

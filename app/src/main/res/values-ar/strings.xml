@@ -13,7 +13,6 @@
     <string name="_6">ستة</string>
     <string name="_7">سبعة</string>
     <string name="_8">ثمانية</string>
-    <string name="app_drawer_tips">نصيحة: ابدأ في كتابة اسم التطبيق لتشغيله تلقائيًا</string>
     <string name="okay">حسنًا</string>
     <string name="cool">رائع!</string>
     <string name="tip_start_typing_for_rename">نصيحة: ابدأ الكتابة بتغيير اسم التطبيق</string>
@@ -66,7 +65,6 @@
     <string name="follow">تابع</string>
     <string name="email">بريد</string>
     <string name="donate">تبرّع</string>
-    <string name="swipe_up_for_apps">1. مرر لأعلى لجميع التطبيقات\n2. اضغط مطوّلًا في أي مكان للإعدادات</string>
     <string name="apps_on_home_screen">التطبيقات على الشاشة الرئيسية</string>
     <string name="hourly_wallpaper_update">خلفية جديدة كل ساعة</string>
     <string name="left">يسار</string>

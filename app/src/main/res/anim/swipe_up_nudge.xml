@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gentle bobbing + pulse for the home-screen "swipe up for apps" nudge. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillAfter="true"
+    android:interpolator="@android:anim/accelerate_decelerate_interpolator">
+
+    <translate
+        android:duration="850"
+        android:fromYDelta="0"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse"
+        android:toYDelta="-35%" />
+
+    <alpha
+        android:duration="850"
+        android:fromAlpha="0.30"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse"
+        android:toAlpha="0.75" />
+</set>

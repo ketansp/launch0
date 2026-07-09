@@ -14,9 +14,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.UserHandle
 import android.provider.Settings
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import app.launch0.BuildConfig
 import app.launch0.R
@@ -178,4 +180,60 @@ fun Long.hasBeenMinutes(minutes: Int): Boolean =
 
 fun Int.dpToPx(): Int {
     return (this * Resources.getSystem().displayMetrics.density).toInt()
+}
+
+/**
+ * Whether [x] (a touch x-coordinate, in view pixels) falls on the notification-count pill drawn as
+ * a compound drawable on this text view. [R.id.notif_pill_side] holds a Boolean set when the pill
+ * is present: true if it occupies the start slot, false for the end slot. The start/end slot is
+ * mapped to an absolute left/right edge using the current layout direction so it works in RTL too.
+ */
+fun TextView.isTouchInsidePill(x: Float): Boolean {
+    val pillInStart = getTag(R.id.notif_pill_side) as? Boolean ?: return false
+    val isRtl = layoutDirection == View.LAYOUT_DIRECTION_RTL
+    val onLeft = pillInStart != isRtl
+    val pill = compoundDrawables[if (onLeft) 0 else 2] ?: return false
+    // When the pill shares its slot with the screen-time capsule, only the pill (drawn on the slot's
+    // outer edge) is tappable, so prefer its stored width over the combined drawable's full width.
+    val pillWidth = (getTag(R.id.notif_pill_width) as? Int) ?: pill.bounds.width()
+    val slop = 8.dpToPx()
+    return if (onLeft) x <= paddingLeft + pillWidth + slop
+    else x >= width - paddingRight - pillWidth - slop
+}
+
+/**
+ * Touch listener for a text view that may show a notification-count pill. Touches that begin on the
+ * pill are consumed for the whole gesture and trigger [onPillTap] on release; every other touch is
+ * forwarded to [delegate] (e.g. a swipe listener) or, when there is none, left unconsumed so the
+ * view's own click handling still runs.
+ */
+fun pillTouchListener(
+    delegate: ((View, MotionEvent) -> Boolean)? = null,
+    onPillTap: () -> Unit,
+): View.OnTouchListener = View.OnTouchListener { view, event ->
+    val textView = view as? TextView
+    when (event.actionMasked) {
+        MotionEvent.ACTION_DOWN ->
+            if (textView != null && textView.isTouchInsidePill(event.x)) {
+                textView.setTag(R.id.notif_pill_down, true)
+                true
+            } else delegate?.invoke(view, event) ?: false
+
+        MotionEvent.ACTION_UP ->
+            if (textView?.getTag(R.id.notif_pill_down) == true) {
+                textView.setTag(R.id.notif_pill_down, false)
+                if (textView.isTouchInsidePill(event.x)) onPillTap()
+                true
+            } else delegate?.invoke(view, event) ?: false
+
+        MotionEvent.ACTION_CANCEL ->
+            if (textView?.getTag(R.id.notif_pill_down) == true) {
+                textView.setTag(R.id.notif_pill_down, false)
+                true
+            } else delegate?.invoke(view, event) ?: false
+
+        else ->
+            if (textView?.getTag(R.id.notif_pill_down) == true) true
+            else delegate?.invoke(view, event) ?: false
+    }
 }

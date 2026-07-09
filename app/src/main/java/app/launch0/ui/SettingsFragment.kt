@@ -79,9 +79,14 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateStatusBar()
         populateDateTime()
         populateYearWidget()
+        populateAppIcons()
+        populateAppNames()
+        populateIconSize()
+        populateIconShape()
         populateSwipeApps()
         populateSwipeDownAction()
         populateDnd()
+        populateDistractionTimer()
         populateSwipeLeftAction()
         populateActionHints()
         initClickListeners()
@@ -96,6 +101,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         if (_binding != null) {
             if (prefs.dndEnabled && !isNotificationServiceEnabled(requireContext())) disableDnd()
             populateDnd()
+            // Refresh the count after returning from the distracting-apps picker.
+            populateDistractionTimer()
         }
     }
 
@@ -115,6 +122,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         }
         if (view.id != R.id.alignmentBottom)
             binding.alignmentSelectLayout.visibility = View.GONE
+        if (view.id != R.id.iconSizeValue && view.id != R.id.iconSizeMinus && view.id != R.id.iconSizePlus)
+            binding.iconSizeLayout.visibility = View.GONE
+        if (view.id != R.id.iconShape)
+            binding.iconShapeSelectLayout.visibility = View.GONE
 
         when (view.id) {
             R.id.launch0HiddenApps -> showHiddenApps()
@@ -134,6 +145,17 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.statusBar -> toggleStatusBar()
             R.id.dateTime -> binding.dateTimeSelectLayout.visibility = View.VISIBLE
             R.id.daysLeftWidget -> toggleYearWidget()
+            R.id.showAppIcons -> toggleAppIcons()
+            R.id.showAppNames -> toggleAppNames()
+            R.id.iconSizeValue -> binding.iconSizeLayout.visibility = View.VISIBLE
+            R.id.iconSizeMinus -> updateIconSize(prefs.iconSize - 1)
+            R.id.iconSizePlus -> updateIconSize(prefs.iconSize + 1)
+            R.id.iconShape -> binding.iconShapeSelectLayout.visibility = View.VISIBLE
+            R.id.shapeDefault -> updateIconShape(Constants.IconShape.DEFAULT)
+            R.id.shapeCircle -> updateIconShape(Constants.IconShape.CIRCLE)
+            R.id.shapeSquare -> updateIconShape(Constants.IconShape.SQUARE)
+            R.id.shapeSquircle -> updateIconShape(Constants.IconShape.SQUIRCLE)
+            R.id.shapeTeardrop -> updateIconShape(Constants.IconShape.TEARDROP)
             R.id.dateTimeOn -> toggleDateTime(Constants.DateTime.ON)
             R.id.dateTimeOff -> toggleDateTime(Constants.DateTime.OFF)
             R.id.dateOnly -> toggleDateTime(Constants.DateTime.DATE_ONLY)
@@ -181,6 +203,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.dndDur180 -> updateDndDuration(180)
             R.id.dndApps -> showDndApps()
 
+            R.id.distractionWaitMode -> toggleDistractionWaitMode()
+            R.id.distractionAppsNum -> showDistractionApps()
+
             R.id.aboutLaunch0 -> {
                 prefs.aboutClicked = true
                 requireContext().openUrl(Constants.URL_ABOUT)
@@ -190,12 +215,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onLongClick(view: View): Boolean {
         when (view.id) {
-            R.id.alignment -> {
-                prefs.appLabelAlignment = prefs.homeAlignment
-                findNavController().navigate(R.id.action_settingsFragment_to_appListFragment)
-                requireContext().showToast(getString(R.string.alignment_changed))
-            }
-
             R.id.hourlyWallpaper -> removeWallpaper()
             R.id.appThemeText -> {
                 binding.appThemeSelectLayout.visibility = View.VISIBLE
@@ -229,6 +248,17 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
         binding.daysLeftWidget.setOnClickListener(this)
+        binding.showAppIcons.setOnClickListener(this)
+        binding.showAppNames.setOnClickListener(this)
+        binding.iconSizeValue.setOnClickListener(this)
+        binding.iconShape.setOnClickListener(this)
+        binding.shapeDefault.setOnClickListener(this)
+        binding.shapeCircle.setOnClickListener(this)
+        binding.shapeSquare.setOnClickListener(this)
+        binding.shapeSquircle.setOnClickListener(this)
+        binding.shapeTeardrop.setOnClickListener(this)
+        binding.iconSizeMinus.setOnClickListener(this)
+        binding.iconSizePlus.setOnClickListener(this)
         binding.dateTimeOn.setOnClickListener(this)
         binding.dateTimeOff.setOnClickListener(this)
         binding.dateOnly.setOnClickListener(this)
@@ -247,6 +277,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.dndDur120.setOnClickListener(this)
         binding.dndDur180.setOnClickListener(this)
         binding.dndApps.setOnClickListener(this)
+        binding.distractionWaitMode.setOnClickListener(this)
+        binding.distractionAppsNum.setOnClickListener(this)
         binding.swipeLeftAction.setOnClickListener(this)
         binding.swipeLeftNotes.setOnClickListener(this)
         binding.swipeLeftAppOption.setOnClickListener(this)
@@ -351,6 +383,74 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.daysLeftWidget.text = getString(
             if (prefs.showYearWidget) R.string.on else R.string.off
         )
+    }
+
+    private fun toggleAppIcons() {
+        prefs.showAppIcons = !prefs.showAppIcons
+        // Icons and names can't both be hidden — turning icons off forces names back on.
+        if (!prefs.showAppIcons && !prefs.showAppNames) {
+            prefs.showAppNames = true
+            populateAppNames()
+        }
+        populateAppIcons()
+        viewModel.refreshHome(false)
+    }
+
+    private fun populateAppIcons() {
+        binding.showAppIcons.text = getString(
+            if (prefs.showAppIcons) R.string.on else R.string.off
+        )
+    }
+
+    private fun toggleAppNames() {
+        prefs.showAppNames = !prefs.showAppNames
+        // Icons and names can't both be hidden — hiding names forces icons on.
+        if (!prefs.showAppNames && !prefs.showAppIcons) {
+            prefs.showAppIcons = true
+            populateAppIcons()
+        }
+        populateAppNames()
+        viewModel.refreshHome(false)
+    }
+
+    private fun populateAppNames() {
+        binding.showAppNames.text = getString(
+            if (prefs.showAppNames) R.string.on else R.string.off
+        )
+    }
+
+    private fun populateIconSize() {
+        binding.iconSizeValue.text = prefs.iconSize.toString()
+        binding.iconSizeCurrent.text = prefs.iconSize.toString()
+    }
+
+    private fun updateIconSize(size: Int) {
+        val clamped = size.coerceIn(Constants.ICON_SIZE_MIN, Constants.ICON_SIZE_MAX)
+        if (prefs.iconSize == clamped) return
+        prefs.iconSize = clamped
+        binding.iconSizeValue.text = clamped.toString()
+        binding.iconSizeCurrent.text = clamped.toString()
+        viewModel.refreshHome(false)
+    }
+
+    private fun populateIconShape() {
+        binding.iconShape.text = getString(
+            when (prefs.iconShape) {
+                Constants.IconShape.CIRCLE -> R.string.shape_circle
+                Constants.IconShape.SQUARE -> R.string.shape_square
+                Constants.IconShape.SQUIRCLE -> R.string.shape_squircle
+                Constants.IconShape.TEARDROP -> R.string.shape_teardrop
+                else -> R.string.shape_default
+            }
+        )
+    }
+
+    private fun updateIconShape(shape: Int) {
+        binding.iconShapeSelectLayout.visibility = View.GONE
+        if (prefs.iconShape == shape) return
+        prefs.iconShape = shape
+        populateIconShape()
+        viewModel.refreshHome(false)
     }
 
     private fun populateDateTime() {
@@ -663,6 +763,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         // Stop holding new notifications; already-held ones release at their scheduled time.
         prefs.dndWindowEnd = 0L
         prefs.dndHeldKeys = mutableSetOf()
+        prefs.dndReleasedKeys = mutableSetOf()
     }
 
     private fun updateDndDuration(minutes: Int) {
@@ -687,6 +788,28 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         findNavController().navigate(
             R.id.action_settingsFragment_to_appListFragment,
             bundleOf(Constants.Key.FLAG to Constants.FLAG_SET_DND_APPS)
+        )
+    }
+
+    private fun populateDistractionTimer() {
+        binding.distractionWaitMode.text = getString(
+            if (prefs.distractionWaitEscalating) R.string.dt_wait_escalating
+            else R.string.dt_wait_fixed
+        )
+        binding.distractionAppsNum.text = prefs.distractionApps.size.toString()
+    }
+
+    private fun toggleDistractionWaitMode() {
+        prefs.distractionWaitEscalating = !prefs.distractionWaitEscalating
+        populateDistractionTimer()
+        viewModel.refreshHome(false)
+    }
+
+    private fun showDistractionApps() {
+        viewModel.getAppList(true)
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_appListFragment,
+            bundleOf(Constants.Key.FLAG to Constants.FLAG_SET_DISTRACTION_APPS)
         )
     }
 

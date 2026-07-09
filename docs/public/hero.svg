@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="320" height="320">
+  <!-- Hero rocket only — no background, no stars. Sits on the page's starfield. -->
+  <defs>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d4d4d8"/>
+      <stop offset="35%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#a1a1aa"/>
+    </linearGradient>
+    <linearGradient id="fo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="60%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#ef444400"/>
+    </linearGradient>
+    <linearGradient id="fi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#f9731600"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Flame -->
+  <ellipse cx="256" cy="406" rx="26" ry="32" fill="#f97316" opacity=".1"/>
+  <path d="M238 368 Q233 394 248 422 Q254 434 256 438 Q258 434 264 422 Q279 394 274 368" fill="url(#fo)" opacity=".9"/>
+  <path d="M246 368 Q243 390 252 414 Q255 420 256 422 Q257 420 260 414 Q269 390 266 368" fill="url(#fi)" opacity=".95"/>
+
+  <!-- Fins -->
+  <path d="M196 298 L170 358 L210 334 Z" fill="#d4d4d8"/>
+  <path d="M316 298 L342 358 L302 334 Z" fill="#d4d4d8"/>
+
+  <!-- Zero body -->
+  <ellipse cx="256" cy="222" rx="74" ry="120" fill="url(#bodyGrad)"/>
+  <ellipse cx="256" cy="222" rx="50" ry="90" fill="#000"/>
+
+  <!-- Nozzle -->
+  <rect x="236" y="337" width="40" height="14" rx="4" fill="#a1a1aa"/>
+  <rect x="243" y="348" width="26" height="14" rx="3" fill="#71717a"/>
+</svg>

@@ -1,12 +1,20 @@
 package app.launch0.ui
 
+import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -19,7 +27,11 @@ import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentAppDrawerBinding
+import app.launch0.helper.DistractionTimer
+import app.launch0.helper.NotificationDndService
+import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.deletePinnedShortcut
+import app.launch0.helper.dpToPx
 import app.launch0.helper.hideKeyboard
 import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isSystemApp
@@ -38,10 +50,16 @@ class AppDrawerFragment : Fragment() {
 
     private var flag = Constants.FLAG_LAUNCH_APP
     private var canRename = false
+    private var previousSoftInputMode: Int? = null
 
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentAppDrawerBinding? = null
     private val binding get() = _binding!!
+
+    /** Screen time is offered (and per-app capsules are shown) only when usage access is granted. */
+    private val screenTimeEnabled: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                requireContext().appUsagePermissionGranted()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,11 +78,31 @@ class AppDrawerFragment : Fragment() {
             canRename = it.getBoolean(Constants.Key.RENAME, false)
         }
 
+        applyWindowInsets()
         initViews()
         initSearch()
         initAdapter()
+        initAlphabetIndex()
         initObservers()
         initClickListeners()
+    }
+
+    /**
+     * Pushes the bottom-aligned search bar (and the list above it) clear of the keyboard by
+     * padding the drawer with the IME inset, falling back to the system bar inset when the
+     * keyboard is hidden. This is more reliable than panning the window, which left the list
+     * and search bar tucked behind the keyboard.
+     */
+    private fun applyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            v.updatePadding(
+                top = bars.top,
+                bottom = maxOf(bars.bottom, ime.bottom),
+            )
+            insets
+        }
     }
 
     private fun initViews() {
@@ -72,11 +110,13 @@ class AppDrawerFragment : Fragment() {
             binding.search.queryHint = getString(R.string.hidden_apps)
         else if (flag == Constants.FLAG_SET_DND_APPS)
             binding.search.queryHint = getString(R.string.dnd_select_apps_hint)
+        else if (flag == Constants.FLAG_SET_DISTRACTION_APPS)
+            binding.search.queryHint = getString(R.string.dt_select_apps_hint)
         else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_CALENDAR_APP)
             binding.search.queryHint = "Please select an app"
         try {
             val searchTextView = binding.search.findViewById<TextView>(R.id.search_src_text)
-            if (searchTextView != null) searchTextView.gravity = prefs.appLabelAlignment
+            if (searchTextView != null) searchTextView.gravity = prefs.homeAlignment
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -96,8 +136,13 @@ class AppDrawerFragment : Fragment() {
 
             override fun onQueryTextChange(newText: String): Boolean {
                 try {
+                    // While searching, flip the list so the most relevant result (item 0 after
+                    // the adapter's ranking sort) renders at the bottom, closest to the search
+                    // box and keyboard. Cleared search reverts to the normal top-anchored list.
+                    val searching = newText.isNotBlank()
+                    if (linearLayoutManager.reverseLayout != searching)
+                        linearLayoutManager.reverseLayout = searching
                     adapter.filter.filter(newText)
-                    binding.appDrawerTip.visibility = View.GONE
                     binding.appRename.visibility =
                         if (canRename && newText.isNotBlank()) View.VISIBLE else View.GONE
                     return true
@@ -112,10 +157,20 @@ class AppDrawerFragment : Fragment() {
     private fun initAdapter() {
         adapter = AppDrawerAdapter(
             flag,
-            prefs.appLabelAlignment,
+            prefs.homeAlignment,
+            prefs.showAppIcons,
+            prefs.showAppNames,
+            prefs.iconSize.dpToPx(),
+            prefs.iconShape,
             appClickListener = { appModel ->
                 if (flag == Constants.FLAG_SET_DND_APPS) {
                     toggleDndApp(appModel)
+                } else if (flag == Constants.FLAG_SET_DISTRACTION_APPS) {
+                    toggleDistractionApp(appModel)
+                } else if ((flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
+                    && DistractionTimer.isDistractingApp(prefs, appModel.appPackage)
+                ) {
+                    openDistractionWait(appModel)
                 } else {
                     viewModel.selectedApp(appModel, flag)
                     if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
@@ -188,7 +243,21 @@ class AppDrawerFragment : Fragment() {
                 prefs.setAppRenameLabel(identifier, renameLabel)
                 viewModel.getAppList()
             },
-            isDndApp = { appPackage -> prefs.dndApps.contains(appPackage) }
+            isDndApp = { appPackage -> prefs.dndApps.contains(appPackage) },
+            isDistractionApp = { appPackage -> prefs.distractionApps.contains(appPackage) },
+            parkedNotificationCount = { appPackage ->
+                NotificationDndService.parkedCount(prefs, appPackage)
+            },
+            onReleaseNotifications = { appModel ->
+                NotificationDndService.releaseForPackage(prefs, appModel.appPackage)
+                val position = adapter.appFilteredList.indexOf(appModel)
+                if (position >= 0) adapter.notifyItemChanged(position)
+                requireContext().showToast(getString(R.string.dnd_released))
+            },
+            screenTimeMinutes = { appPackage ->
+                val millis = if (screenTimeEnabled) viewModel.appScreenTimes.value?.get(appPackage) ?: 0L else 0L
+                Math.round(millis / 60000.0).toInt()
+            }
         )
 
         linearLayoutManager = object : LinearLayoutManager(requireContext()) {
@@ -214,13 +283,38 @@ class AppDrawerFragment : Fragment() {
                 AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_anim_from_bottom)
     }
 
-    private fun initObservers() {
-        viewModel.firstOpen.observe(viewLifecycleOwner) {
-            if (it && flag == Constants.FLAG_LAUNCH_APP) {
-                binding.appDrawerTip.visibility = View.VISIBLE
-                binding.appDrawerTip.isSelected = true
-            }
+    private fun initAlphabetIndex() {
+        // The index always sits in its own column on the right (see the layout); the app
+        // names follow the home screen alignment independently of it.
+        binding.alphabetIndex.setTextColor(themeColor(R.attr.primaryColor))
+        binding.alphabetIndex.setOnSectionSelectedListener { section ->
+            val position = adapter.getPositionForSection(section)
+            if (position >= 0) linearLayoutManager.scrollToPositionWithOffset(position, 0)
         }
+        adapter.onListUpdated = { refreshAlphabetIndex() }
+    }
+
+    /** Rebuilds the alphabet index from the current list, hiding it while a search is active. */
+    private fun refreshAlphabetIndex() {
+        if (_binding == null) return
+        val searching = binding.search.query?.isNotBlank() == true
+        val sections = if (searching) emptyList() else adapter.getSections()
+        binding.alphabetIndex.setSections(sections)
+        // Use INVISIBLE (not GONE) so the index column keeps reserving its width. Otherwise the
+        // RecyclerView (layout_weight=1) would expand into the freed space and right-aligned app
+        // names would shift right while a search is active.
+        binding.alphabetIndex.visibility = if (sections.size > 1) View.VISIBLE else View.INVISIBLE
+    }
+
+    private fun themeColor(attr: Int): Int {
+        val typedValue = TypedValue()
+        requireContext().theme.resolveAttribute(attr, typedValue, true)
+        return if (typedValue.resourceId != 0)
+            ContextCompat.getColor(requireContext(), typedValue.resourceId)
+        else typedValue.data
+    }
+
+    private fun initObservers() {
         if (flag == Constants.FLAG_HIDDEN_APPS) {
             viewModel.hiddenApps.observe(viewLifecycleOwner) {
                 it?.let {
@@ -235,13 +329,17 @@ class AppDrawerFragment : Fragment() {
                 }
             }
         }
+
+        // Refresh today's per-app usage (throttled) and re-decorate rows when it arrives.
+        if (screenTimeEnabled) {
+            viewModel.getTodaysScreenTime()
+            viewModel.appScreenTimes.observe(viewLifecycleOwner) {
+                adapter.notifyDataSetChanged()
+            }
+        }
     }
 
     private fun initClickListeners() {
-        binding.appDrawerTip.setOnClickListener {
-            binding.appDrawerTip.isSelected = false
-            binding.appDrawerTip.isSelected = true
-        }
         binding.appRename.setOnClickListener {
             val name = binding.search.query.toString().trim()
             if (name.isEmpty()) {
@@ -300,6 +398,38 @@ class AppDrawerFragment : Fragment() {
         if (position >= 0) adapter.notifyItemChanged(position)
     }
 
+    private fun toggleDistractionApp(appModel: AppModel) {
+        if (appModel.appPackage.isBlank()) return
+        val distractionApps = prefs.distractionApps
+        if (!distractionApps.add(appModel.appPackage)) distractionApps.remove(appModel.appPackage)
+        prefs.distractionApps = distractionApps
+        val position = adapter.appFilteredList.indexOf(appModel)
+        if (position >= 0) adapter.notifyItemChanged(position)
+    }
+
+    /** Routes a distracting app through the wait screen; the drawer leaves the back stack. */
+    private fun openDistractionWait(appModel: AppModel) {
+        val (activityClassName, shortcutId, isShortcut) = when (appModel) {
+            is AppModel.App -> Triple(appModel.activityClassName, "", false)
+            is AppModel.PinnedShortcut -> Triple(null, appModel.shortcutId, true)
+        }
+        try {
+            findNavController().navigate(
+                R.id.action_appListFragment_to_distractionWaitFragment,
+                bundleOf(
+                    Constants.Key.APP_NAME to appModel.appLabel,
+                    Constants.Key.APP_PACKAGE to appModel.appPackage,
+                    Constants.Key.APP_ACTIVITY_CLASS to activityClassName,
+                    Constants.Key.SHORTCUT_ID to shortcutId,
+                    Constants.Key.IS_SHORTCUT to isShortcut,
+                    Constants.Key.APP_USER to appModel.user.toString(),
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun checkMessageAndExit() {
         findNavController().popBackStack()
         if (flag == Constants.FLAG_LAUNCH_APP)
@@ -308,11 +438,19 @@ class AppDrawerFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
+        // Resize the window for the keyboard so the IME inset is dispatched to
+        // applyWindowInsets(), which lifts the list and search bar above the keyboard.
+        // The previous mode is restored in onStop.
+        requireActivity().window.let { window ->
+            previousSoftInputMode = window.attributes.softInputMode
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
         binding.search.showKeyboard(prefs.autoShowKeyboard)
     }
 
     override fun onStop() {
         binding.search.hideKeyboard()
+        previousSoftInputMode?.let { requireActivity().window.setSoftInputMode(it) }
         super.onStop()
     }
 

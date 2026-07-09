@@ -5,7 +5,7 @@
     <string name="olauncher_pro" translatable="false">Olauncher Pro</string>
     <string name="digital_minimalism" translatable="false"><u>Digital Minimalism</u></string>
     <string name="new_app_note_to_self" translatable="false"><u>New app: Note to Self</u></string>
-    <string name="day_battery" formatted="false" translatable="false">%s, %d%%</string>
+    <string name="day_battery" formatted="false" translatable="false">%s\nbattery %d%%</string>
     <string name="tag_0" translatable="false">0</string>
     <string name="tag_1" translatable="false">1</string>
     <string name="tag_2" translatable="false">2</string>
@@ -39,7 +39,6 @@
     <string name="follow">Follow</string>
     <string name="email">Email</string>
     <string name="donate">Donate</string>
-    <string name="swipe_up_for_apps">1. Swipe up for all apps\n2. Long press anywhere for settings</string>
     <string name="apps_on_home_screen">Apps on home screen</string>
     <string name="hourly_wallpaper_update">New wallpaper every hour</string>
     <string name="left">Left</string>
@@ -57,7 +56,6 @@
     <string name="_6">6</string>
     <string name="_7">7</string>
     <string name="_8">8</string>
-    <string name="app_drawer_tips">Tip: Start typing an app name to auto-launch it</string>
     <string name="okay">Okay</string>
     <string name="cool">Cool!</string>
     <string name="auto_show_keyboard">Auto show keyboard</string>
@@ -66,7 +64,15 @@
     <string name="rename">Rename</string>
     <string name="show_date_time">Show date time</string>
     <string name="days_left_widget">Days left widget</string>
-    <string name="widget_percent_over">%1$d%% over</string>
+    <string name="show_app_icons">Show app icons</string>
+    <string name="show_app_names">Show app names</string>
+    <string name="icon_size">Icon size</string>
+    <string name="icon_shape">Icon shape</string>
+    <string name="shape_default">Default</string>
+    <string name="shape_circle">Circle</string>
+    <string name="shape_square">Square</string>
+    <string name="shape_squircle">Squircle</string>
+    <string name="shape_teardrop">Teardrop</string>
     <string name="appearance">Appearance</string>
     <string name="gestures">Gestures</string>
     <string name="theme_mode">Theme mode</string>
@@ -167,6 +173,7 @@
     <string name="dnd_select_apps_hint">Tap apps to hold their notifications</string>
     <string name="dnd_grant_access">Please allow notification access for Launch0</string>
     <string name="dnd_no_apps_selected">Select at least one app to hold</string>
+    <string name="dnd_released">Held notifications released</string>
     <string name="minutes_suffix" translatable="false">%1$d min</string>
     <string name="dnd_30" translatable="false">30</string>
     <string name="dnd_45" translatable="false">45</string>
@@ -175,17 +182,74 @@
     <string name="dnd_120" translatable="false">120</string>
     <string name="dnd_180" translatable="false">180</string>
 
+    <!-- Distraction timer -->
+    <string name="distraction_timer">Distraction timer</string>
+    <string name="dt_wait">Wait</string>
+    <string name="dt_wait_escalating">Escalating · 10–60s</string>
+    <string name="dt_wait_fixed">Fixed · 30s</string>
+    <string name="dt_leave_mid_wait">Leave mid-wait</string>
+    <string name="dt_timer_resets">Timer resets</string>
+    <string name="dt_apps">Distracting apps</string>
+    <string name="dt_select_apps_hint">Tap apps to mark as distracting</string>
+    <string name="dt_seconds_until">seconds until %1$s opens</string>
+    <string name="dt_open_app">Open %1$s</string>
+    <string name="dt_you_waited">You waited. Tap to open.</string>
+    <string name="dt_opens_today">Opens today</string>
+    <string name="dt_last_open">Last open</string>
+    <string name="dt_next_wait">Next wait</string>
+    <string name="dt_waits_double">Waits double with every open today.</string>
+    <string name="dt_fixed_wait_note">Every open waits %1$ds today.</string>
+    <string name="dt_turn_back">Turn back</string>
+    <string name="dt_turn_back_caption">Going back resets the timer</string>
+    <string name="dt_timer_reset_toast">Timer reset. This open wasn\'t counted.</string>
+    <string name="dt_aphorism">Are you using your phone,\nor is your phone using you?</string>
+    <string name="dt_wait_capsule" translatable="false">%1$ds wait</string>
+    <string name="dt_seconds_value" translatable="false">%1$ds</string>
+    <string name="dt_minutes_ago">%1$dm ago</string>
+    <string name="dt_hours_ago">%1$dh ago</string>
+    <string name="dt_days_ago">%1$dd ago</string>
+    <string name="dt_none" translatable="false">—</string>
+
     <!-- Personal notes page -->
     <string name="notes_title">Notes</string>
+    <string name="notes_back">Back</string>
+    <string name="notes_back_symbol" translatable="false">‹</string>
     <string name="swipe_left_for">Swipe left for</string>
+    <string name="swipe_up_for_apps">Swipe up for apps</string>
+    <string name="swipe_left_for_notes">Swipe left for notes</string>
     <string name="notes_empty_hint">Jot anything here. Notes, links, images — like a chat with yourself.</string>
     <string name="notes_input_hint">Write something…</string>
     <string name="notes_send">Send</string>
-    <string name="notes_attach_symbol" translatable="false">+</string>
     <string name="notes_add_image">Add image</string>
     <string name="notes_image_desc">Image</string>
     <string name="notes_delete">Delete</string>
     <string name="notes_delete_confirm">Delete this item?</string>
     <string name="couldnt_add_image">Couldn\'t add to notes</string>
     <string name="cancel">Cancel</string>
+
+    <!-- Notes: search, recording, message actions, to-dos -->
+    <string name="notes_search">Search</string>
+    <string name="notes_copy">Copy</string>
+    <string name="notes_share">Share</string>
+    <string name="notes_edit">Edit</string>
+    <string name="notes_save">Save</string>
+    <string name="notes_copied">Copied</string>
+    <string name="notes_editing">Editing note</string>
+    <string name="notes_search_results">Results for “%1$s”</string>
+    <string name="notes_no_results">No matching notes</string>
+    <string name="notes_audio_desc">Voice note</string>
+    <string name="notes_record_desc">Record a voice note</string>
+    <string name="notes_recording">Recording…</string>
+    <string name="notes_mic_permission">Microphone permission is needed to record voice notes</string>
+    <string name="notes_recording_failed">Couldn\'t record audio</string>
+    <string name="notes_today">Today</string>
+    <string name="notes_yesterday">Yesterday</string>
+    <plurals name="notes_entry_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <string name="notes_mark_done">Mark as done</string>
+    <string name="notes_mark_urgent">Mark as urgent</string>
+    <string name="notes_play_symbol" translatable="false">▶</string>
+    <string name="notes_pause_symbol" translatable="false">⏸</string>
 </resources>

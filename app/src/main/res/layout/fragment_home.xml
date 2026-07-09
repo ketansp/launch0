@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
@@ -75,15 +76,6 @@
         android:visibility="gone"
         tools:visibility="visible">
 
-        <TextView
-            android:id="@+id/tvWidgetCaption"
-            style="@style/TextSmall"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:textColor="?attr/primaryColorTrans80"
-            tools:text="41% over" />
-
         <app.launch0.ui.YearProgressView
             android:id="@+id/yearWidget"
             android:layout_width="match_parent"
@@ -95,7 +87,7 @@
         android:id="@+id/homeAppsLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_vertical"
+        android:gravity="bottom"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="112dp"
@@ -191,18 +183,35 @@
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/firstRunTips"
-        style="@style/TextSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginStart="20dp"
+    <!-- Animated swipe-up nudge: hints that swiping up opens the app list. Anchored to the bottom
+         center. Not clickable so the gesture falls through to the home screen's swipe handler. -->
+    <ImageView
+        android:id="@+id/swipeUpNudge"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:clickable="false"
+        android:contentDescription="@string/swipe_up_for_apps"
+        android:focusable="false"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_lucide_chevrons_up"
+        app:tint="?attr/primaryColor" />
+
+    <!-- Animated swipe-left nudge: hints that swiping left (right-to-left) opens notes. Anchored to
+         the right edge. Not clickable so the gesture falls through to the home screen's swipe handler. -->
+    <ImageView
+        android:id="@+id/swipeLeftNudge"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_gravity="center_vertical|end"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="56dp"
-        android:text="@string/swipe_up_for_apps"
-        android:visibility="gone"
-        tools:visibility="visible" />
+        android:clickable="false"
+        android:contentDescription="@string/swipe_left_for_notes"
+        android:focusable="false"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_lucide_chevrons_left"
+        app:tint="?attr/primaryColor" />
 
     <!-- Set default launcher -->
     <TextView

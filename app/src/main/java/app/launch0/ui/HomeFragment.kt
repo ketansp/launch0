@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -30,13 +31,22 @@ import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentHomeBinding
+import app.launch0.helper.DistractionTimer
+import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
+import app.launch0.helper.combineDrawablesHorizontally
 import app.launch0.helper.dpToPx
+import app.launch0.helper.getWaitCapsuleDrawable
 import app.launch0.helper.expandNotificationDrawer
 import app.launch0.helper.getChangedAppTheme
+import app.launch0.helper.getNotificationCountDrawable
+import app.launch0.helper.getScreenTimeCapsuleDrawable
+import app.launch0.helper.getShapedAppIcon
 import app.launch0.helper.getUserHandleFromString
+import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.openAlarmApp
+import app.launch0.helper.pillTouchListener
 import app.launch0.helper.openCalendar
 import app.launch0.helper.openCameraApp
 import app.launch0.helper.openDialerApp
@@ -51,12 +61,20 @@ import java.util.Locale
 
 class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener {
 
+    companion object {
+        // Only show a home app's usage capsule once it has been used for more than this many minutes.
+        private const val SCREEN_TIME_MIN_MINUTES = 5
+    }
+
     private lateinit var prefs: Prefs
     private lateinit var viewModel: MainViewModel
     private lateinit var deviceManager: DevicePolicyManager
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+
+    // Today's foreground time per package (millis); drives the per-app usage capsules on home apps.
+    private var appScreenTimes: Map<String, Long> = emptyMap()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
@@ -76,6 +94,48 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
         initClickListeners()
+        initSwipeUpNudge()
+        initSwipeLeftNudge()
+    }
+
+    /**
+     * Starts the gentle bobbing/pulse hint that swiping up opens the app list. The hint retires once
+     * the user has opened the app drawer enough times. The icon is left static on e-ink panels,
+     * where a perpetual animation would constantly redraw the screen.
+     */
+    private fun initSwipeUpNudge() {
+        if (prefs.appDrawerOpenCount >= Constants.NUDGE_DISMISS_AFTER) {
+            binding.swipeUpNudge.visibility = View.GONE
+            return
+        }
+        if (requireContext().isEinkDisplay()) {
+            binding.swipeUpNudge.alpha = 0.5f
+            return
+        }
+        binding.swipeUpNudge.startAnimation(
+            AnimationUtils.loadAnimation(requireContext(), R.anim.swipe_up_nudge)
+        )
+    }
+
+    /**
+     * Starts the gentle sideways drift/pulse hint that a right-to-left swipe opens notes. Only shown
+     * while a left swipe is actually wired to notes, and retired once the user has opened notes
+     * enough times. Left static on e-ink panels to avoid constant redraws.
+     */
+    private fun initSwipeLeftNudge() {
+        val opensNotes = prefs.swipeLeftAction == Constants.SwipeLeftAction.NOTES
+        if (!opensNotes || prefs.notesOpenCount >= Constants.NUDGE_DISMISS_AFTER) {
+            binding.swipeLeftNudge.visibility = View.GONE
+            return
+        }
+        binding.swipeLeftNudge.visibility = View.VISIBLE
+        if (requireContext().isEinkDisplay()) {
+            binding.swipeLeftNudge.alpha = 0.5f
+            return
+        }
+        binding.swipeLeftNudge.startAnimation(
+            AnimationUtils.loadAnimation(requireContext(), R.anim.swipe_left_nudge)
+        )
     }
 
     override fun onResume() {
@@ -166,11 +226,6 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun initObservers() {
-        if (prefs.firstSettingsOpen) {
-            binding.firstRunTips.visibility = View.VISIBLE
-            binding.setDefaultLauncher.visibility = View.GONE
-        } else binding.firstRunTips.visibility = View.GONE
-
         viewModel.refreshHome.observe(viewLifecycleOwner) {
             populateHomeScreen(it)
         }
@@ -180,10 +235,11 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                     prefs.hourlyWallpaper = false
                     viewModel.cancelWallpaperWorker()
                 }
-                prefs.homeBottomAlignment = false
-                setHomeAlignment()
             }
-            if (binding.firstRunTips.visibility == View.VISIBLE) return@Observer
+            // Re-align whenever default-launcher status changes. While Launch0 isn't the
+            // default launcher we render apps centered (so they don't collide with the
+            // "Set as default" prompt at the bottom) without touching the saved preference.
+            setHomeAlignment()
             binding.setDefaultLauncher.isVisible = it.not() && prefs.hideSetDefaultLauncher.not()
 //            if (it) binding.setDefaultLauncher.visibility = View.GONE
 //            else binding.setDefaultLauncher.visibility = View.VISIBLE
@@ -200,19 +256,36 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         viewModel.screenTimeValue.observe(viewLifecycleOwner) {
             it?.let { binding.tvScreenTime.text = it }
         }
+        viewModel.appScreenTimes.observe(viewLifecycleOwner) {
+            appScreenTimes = it ?: emptyMap()
+            // Re-decorate home apps so each name picks up its refreshed usage capsule.
+            populateHomeScreen(false)
+        }
     }
 
     private fun initSwipeTouchListener() {
         val context = requireContext()
         binding.mainLayout.setOnTouchListener(getSwipeGestureListener(context))
-        binding.homeApp1.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp1))
-        binding.homeApp2.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp2))
-        binding.homeApp3.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp3))
-        binding.homeApp4.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp4))
-        binding.homeApp5.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp5))
-        binding.homeApp6.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp6))
-        binding.homeApp7.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp7))
-        binding.homeApp8.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp8))
+        val homeApps = listOf(
+            binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
+            binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
+        )
+        homeApps.forEachIndexed { index, textView ->
+            setHomeAppTouchListener(textView, index + 1)
+        }
+    }
+
+    /**
+     * Combines the per-app swipe gestures with the notification-count pill: a touch starting on the
+     * pill releases the app's parked notifications, anything else falls through to the swipe handler.
+     */
+    private fun setHomeAppTouchListener(textView: TextView, location: Int) {
+        val swipeListener = getViewSwipeTouchListener(requireContext(), textView)
+        textView.setOnTouchListener(
+            pillTouchListener(delegate = { v, event -> swipeListener.onTouch(v, event) }) {
+                releaseNotificationsForHomeApp(location)
+            }
+        )
     }
 
     private fun initClickListeners() {
@@ -227,18 +300,27 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun setHomeAlignment(horizontalGravity: Int = prefs.homeAlignment) {
-        val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
+        val bottomAligned = prefs.homeBottomAlignment && viewModel.isLaunch0Default.value == true
+        val verticalGravity = if (bottomAligned) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
-        binding.tvWidgetCaption.gravity = horizontalGravity
-        binding.homeApp1.gravity = horizontalGravity
-        binding.homeApp2.gravity = horizontalGravity
-        binding.homeApp3.gravity = horizontalGravity
-        binding.homeApp4.gravity = horizontalGravity
-        binding.homeApp5.gravity = horizontalGravity
-        binding.homeApp6.gravity = horizontalGravity
-        binding.homeApp7.gravity = horizontalGravity
-        binding.homeApp8.gravity = horizontalGravity
+        // Keep the date's (now multi-line, with the battery line) text aligned with the home edge.
+        binding.date.gravity = horizontalGravity
+
+        // Left/right alignment stretches each row to the full width so the usage capsule and
+        // notification pill (drawn as the compound drawable opposite the name) land on the far edge,
+        // matching the app drawer. Centre keeps rows wrap-content so the icon stays beside the name.
+        val rowWidth = if (horizontalGravity == Gravity.CENTER)
+            ViewGroup.LayoutParams.WRAP_CONTENT else ViewGroup.LayoutParams.MATCH_PARENT
+        listOf(
+            binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
+            binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
+        ).forEach { homeApp ->
+            homeApp.gravity = horizontalGravity
+            if (homeApp.layoutParams.width != rowWidth) {
+                homeApp.layoutParams = homeApp.layoutParams.apply { width = rowWidth }
+            }
+        }
     }
 
     private fun populateDateTime() {
@@ -291,8 +373,30 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.widgetLayout.isVisible = show
         if (!show) return
         binding.yearWidget.refresh()
-        binding.tvWidgetCaption.text =
-            getString(R.string.widget_percent_over, binding.yearWidget.percentOver())
+        positionWidgetBelowHeader()
+    }
+
+    /**
+     * Anchors the days-left widget just below whichever header is currently showing — the
+     * clock/date block and/or the screen-time label — so the grid never overlaps them,
+     * regardless of font size, density or which headers are enabled. Falls back to a fixed
+     * top margin when no header is visible. Posted so the headers are measured first.
+     */
+    private fun positionWidgetBelowHeader() {
+        binding.widgetLayout.post {
+            if (_binding == null) return@post
+            var top = 56.dpToPx()
+            if (binding.dateTimeLayout.isVisible)
+                top = maxOf(top, binding.dateTimeLayout.bottom)
+            if (binding.tvScreenTime.isVisible)
+                top = maxOf(top, binding.tvScreenTime.bottom)
+            val params = binding.widgetLayout.layoutParams as FrameLayout.LayoutParams
+            val target = top + 16.dpToPx()
+            if (params.topMargin != target) {
+                params.topMargin = target
+                binding.widgetLayout.layoutParams = params
+            }
+        }
     }
 
     private fun populateHomeScreen(appCountUpdated: Boolean) {
@@ -381,24 +485,104 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                 // Check if our shortcut still exists
                 if (shortcuts?.any { it.id == shortcutId } == true) {
                     textView.text = appName
+                    setHomeAppDecorations(textView, packageName, userString)
                     return true
                 }
                 textView.text = ""
+                setHomeAppDecorations(textView, "", userString)
                 return false
             } catch (e: Exception) {
                 e.printStackTrace()
                 textView.text = ""
+                setHomeAppDecorations(textView, "", userString)
                 return false
             }
         }
-        
+
         // Regular app check
         if (isPackageInstalled(requireContext(), packageName, userString)) {
             textView.text = appName
+            setHomeAppDecorations(textView, packageName, userString)
             return true
         }
         textView.text = ""
+        setHomeAppDecorations(textView, "", userString)
         return false
+    }
+
+    /**
+     * Decorates [textView] with the app icon (when enabled) and, on the side opposite the app name,
+     * any combination of a parked-notification count pill (when DND has held notifications back) and
+     * a screen-time usage capsule (when the app has been used for more than [SCREEN_TIME_MIN_MINUTES]
+     * today). The icon sits on the same side as the home layout alignment (right when right-aligned).
+     * Tags the view so the notification pill alone can be hit-tested for taps (which release the
+     * parked notifications), even when it shares the slot with the usage capsule.
+     */
+    private fun setHomeAppDecorations(textView: TextView, packageName: String, userString: String) {
+        val sizePx = prefs.iconSize.dpToPx()
+        val icon = if (prefs.showAppIcons && packageName.isNotEmpty())
+            requireContext().getShapedAppIcon(packageName, userString, sizePx, prefs.iconShape)
+        else null
+        icon?.setBounds(0, 0, sizePx, sizePx)
+
+        val count = NotificationDndService.parkedCount(prefs, packageName)
+        val notifPill = if (count > 0) requireContext().getNotificationCountDrawable(count) else null
+
+        val usageMinutes = screenTimeMinutes(packageName)
+        val timeCapsule = if (usageMinutes > SCREEN_TIME_MIN_MINUTES)
+            requireContext().getScreenTimeCapsuleDrawable(usageMinutes) else null
+
+        // Distracting apps read recessed on home: name dimmed, next wait shown beside it.
+        val isDistracting = DistractionTimer.isDistractingApp(prefs, packageName)
+        val waitCapsule = if (isDistracting)
+            requireContext().getWaitCapsuleDrawable(DistractionTimer.nextWaitSeconds(prefs, packageName))
+        else null
+        textView.alpha = if (isDistracting) 0.5f else 1f
+
+        val iconOnEnd = prefs.homeAlignment == Gravity.END
+
+        // All decorations share the slot opposite the name. The notification pill goes on the slot's
+        // outer edge so its tap target keeps lining up with that edge; the capsules sit inboard.
+        val inwards = listOfNotNull(notifPill, timeCapsule, waitCapsule)
+        val opposite = when {
+            inwards.size > 1 ->
+                requireContext().combineDrawablesHorizontally(
+                    if (iconOnEnd) inwards else inwards.reversed(),
+                    6.dpToPx(),
+                )
+            else -> inwards.firstOrNull()
+        }
+
+        if (icon == null && opposite == null) {
+            textView.setCompoundDrawables(null, null, null, null)
+            textView.setTag(R.id.notif_pill_side, null)
+            textView.setTag(R.id.notif_pill_width, null)
+            return
+        }
+
+        // Icon on the alignment side, decorations on the opposite (start) side when right-aligned.
+        val startDrawable = if (iconOnEnd) opposite else icon
+        val endDrawable = if (iconOnEnd) icon else opposite
+        textView.setCompoundDrawablesRelative(startDrawable, null, endDrawable, null)
+        textView.compoundDrawablePadding = 12.dpToPx()
+        textView.setTag(R.id.notif_pill_side, if (notifPill != null) iconOnEnd else null)
+        textView.setTag(R.id.notif_pill_width, notifPill?.bounds?.width())
+    }
+
+    /** Rounded minutes of foreground time the app at [packageName] has had today, 0 if unknown. */
+    private fun screenTimeMinutes(packageName: String): Int {
+        if (packageName.isEmpty()) return 0
+        val millis = appScreenTimes[packageName] ?: return 0
+        return Math.round(millis / 60000.0).toInt()
+    }
+
+    private fun releaseNotificationsForHomeApp(location: Int) {
+        val packageName = prefs.getAppPackage(location)
+        if (packageName.isBlank()) return
+        if (NotificationDndService.parkedCount(prefs, packageName) == 0) return
+        NotificationDndService.releaseForPackage(prefs, packageName)
+        populateHomeScreen(false)
+        requireContext().showToast(getString(R.string.dnd_released))
     }
 
     private fun hideHomeApps() {
@@ -423,6 +607,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     ) {
         if (appName.isEmpty()) {
             showLongPressToast()
+            return
+        }
+        if (DistractionTimer.isDistractingApp(prefs, packageName)) {
+            openDistractionWait(appName, packageName, activityClassName, shortcutId, isShortcut, userString)
             return
         }
         if (isShortcut && !shortcutId.isNullOrEmpty()) {
@@ -472,6 +660,32 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         )
     }
 
+    /** Routes a distracting app through the wait screen instead of opening it straight away. */
+    private fun openDistractionWait(
+        appName: String,
+        packageName: String,
+        activityClassName: String?,
+        shortcutId: String?,
+        isShortcut: Boolean,
+        userString: String,
+    ) {
+        try {
+            findNavController().navigate(
+                R.id.action_mainFragment_to_distractionWaitFragment,
+                bundleOf(
+                    Constants.Key.APP_NAME to appName,
+                    Constants.Key.APP_PACKAGE to packageName,
+                    Constants.Key.APP_ACTIVITY_CLASS to activityClassName,
+                    Constants.Key.SHORTCUT_ID to shortcutId,
+                    Constants.Key.IS_SHORTCUT to isShortcut,
+                    Constants.Key.APP_USER to userString,
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun homeAppClicked(location: Int) {
         launchAppOrShortcut(
             appName = prefs.getAppName(location),
@@ -504,6 +718,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun openNotesPage() {
+        if (prefs.notesOpenCount < Constants.NUDGE_DISMISS_AFTER)
+            prefs.notesOpenCount++
         try {
             findNavController().navigate(R.id.action_mainFragment_to_notesFragment)
         } catch (e: Exception) {
@@ -525,6 +741,9 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun showAppList(flag: Int, rename: Boolean = false, includeHiddenApps: Boolean = false) {
+        // Count genuine app-drawer opens (launching an app) so the swipe-up hint can retire.
+        if (flag == Constants.FLAG_LAUNCH_APP && prefs.appDrawerOpenCount < Constants.NUDGE_DISMISS_AFTER)
+            prefs.appDrawerOpenCount++
         viewModel.getAppList(includeHiddenApps)
         try {
             findNavController().navigate(

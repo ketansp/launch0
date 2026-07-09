@@ -5,6 +5,12 @@ object Constants {
     object Key {
         const val FLAG = "flag"
         const val RENAME = "rename"
+        const val APP_NAME = "appName"
+        const val APP_PACKAGE = "appPackage"
+        const val APP_ACTIVITY_CLASS = "appActivityClass"
+        const val APP_USER = "appUser"
+        const val IS_SHORTCUT = "isShortcut"
+        const val SHORTCUT_ID = "shortcutId"
     }
 
     object Dialog {
@@ -49,10 +55,33 @@ object Constants {
         val DURATION_OPTIONS = intArrayOf(30, 45, 60, 90, 120, 180)
     }
 
+    object DistractionTimer {
+        // Escalating mode: wait = BASE * 2^(opens today), capped at MAX. Fixed mode: FIXED.
+        const val BASE_WAIT_SECONDS = 10
+        const val MAX_WAIT_SECONDS = 60
+        const val FIXED_WAIT_SECONDS = 30
+    }
+
     object SwipeLeftAction {
         const val NOTES = 1
         const val APP = 2
     }
+
+    object IconShape {
+        const val DEFAULT = 0
+        const val CIRCLE = 1
+        const val SQUARE = 2
+        const val SQUIRCLE = 3
+        const val TEARDROP = 4
+    }
+
+    // Home/drawer app icon size in dp (used when "Show app icons" is on).
+    const val ICON_SIZE_MIN = 16
+    const val ICON_SIZE_MAX = 48
+    const val ICON_SIZE_DEFAULT = 28
+
+    // Times the app drawer / notes must be opened before its swipe-hint nudge is retired.
+    const val NUDGE_DISMISS_AFTER = 10
 
     object CharacterIndicator {
         const val SHOW = 102
@@ -64,6 +93,11 @@ object Constants {
         "com.sec.android.app.clockpackage", //Samsung Clock
         "com.oneplus.deskclock", //OnePlus Clock
         "com.miui.clock", //Xiaomi Clock
+    )
+
+    val WHATSAPP_PACKAGES = arrayOf(
+        "com.whatsapp", //WhatsApp Messenger
+        "com.whatsapp.w4b", //WhatsApp Business
     )
 
 
@@ -89,6 +123,7 @@ object Constants {
     const val FLAG_SET_CALENDAR_APP = 14
 
     const val FLAG_SET_DND_APPS = 20
+    const val FLAG_SET_DISTRACTION_APPS = 21
 
     const val REQUEST_CODE_ENABLE_ADMIN = 666
     const val REQUEST_CODE_LAUNCHER_SELECTOR = 678

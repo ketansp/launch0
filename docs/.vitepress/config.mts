@@ -2,14 +2,17 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Launch0',
-  description: 'Minimal & Productive Android Launcher',
+  description: 'OS for the busy — a fast, text-only home screen',
+
+  // Dark mode only — hides the appearance toggle in the nav bar
+  appearance: 'force-dark',
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     ['meta', { name: 'theme-color', content: '#f97316' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'Launch0 - Minimal & Productive Android Launcher' }],
-    ['meta', { property: 'og:description', content: 'A minimal, open-source Android launcher built for productivity. No icons, no ads, no data collection.' }],
+    ['meta', { property: 'og:title', content: 'Launch0 - OS for the busy' }],
+    ['meta', { property: 'og:description', content: 'An OS for the busy — a fast, text-only home screen. Launch apps, capture notes, hold distractions, track your time. No ads, no data collection.' }],
     ['meta', { property: 'og:url', content: 'https://launch0.app' }],
   ],
 

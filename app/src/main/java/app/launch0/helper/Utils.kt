@@ -9,9 +9,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.Point
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.UserHandle
@@ -20,6 +22,7 @@ import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.MediaStore
 import android.provider.Settings
+import android.provider.Telephony
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
@@ -29,6 +32,7 @@ import android.view.animation.LinearInterpolator
 import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.net.toUri
 import app.launch0.BuildConfig
@@ -39,6 +43,7 @@ import app.launch0.data.Prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.Collator
+import java.text.Normalizer
 import kotlin.math.pow
 import kotlin.math.sqrt
 import androidx.core.graphics.createBitmap
@@ -50,6 +55,25 @@ fun Context.showToast(message: String?, duration: Int = Toast.LENGTH_SHORT) {
 
 fun Context.showToast(stringResource: Int, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(this, getString(stringResource), duration).show()
+}
+
+/**
+ * Accent-stripped form of a label, so "Ärzte" sorts (and sections) alongside "A".
+ * Mirrors the normalization used by the app drawer's alphabet index (see AppDrawerAdapter).
+ */
+private fun normalizeLabel(label: String): String =
+    Normalizer.normalize(label.trim(), Normalizer.Form.NFD)
+        .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+
+/**
+ * Sort rank that keeps the alphabet index and the list in sync: names starting with a digit,
+ * symbol, or non-Latin character all collapse into the leading "#" bucket (rank 0); everything
+ * A–Z follows (rank 1). Without this, digits/ASCII symbols sort above 'A' while emoji/CJK names
+ * sort below 'Z', splitting the "#" section into two groups — only one of which the index can reach.
+ */
+private fun drawerSectionRank(label: String): Int {
+    val first = normalizeLabel(label).firstOrNull() ?: return 0
+    return if (first.uppercaseChar() in 'A'..'Z') 1 else 0
 }
 
 suspend fun getAppsList(
@@ -105,7 +129,13 @@ suspend fun getAppsList(
                 appList.addAll(getPinnedShortcuts(context, prefs))
             }
 
-            appList.sortBy { it.appLabel.lowercase() }
+            appList.sortWith(
+                compareBy(
+                    { drawerSectionRank(it.appLabel) },
+                    { normalizeLabel(it.appLabel).lowercase() },
+                    { it.appLabel.lowercase() },
+                )
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -179,6 +209,72 @@ fun getUserHandleFromString(context: Context, userHandleString: String): UserHan
         }
     }
     return android.os.Process.myUserHandle()
+}
+
+/**
+ * Builds an [AppModel.App] for the given package using its launcher activity (current user).
+ * Returns null if the package has no launchable activity.
+ */
+private fun appModelForPackage(context: Context, packageName: String?): AppModel.App? {
+    if (packageName.isNullOrBlank() || packageName == "android") return null
+    return try {
+        val launcher = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val user = android.os.Process.myUserHandle()
+        val activities = launcher.getActivityList(packageName, user)
+        if (activities.isEmpty()) return null
+        val activity = activities[0]
+        AppModel.App(
+            appLabel = activity.label.toString(),
+            key = null,
+            appPackage = packageName,
+            activityClassName = activity.componentName.className,
+            isNew = false,
+            user = user,
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+/**
+ * Resolves the default home screen favourites — phone, camera, messaging and WhatsApp — to the
+ * apps actually installed on this device, in that order. Entries that can't be resolved are skipped.
+ */
+fun getDefaultHomeApps(context: Context): List<AppModel.App> {
+    val pm = context.packageManager
+    fun resolvePackage(intent: Intent): String? =
+        pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName
+
+    val apps = mutableListOf<AppModel.App>()
+
+    // Phone
+    appModelForPackage(context, resolvePackage(Intent(Intent.ACTION_DIAL)))?.let { apps.add(it) }
+    // Camera
+    appModelForPackage(context, resolvePackage(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)))?.let { apps.add(it) }
+    // Messaging
+    val smsPackage = Telephony.Sms.getDefaultSmsPackage(context)
+        ?: resolvePackage(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MESSAGING))
+    appModelForPackage(context, smsPackage)?.let { apps.add(it) }
+    // WhatsApp
+    Constants.WHATSAPP_PACKAGES.firstNotNullOfOrNull { appModelForPackage(context, it) }?.let { apps.add(it) }
+
+    return apps.distinctBy { it.appPackage }
+}
+
+/** App icon for a home favourite, badged for the owning user profile. Null if unavailable. */
+fun Context.getAppIcon(packageName: String, userString: String): Drawable? {
+    if (packageName.isBlank()) return null
+    return try {
+        val launcher = getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val user = getUserHandleFromString(this, userString)
+        val activities = launcher.getActivityList(packageName, user)
+        if (activities.isNotEmpty()) activities[0].getBadgedIcon(0)
+        else packageManager.getApplicationIcon(packageName)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }
 
 fun isLaunch0Default(context: Context): Boolean {
@@ -396,6 +492,144 @@ fun Context.getColorFromAttr(
 ): Int {
     theme.resolveAttribute(attrColor, typedValue, resolveRefs)
     return typedValue.data
+}
+
+/**
+ * Builds the parked-notification count capsule shown next to an app name when DND has held
+ * notifications back. A bell glyph precedes the count; counts above 99 collapse to "99+".
+ * [compact] renders the slightly smaller drawer variant. The returned drawable's bounds are already
+ * set to its intrinsic size, ready to be used as a compound drawable.
+ */
+fun Context.getNotificationCountDrawable(count: Int, compact: Boolean = false): Drawable {
+    val label = if (count > 99) "99+" else count.toString()
+    return buildCapsuleDrawable(label, R.drawable.ic_notif_bell, compact)
+}
+
+/**
+ * Builds the screen-time capsule shown next to a home app's name when the app has been used for an
+ * appreciable amount of time today. Shares the look of [getNotificationCountDrawable] — a translucent
+ * foreground-tinted capsule with the value in the foreground colour — but carries no glyph and reads
+ * as plain minutes, e.g. "7m", "35m", "125m".
+ */
+fun Context.getScreenTimeCapsuleDrawable(minutes: Int, compact: Boolean = false): Drawable {
+    return buildCapsuleDrawable("${minutes}m", null, compact)
+}
+
+/**
+ * Builds the distraction-timer capsule shown next to a flagged app's name on the home screen,
+ * reading the wait its next open would incur, e.g. "40s wait". Same register as the other capsules.
+ */
+fun Context.getWaitCapsuleDrawable(seconds: Int, compact: Boolean = false): Drawable {
+    return buildCapsuleDrawable(getString(R.string.dt_wait_capsule, seconds), null, compact)
+}
+
+/**
+ * Shared renderer for the launcher's monochrome capsules. Faithful to the launcher's register: a
+ * translucent capsule filled with the foreground colour at low opacity, an optional [glyphRes] and
+ * the [label] drawn in the foreground colour, and an inverse-colour text shadow so the value stays
+ * legible over any wallpaper. [compact] renders the slightly smaller drawer variant. The returned
+ * drawable's bounds are already set to its intrinsic size, ready to be used as a compound drawable.
+ */
+private fun Context.buildCapsuleDrawable(
+    label: String,
+    @DrawableRes glyphRes: Int?,
+    compact: Boolean,
+): Drawable {
+    val density = resources.displayMetrics.density
+
+    val foreground = getColorFromAttr(R.attr.primaryColor)
+    val inverse = getColorFromAttr(R.attr.primaryInverseColor)
+
+    // Translucent foreground fill — lighter foregrounds (dark theme) get a touch more opacity,
+    // matching the design's 0.13 (light) / 0.20 (dark) capsule.
+    val foregroundIsLight = androidx.core.graphics.ColorUtils.calculateLuminance(foreground) > 0.5
+    val fillAlpha = if (foregroundIsLight) 0.20f else 0.13f
+
+    val glyphSizePx = (if (compact) 13f else 14f) * density
+    val gapPx = 6f * density
+    val horizontalPadding = (if (compact) 9f else 11f) * density
+    val verticalPadding = (if (compact) 3f else 4f) * density
+
+    val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = foreground
+        textSize = (if (compact) 13.5f else 15f) * density
+        typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+        textAlign = android.graphics.Paint.Align.LEFT
+        setShadowLayer(4f * density, 0f, 2f * density, android.graphics.Color.argb(140, android.graphics.Color.red(inverse), android.graphics.Color.green(inverse), android.graphics.Color.blue(inverse)))
+    }
+    val textWidth = textPaint.measureText(label)
+    val fontMetrics = textPaint.fontMetrics
+
+    val hasGlyph = glyphRes != null
+    val glyphSpace = if (hasGlyph) glyphSizePx + gapPx else 0f
+    val contentHeight = maxOf(if (hasGlyph) glyphSizePx else 0f, fontMetrics.descent - fontMetrics.ascent)
+    val height = contentHeight + verticalPadding * 2f
+    val width = horizontalPadding * 2f + glyphSpace + textWidth
+
+    val bitmap = android.graphics.Bitmap.createBitmap(
+        kotlin.math.ceil(width).toInt(),
+        kotlin.math.ceil(height).toInt(),
+        android.graphics.Bitmap.Config.ARGB_8888,
+    )
+    val canvas = android.graphics.Canvas(bitmap)
+
+    val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = foreground
+        alpha = (fillAlpha * 255f).toInt()
+        style = android.graphics.Paint.Style.FILL
+    }
+    val radius = height / 2f
+    canvas.drawRoundRect(0f, 0f, width, height, radius, radius, fillPaint)
+
+    if (glyphRes != null) {
+        val glyph = androidx.core.content.ContextCompat.getDrawable(this, glyphRes)?.mutate()
+        if (glyph != null) {
+            glyph.setTint(foreground)
+            val glyphTop = ((height - glyphSizePx) / 2f).toInt()
+            val glyphLeft = horizontalPadding.toInt()
+            glyph.setBounds(glyphLeft, glyphTop, glyphLeft + glyphSizePx.toInt(), glyphTop + glyphSizePx.toInt())
+            glyph.draw(canvas)
+        }
+    }
+
+    val textX = horizontalPadding + glyphSpace
+    val baseline = height / 2f - (fontMetrics.ascent + fontMetrics.descent) / 2f
+    canvas.drawText(label, textX, baseline, textPaint)
+
+    return android.graphics.drawable.BitmapDrawable(resources, bitmap).apply {
+        setBounds(0, 0, bitmap.width, bitmap.height)
+    }
+}
+
+/**
+ * Lays [drawables] out left-to-right with [gapPx] between them, vertically centred, and returns a
+ * single drawable whose bounds are set to the combined size. Used to place the notification-count
+ * pill and the screen-time capsule together in one compound-drawable slot.
+ */
+fun Context.combineDrawablesHorizontally(drawables: List<Drawable>, gapPx: Int): Drawable {
+    if (drawables.size == 1) return drawables[0]
+
+    val totalWidth = drawables.sumOf { it.bounds.width() } + gapPx * (drawables.size - 1)
+    val totalHeight = drawables.maxOf { it.bounds.height() }
+
+    val bitmap = android.graphics.Bitmap.createBitmap(totalWidth, totalHeight, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bitmap)
+
+    var left = 0
+    drawables.forEach { drawable ->
+        val w = drawable.bounds.width()
+        val h = drawable.bounds.height()
+        val top = (totalHeight - h) / 2
+        canvas.save()
+        canvas.translate(left.toFloat(), top.toFloat())
+        drawable.draw(canvas)
+        canvas.restore()
+        left += w + gapPx
+    }
+
+    return android.graphics.drawable.BitmapDrawable(resources, bitmap).apply {
+        setBounds(0, 0, totalWidth, totalHeight)
+    }
 }
 
 fun View.animateAlpha(alpha: Float = 1.0f) {

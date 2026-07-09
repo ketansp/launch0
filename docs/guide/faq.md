@@ -14,9 +14,27 @@ Some devices do not support gesture navigation with third-party launchers. This 
 
 ## How do I change the wallpaper?
 
-Launch0 can set a new wallpaper daily. Enable it in **Settings > Appearance > Daily new wallpaper**.
+Launch0 can generate a fresh abstract wallpaper for you every hour. Enable **New wallpaper every hour** in **Settings**. The wallpaper is created on your device — nothing is downloaded — and it matches your light or dark theme. This works while Launch0 is your default launcher.
 
 You can also set any wallpaper manually from your phone's settings or Gallery/Photos app.
+
+## How do I use Notes?
+
+Swipe left on the home screen to open Notes — a private, chat-like space just for you. Type to add a text note, tap the mic to record a voice memo, or add an image. Long-press any note to copy, share, edit, or delete it, and mark notes as **done** or **urgent**. Swipe left again inside Notes to search everything you've saved. All notes stay on your device.
+
+You can also share an image from another app straight into Notes using Android's share sheet.
+
+## What is "Hold notifications" / Do Not Disturb?
+
+Do Not Disturb lets you park notifications from distracting apps so they don't interrupt you. In **Settings**, turn on **Hold notifications**, choose how long to hold them (30 minutes to 3 hours), and pick which apps to hold. Held notifications show up as a small count next to the app on your home screen and in the app drawer — tap it to release them, or they'll arrive automatically when the window ends. This requires granting notification access, and ongoing notifications like calls and music are never held.
+
+## Can I show app icons?
+
+Yes. Launch0 is text-first, but icons are optional. In **Settings**, turn on **Show app icons** to display icons in the app drawer, and adjust their **size** and **shape** (default, circle, square, squircle, or teardrop). You can also turn off **Show app names** for an icons-only grid — you just can't hide both icons and names at once.
+
+## How do I change which apps show on the home screen?
+
+In **Settings**, set the number of home apps (0–8). Then long-press any slot on the home screen to pick or change the app it points to. You can also adjust alignment (left, center, right, and an optional bottom position) from Settings.
 
 ## Double tap to lock doesn't work
 
@@ -34,4 +52,4 @@ No. System apps cannot be uninstalled. Launch0 will show a message if you try to
 
 ## Is this the same as Olauncher?
 
-Launch0 is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher). It shares the same foundation but is developed independently with a focus on minimalism and productivity. If you want extra features like weather, widgets, fonts, and folders, check out [Olauncher Pro](https://play.google.com/store/apps/details?id=app.prolauncher).
+Launch0 is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher). It shares the same foundation but is developed independently, positioned as an OS for the busy. If you want extra features like weather, widgets, fonts, and folders, check out [Olauncher Pro](https://play.google.com/store/apps/details?id=app.prolauncher).

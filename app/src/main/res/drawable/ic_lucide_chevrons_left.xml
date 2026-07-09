@@ -1,0 +1,21 @@
+<!-- Lucide "chevrons-left" icon, used for the swipe-left (notes) nudge (https://lucide.dev) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M11,17l-5,-5l5,-5"
+        android:strokeColor="?attr/primaryColor"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M18,17l-5,-5l5,-5"
+        android:strokeColor="?attr/primaryColor"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+</vector>

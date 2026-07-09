@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Distraction timer wait screen ("the ledger"): countdown leads top-left like the home clock,
+     a receipts card of today's usage below, and "Turn back" as the primary action at the bottom.
+     Rendered directly over the wallpaper in the launcher's monochrome register. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.DistractionWaitFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingHorizontal="26dp"
+        android:paddingTop="72dp"
+        android:paddingBottom="48dp">
+
+        <!-- Waiting state: the countdown in the home screen's own dialect -->
+        <LinearLayout
+            android:id="@+id/waitingGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvCountdown"
+                style="@style/TextDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:textColor="?attr/primaryColor"
+                android:textSize="72sp"
+                tools:text="40" />
+
+            <TextView
+                android:id="@+id/tvWaitCaption"
+                style="@style/TextDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?attr/primaryColorTrans80"
+                android:textSize="16sp"
+                tools:text="seconds until Instagram opens" />
+        </LinearLayout>
+
+        <!-- Ready state: the wait is over, tap to open -->
+        <LinearLayout
+            android:id="@+id/readyGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvOpen"
+                style="@style/TextDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:textColor="?attr/primaryColor"
+                android:textSize="36sp"
+                tools:text="Open Instagram" />
+
+            <TextView
+                style="@style/TextDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/dt_you_waited"
+                android:textColor="?attr/primaryColorTrans50"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- The ledger: dry receipts of today's usage -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/rounded_rect_ledger"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="2dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="13dp">
+
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dt_opens_today"
+                    android:textColor="?attr/primaryColorTrans80" />
+
+                <TextView
+                    android:id="@+id/tvOpensToday"
+                    style="@style/TextSmallBold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:textColor="?attr/primaryColor"
+                    tools:text="4" />
+            </FrameLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/primaryShadeColor" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="13dp">
+
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/screen_time"
+                    android:textColor="?attr/primaryColorTrans80" />
+
+                <TextView
+                    android:id="@+id/tvScreenTimeValue"
+                    style="@style/TextSmallBold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:textColor="?attr/primaryColor"
+                    tools:text="52m" />
+            </FrameLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/primaryShadeColor" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="13dp">
+
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dt_last_open"
+                    android:textColor="?attr/primaryColorTrans80" />
+
+                <TextView
+                    android:id="@+id/tvLastOpen"
+                    style="@style/TextSmallBold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:textColor="?attr/primaryColor"
+                    tools:text="24m ago" />
+            </FrameLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/primaryShadeColor" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="13dp">
+
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dt_next_wait"
+                    android:textColor="?attr/primaryColorTrans80" />
+
+                <TextView
+                    android:id="@+id/tvNextWait"
+                    style="@style/TextSmallBold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:textColor="?attr/primaryColor"
+                    tools:text="60s" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvWaitNote"
+            style="@style/TextDefault"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/dt_waits_double"
+            android:textColor="?attr/primaryColorTrans50"
+            android:textSize="13sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Turning back stays the primary action -->
+        <LinearLayout
+            android:id="@+id/turnBackGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TextDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:text="@string/dt_turn_back"
+                android:textColor="?attr/primaryColor"
+                android:textSize="26sp" />
+
+            <TextView
+                style="@style/TextDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:text="@string/dt_turn_back_caption"
+                android:textColor="?attr/primaryColorTrans50"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/TextDefault"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:lineSpacingMultiplier="1.3"
+            android:text="@string/dt_aphorism"
+            android:textColor="?attr/primaryColorTrans50"
+            android:textSize="13sp" />
+    </LinearLayout>
+</FrameLayout>

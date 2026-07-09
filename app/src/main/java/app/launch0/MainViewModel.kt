@@ -19,6 +19,7 @@ import app.launch0.helper.SingleLiveEvent
 import app.launch0.helper.WallpaperWorker
 import app.launch0.helper.formattedTimeSpent
 import app.launch0.helper.getAppsList
+import app.launch0.helper.getDefaultHomeApps
 import app.launch0.helper.hasBeenMinutes
 import app.launch0.helper.isLaunch0Default
 import app.launch0.helper.isPackageInstalled
@@ -44,6 +45,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val launcherResetFailed = MutableLiveData<Boolean>()
     val homeAppAlignment = MutableLiveData<Int>()
     val screenTimeValue = MutableLiveData<String>()
+    // Today's foreground time per package (millis), used to decorate home apps with a usage capsule.
+    val appScreenTimes = MutableLiveData<Map<String, Long>>()
 
     val showDialog = SingleLiveEvent<String>()
     val checkForMessages = SingleLiveEvent<Unit?>()
@@ -416,14 +419,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val startTime = calendar.timeInMillis
         val endTime = System.currentTimeMillis()
 
-        val timeSpent = eventLogWrapper.aggregateSimpleUsageStats(
-            eventLogWrapper.aggregateForegroundStats(
-                eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
-            )
+        val simpleStats = eventLogWrapper.aggregateForegroundStats(
+            eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
         )
+        val timeSpent = eventLogWrapper.aggregateSimpleUsageStats(simpleStats)
         val viewTimeSpent = appContext.formattedTimeSpent(timeSpent)
         screenTimeValue.postValue(viewTimeSpent)
+
+        // Per-package totals (summed across components/users) for the per-app usage capsules.
+        val perApp = simpleStats
+            .groupBy { it.applicationId }
+            .mapValues { (_, stats) -> stats.sumOf { it.timeUsed } }
+        appScreenTimes.postValue(perApp)
+
         prefs.screenTimeLastUpdated = endTime
+    }
+
+    fun setDefaultHomeApps() {
+        viewModelScope.launch {
+            try {
+                val apps = getDefaultHomeApps(appContext)
+                if (apps.isEmpty()) return@launch
+                apps.forEachIndexed { index, app -> saveHomeApp(app, index + 1) }
+                prefs.homeAppsNum = apps.size
+                refreshHome(true)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun setDefaultClockApp() {
