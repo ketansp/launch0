@@ -42,7 +42,11 @@ jobs:
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > launch0-upload.keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '[:space:]' | base64 -d > launch0-upload.keystore
+          # Verify the keystore decoded into a valid file
+          keytool -list -keystore launch0-upload.keystore \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" > /dev/null
+          echo "Keystore decoded and verified."
 
       - name: Build signed release AAB
         run: |
@@ -55,15 +59,6 @@ jobs:
           LAUNCH0_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           LAUNCH0_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Sign AAB
-        run: |
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore launch0-upload.keystore \
-            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
-            -keypass "${{ secrets.KEY_PASSWORD }}" \
-            app/build/outputs/bundle/release/app-release.aab \
-            "${{ secrets.KEY_ALIAS }}"
-
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
@@ -73,21 +68,16 @@ jobs:
           track: ${{ inputs.track }}
           releaseName: "Launch0 ${{ inputs.version_name }}"
 
-      - name: Build release APK for GitHub Release
+      - name: Build signed release APK for GitHub Release
         run: |
           ./gradlew assembleRelease \
             -PversionNameOverride=${{ inputs.version_name }} \
             -PversionCodeOverride=${{ inputs.version_code }}
-
-      - name: Sign APK
-        run: |
-          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)
-          ${BUILD_TOOLS}apksigner sign \
-            --ks launch0-upload.keystore --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
-            --out app/build/outputs/apk/release/app-release.apk \
-            app/build/outputs/apk/release/app-release-unsigned.apk
+        env:
+          LAUNCH0_KEYSTORE_FILE: ${{ github.workspace }}/launch0-upload.keystore
+          LAUNCH0_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          LAUNCH0_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          LAUNCH0_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Create GitHub Release
         env:

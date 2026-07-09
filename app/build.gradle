@@ -38,11 +38,28 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            def keystoreFile = System.getenv("LAUNCH0_KEYSTORE_FILE")
+            if (keystoreFile) {
+                storeFile file(keystoreFile)
+                storePassword System.getenv("LAUNCH0_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("LAUNCH0_KEY_ALIAS")
+                keyPassword System.getenv("LAUNCH0_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             debuggable false
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Only apply the signing config when the keystore env var is present
+            // (e.g. in CI). Local debug builds are unaffected.
+            if (System.getenv("LAUNCH0_KEYSTORE_FILE")) {
+                signingConfig signingConfigs.release
+            }
         }
         debug {
             debuggable true
