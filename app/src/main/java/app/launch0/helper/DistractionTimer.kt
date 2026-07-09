@@ -8,15 +8,15 @@ import kotlin.math.min
  * Logic for the distraction timer: apps the user marks as distracting open only after a wait.
  * In escalating mode the wait doubles with every open of that app today (10s → 20s → 40s → 60s,
  * capped); in fixed mode every open waits 30s. Opens are counted per app per calendar day and
- * reset at local midnight. Turning back mid-wait does not undo the attempt — the tap already
- * counted, so the next open still waits longer.
+ * reset at local midnight. Only opens that actually go through are counted — turning back or
+ * abandoning the wait screen leaves the count untouched.
  */
 object DistractionTimer {
 
     fun isDistractingApp(prefs: Prefs, packageName: String): Boolean =
         packageName.isNotEmpty() && prefs.distractionApps.contains(packageName)
 
-    /** Opens of [packageName] counted so far today (attempts included). */
+    /** Opens of [packageName] that went through so far today. */
     fun opensToday(prefs: Prefs, packageName: String): Int {
         rolloverIfNeeded(prefs)
         return parseCounts(prefs.distractionOpenCounts)[packageName] ?: 0
@@ -36,16 +36,13 @@ object DistractionTimer {
     fun nextWaitSeconds(prefs: Prefs, packageName: String): Int =
         waitSeconds(prefs, opensToday(prefs, packageName))
 
-    /** Counts one open attempt of [packageName] toward today; the next wait doubles from here. */
-    fun recordAttempt(prefs: Prefs, packageName: String) {
+    /** Counts one completed open of [packageName] toward today and stamps it as opened now. */
+    fun recordOpen(prefs: Prefs, packageName: String) {
         rolloverIfNeeded(prefs)
         val counts = parseCounts(prefs.distractionOpenCounts).toMutableMap()
         counts[packageName] = (counts[packageName] ?: 0) + 1
         prefs.distractionOpenCounts = serializeCounts(counts)
-    }
 
-    /** Stamps [packageName] as opened now; drives the "Last open" ledger row. */
-    fun recordLaunch(prefs: Prefs, packageName: String) {
         val lastOpens = parseLongs(prefs.distractionLastOpens).toMutableMap()
         lastOpens[packageName] = System.currentTimeMillis()
         prefs.distractionLastOpens = serializeLongs(lastOpens)

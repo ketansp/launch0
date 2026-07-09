@@ -26,8 +26,8 @@ import app.launch0.helper.showToast
  * The wait screen shown when a distracting app is opened. A countdown leads top-left in the home
  * screen's dialect; below it a ledger of today's receipts (opens, screen time, last open, next
  * wait). The app opens only after the wait; "Turn back", back, home, or switching away resets the
- * timer. The attempt is counted the moment this screen appears, so in escalating mode the next
- * open waits longer either way.
+ * timer. An open is counted only when the app actually launches — turning back or abandoning the
+ * wait leaves today's count untouched.
  */
 class DistractionWaitFragment : Fragment(), View.OnClickListener {
 
@@ -68,11 +68,10 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
             return
         }
 
-        // Count this attempt once (not again on config changes); the next wait doubles from here.
-        if (savedInstanceState == null) DistractionTimer.recordAttempt(prefs, appPackage)
-        // Opens today now include this attempt; this wait escalates from the opens before it.
+        // This wait escalates from the opens that went through today; the count grows only in
+        // openApp(), so turning back or abandoning the wait doesn't lengthen the next one.
         val opensToday = DistractionTimer.opensToday(prefs, appPackage)
-        val waitSeconds = DistractionTimer.waitSeconds(prefs, (opensToday - 1).coerceAtLeast(0))
+        val waitSeconds = DistractionTimer.waitSeconds(prefs, opensToday)
 
         populateLedger(opensToday)
         binding.tvWaitCaption.text = getString(R.string.dt_seconds_until, appName)
@@ -97,8 +96,9 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
 
     private fun populateLedger(opensToday: Int) {
         binding.tvOpensToday.text = opensToday.toString()
+        // The wait this open would leave behind, once it counts.
         binding.tvNextWait.text =
-            getString(R.string.dt_seconds_value, DistractionTimer.waitSeconds(prefs, opensToday))
+            getString(R.string.dt_seconds_value, DistractionTimer.waitSeconds(prefs, opensToday + 1))
         binding.tvLastOpen.text = lastOpenLabel()
         populateScreenTime()
     }
@@ -143,7 +143,7 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
     }
 
     private fun openApp() {
-        DistractionTimer.recordLaunch(prefs, appPackage)
+        DistractionTimer.recordOpen(prefs, appPackage)
         val user = getUserHandleFromString(requireContext(), appUser)
         val appModel = if (isShortcut && shortcutId.isNotEmpty())
             AppModel.PinnedShortcut(
@@ -168,12 +168,7 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
     }
 
     private fun turnBack() {
-        requireContext().showToast(
-            getString(
-                if (prefs.distractionWaitEscalating) R.string.dt_timer_reset_toast
-                else R.string.dt_timer_reset_toast_fixed
-            )
-        )
+        requireContext().showToast(getString(R.string.dt_timer_reset_toast))
         findNavController().popBackStack(R.id.mainFragment, false)
     }
 
