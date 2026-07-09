@@ -201,8 +201,7 @@
     <string name="dt_fixed_wait_note">Every open waits %1$ds today.</string>
     <string name="dt_turn_back">Turn back</string>
     <string name="dt_turn_back_caption">Going back resets the timer</string>
-    <string name="dt_timer_reset_toast">Timer reset. The next open waits longer.</string>
-    <string name="dt_timer_reset_toast_fixed">Timer reset.</string>
+    <string name="dt_timer_reset_toast">Timer reset. This open wasn\'t counted.</string>
     <string name="dt_aphorism">Are you using your phone,\nor is your phone using you?</string>
     <string name="dt_wait_capsule" translatable="false">%1$ds wait</string>
     <string name="dt_seconds_value" translatable="false">%1$ds</string>
