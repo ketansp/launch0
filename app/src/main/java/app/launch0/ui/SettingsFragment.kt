@@ -96,7 +96,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     override fun onResume() {
         super.onResume()
         // Refresh notification-access status after returning from system settings.
+        // Keep DND off if access was revoked or never granted, so the toggle can't
+        // show "On" without the permission it needs to work.
         if (_binding != null) {
+            if (prefs.dndEnabled && !isNotificationServiceEnabled(requireContext())) disableDnd()
             populateDnd()
             // Refresh the count after returning from the distracting-apps picker.
             populateDistractionTimer()
@@ -737,21 +740,30 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private fun toggleDnd() {
-        prefs.dndEnabled = !prefs.dndEnabled
         if (prefs.dndEnabled) {
-            if (!isNotificationServiceEnabled(requireContext())) {
-                requireContext().showToast(getString(R.string.dnd_grant_access), Toast.LENGTH_LONG)
-                openNotificationAccessSettings()
-            } else if (prefs.dndApps.isEmpty()) {
-                requireContext().showToast(getString(R.string.dnd_no_apps_selected))
-            }
-        } else {
-            // Stop holding new notifications; already-held ones release at their scheduled time.
-            prefs.dndWindowEnd = 0L
-            prefs.dndHeldKeys = mutableSetOf()
-            prefs.dndReleasedKeys = mutableSetOf()
+            disableDnd()
+            populateDnd()
+            return
+        }
+        // Only switch DND on once notification access has actually been granted.
+        if (!isNotificationServiceEnabled(requireContext())) {
+            requireContext().showToast(getString(R.string.dnd_grant_access), Toast.LENGTH_LONG)
+            openNotificationAccessSettings()
+            return
+        }
+        prefs.dndEnabled = true
+        if (prefs.dndApps.isEmpty()) {
+            requireContext().showToast(getString(R.string.dnd_no_apps_selected))
         }
         populateDnd()
+    }
+
+    private fun disableDnd() {
+        prefs.dndEnabled = false
+        // Stop holding new notifications; already-held ones release at their scheduled time.
+        prefs.dndWindowEnd = 0L
+        prefs.dndHeldKeys = mutableSetOf()
+        prefs.dndReleasedKeys = mutableSetOf()
     }
 
     private fun updateDndDuration(minutes: Int) {
