@@ -42,7 +42,11 @@ jobs:
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > launch0-upload.keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '[:space:]' | base64 -d > launch0-upload.keystore
+          # Verify the keystore decoded into a valid file
+          keytool -list -keystore launch0-upload.keystore \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" > /dev/null
+          echo "Keystore decoded and verified."
 
       - name: Build signed release AAB
         run: |
