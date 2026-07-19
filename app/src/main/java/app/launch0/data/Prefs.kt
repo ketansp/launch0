@@ -25,6 +25,7 @@ class Prefs(context: Context) {
     private val STATUS_BAR = "STATUS_BAR"
     private val DATE_TIME_VISIBILITY = "DATE_TIME_VISIBILITY"
     private val SHOW_YEAR_WIDGET = "SHOW_YEAR_WIDGET"
+    private val SHOW_CALENDAR_WIDGET = "SHOW_CALENDAR_WIDGET"
     private val SHOW_APP_ICONS = "SHOW_APP_ICONS"
     private val SHOW_APP_NAMES = "SHOW_APP_NAMES"
     private val ICON_SIZE = "ICON_SIZE"
@@ -196,6 +197,12 @@ class Prefs(context: Context) {
     var showYearWidget: Boolean
         get() = prefs.getBoolean(SHOW_YEAR_WIDGET, true)
         set(value) = prefs.edit { putBoolean(SHOW_YEAR_WIDGET, value).apply() }
+
+    // Off by default: the calendar widget needs the READ_CALENDAR runtime permission, so it only
+    // turns on once the user opts in (and grants access) from settings.
+    var showCalendarWidget: Boolean
+        get() = prefs.getBoolean(SHOW_CALENDAR_WIDGET, false)
+        set(value) = prefs.edit { putBoolean(SHOW_CALENDAR_WIDGET, value).apply() }
 
     var showAppIcons: Boolean
         get() = prefs.getBoolean(SHOW_APP_ICONS, true)

@@ -83,6 +83,22 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
+    <!-- Today's calendar widget -->
+    <FrameLayout
+        android:id="@+id/calendarWidgetLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="74dp"
+        android:layout_marginTop="150dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <app.launch0.ui.CalendarWidgetView
+            android:id="@+id/calendarWidget"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
+
     <!-- Home apps-->
     <LinearLayout
         android:id="@+id/homeAppsLayout"

@@ -13,6 +13,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import app.launch0.data.AppModel
+import app.launch0.data.CalendarEvent
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.helper.SingleLiveEvent
@@ -20,12 +21,15 @@ import app.launch0.helper.WallpaperWorker
 import app.launch0.helper.formattedTimeSpent
 import app.launch0.helper.getAppsList
 import app.launch0.helper.getDefaultHomeApps
+import app.launch0.helper.getTodaysCalendarEvents
 import app.launch0.helper.hasBeenMinutes
 import app.launch0.helper.isLaunch0Default
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.showToast
 import app.launch0.helper.usageStats.EventLogWrapper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -38,6 +42,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val refreshHome = MutableLiveData<Boolean>()
     val toggleDateTime = MutableLiveData<Unit>()
     val toggleWidget = MutableLiveData<Unit>()
+    val toggleCalendarWidget = MutableLiveData<Unit>()
+    // Today's remaining calendar events for the home-screen widget; empty when off or not granted.
+    val calendarEvents = MutableLiveData<List<CalendarEvent>>()
     val updateSwipeApps = MutableLiveData<Any>()
     val appList = MutableLiveData<List<AppModel>?>()
     val hiddenApps = MutableLiveData<List<AppModel>?>()
@@ -324,6 +331,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleWidget() {
         toggleWidget.postValue(Unit)
+    }
+
+    fun toggleCalendarWidget() {
+        toggleCalendarWidget.postValue(Unit)
+    }
+
+    /** Reads today's remaining events off the main thread and posts them to [calendarEvents]. */
+    fun loadCalendarEvents() {
+        viewModelScope.launch {
+            calendarEvents.value = withContext(Dispatchers.IO) {
+                appContext.getTodaysCalendarEvents()
+            }
+        }
     }
 
     private fun updateSwipeApps() {

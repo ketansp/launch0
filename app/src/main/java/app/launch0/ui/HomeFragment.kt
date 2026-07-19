@@ -1,10 +1,12 @@
 package app.launch0.ui
 
 import android.app.admin.DevicePolicyManager
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
+import android.provider.CalendarContract
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
@@ -17,6 +19,7 @@ import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
@@ -28,10 +31,12 @@ import androidx.navigation.fragment.findNavController
 import app.launch0.MainViewModel
 import app.launch0.R
 import app.launch0.data.AppModel
+import app.launch0.data.CalendarEvent
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentHomeBinding
 import app.launch0.helper.DistractionTimer
+import app.launch0.helper.hasCalendarPermission
 import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.combineDrawablesHorizontally
@@ -76,6 +81,15 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     // Today's foreground time per package (millis); drives the per-app usage capsules on home apps.
     private var appScreenTimes: Map<String, Long> = emptyMap()
 
+    // Requests READ_CALENDAR when the user taps the widget's "grant access" prompt. On grant we keep
+    // the widget on and repopulate; on denial the widget quietly falls back to the prompt.
+    private val calendarPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (_binding == null) return@registerForActivityResult
+            if (granted) populateCalendarWidget()
+            else requireContext().showToast(getString(R.string.calendar_permission_denied))
+        }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
@@ -94,8 +108,19 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
         initClickListeners()
+        initCalendarWidget()
         initSwipeUpNudge()
         initSwipeLeftNudge()
+    }
+
+    /** Wires the calendar widget's taps: an event opens it in the calendar, the prompt requests access. */
+    private fun initCalendarWidget() {
+        binding.calendarWidget.setOnEventClickListener { openCalendarEvent(it) }
+        binding.calendarWidget.setOnHeaderClickListener { openCalendarApp() }
+        binding.calendarWidget.setOnMessageClickListener {
+            if (requireContext().hasCalendarPermission()) openCalendarApp()
+            else calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR)
+        }
     }
 
     /**
@@ -253,6 +278,12 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         viewModel.toggleWidget.observe(viewLifecycleOwner) {
             populateWidget()
         }
+        viewModel.toggleCalendarWidget.observe(viewLifecycleOwner) {
+            populateCalendarWidget()
+        }
+        viewModel.calendarEvents.observe(viewLifecycleOwner) {
+            bindCalendarEvents(it)
+        }
         viewModel.screenTimeValue.observe(viewLifecycleOwner) {
             it?.let { binding.tvScreenTime.text = it }
         }
@@ -377,6 +408,39 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     /**
+     * Shows the boxed agenda widget when it's enabled. With calendar access granted it loads today's
+     * events off the main thread (the result arrives via [bindCalendarEvents]); otherwise it shows a
+     * tap-to-grant prompt in the same box.
+     */
+    private fun populateCalendarWidget() {
+        val show = prefs.showCalendarWidget
+        binding.calendarWidgetLayout.isVisible = show
+        if (!show) return
+        binding.calendarWidget.refresh()
+        if (requireContext().hasCalendarPermission()) {
+            // Events arrive asynchronously via bindCalendarEvents(); load them off the main thread.
+            viewModel.loadCalendarEvents()
+        } else {
+            binding.calendarWidget.showMessage(getString(R.string.calendar_grant_access))
+        }
+        positionCalendarWidgetBelowHeader()
+    }
+
+    private fun bindCalendarEvents(events: List<CalendarEvent>) {
+        if (_binding == null || !prefs.showCalendarWidget) return
+        when {
+            // Access revoked since the events were loaded — fall back to the prompt, not "no events".
+            !requireContext().hasCalendarPermission() ->
+                binding.calendarWidget.showMessage(getString(R.string.calendar_grant_access))
+            events.isEmpty() ->
+                binding.calendarWidget.showMessage(getString(R.string.calendar_no_events))
+            else ->
+                binding.calendarWidget.showEvents(events)
+        }
+        positionCalendarWidgetBelowHeader()
+    }
+
+    /**
      * Anchors the days-left widget just below whichever header is currently showing — the
      * clock/date block and/or the screen-time label — so the grid never overlaps them,
      * regardless of font size, density or which headers are enabled. Falls back to a fixed
@@ -390,6 +454,9 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                 top = maxOf(top, binding.dateTimeLayout.bottom)
             if (binding.tvScreenTime.isVisible)
                 top = maxOf(top, binding.tvScreenTime.bottom)
+            // When the calendar widget is also showing, the days-left grid stacks below it.
+            if (binding.calendarWidgetLayout.isVisible)
+                top = maxOf(top, binding.calendarWidgetLayout.bottom)
             val params = binding.widgetLayout.layoutParams as FrameLayout.LayoutParams
             val target = top + 16.dpToPx()
             if (params.topMargin != target) {
@@ -399,10 +466,45 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         }
     }
 
+    /**
+     * Anchors the calendar widget just below whichever header is showing — clock/date and/or the
+     * screen-time label — mirroring [positionWidgetBelowHeader]. Re-runs the year-widget positioning
+     * afterwards so, when both are on, the days-left grid ends up below this box.
+     */
+    private fun positionCalendarWidgetBelowHeader() {
+        binding.calendarWidgetLayout.post {
+            if (_binding == null) return@post
+            var top = 56.dpToPx()
+            if (binding.dateTimeLayout.isVisible)
+                top = maxOf(top, binding.dateTimeLayout.bottom)
+            if (binding.tvScreenTime.isVisible)
+                top = maxOf(top, binding.tvScreenTime.bottom)
+            val params = binding.calendarWidgetLayout.layoutParams as FrameLayout.LayoutParams
+            val target = top + 16.dpToPx()
+            if (params.topMargin != target) {
+                params.topMargin = target
+                binding.calendarWidgetLayout.layoutParams = params
+            }
+            if (binding.widgetLayout.isVisible)
+                positionWidgetBelowHeader()
+        }
+    }
+
+    /** Opens the tapped event in the calendar app, falling back to the calendar's day view. */
+    private fun openCalendarEvent(event: CalendarEvent) {
+        try {
+            val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
+            startActivity(Intent(Intent.ACTION_VIEW).setData(uri))
+        } catch (e: Exception) {
+            openCalendarApp()
+        }
+    }
+
     private fun populateHomeScreen(appCountUpdated: Boolean) {
         if (appCountUpdated) hideHomeApps()
         populateDateTime()
         populateWidget()
+        populateCalendarWidget()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             populateScreenTime()

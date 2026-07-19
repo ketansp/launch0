@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!--Used only to show today's events in the optional home-screen calendar widget.
+        Read locally via the CalendarContract provider; nothing leaves the device.-->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <!--Used only for opening alarm app-->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <!--Used only for recording personal voice notes-->
