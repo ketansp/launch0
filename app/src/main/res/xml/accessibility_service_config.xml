@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:accessibilityEventTypes="typeViewClicked"
     android:accessibilityFeedbackType="feedbackVisual"
     android:accessibilityFlags="flagDefault"
     android:canRetrieveWindowContent="true"
     android:description="@string/accessibility_service_description"
+    android:isAccessibilityTool="true"
     android:notificationTimeout="10"
     android:packageNames="app.launch0.debug, app.launch0"
-    android:settingsActivity="com.example.android.accessibility.ServiceSettingsActivity" />
+    tools:targetApi="30" />

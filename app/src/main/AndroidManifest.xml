@@ -4,9 +4,6 @@
 
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <!--Used only for opening alarm app-->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
@@ -15,6 +12,43 @@
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+
+    <!--
+        Launch0 does not use QUERY_ALL_PACKAGES. Google Play treats the installed-app
+        inventory as sensitive, and a launcher does not need it: the app list is built
+        from the exempt LauncherApps API, and the <queries> below cover the only direct
+        PackageManager lookups the app makes. The remove directive keeps the permission
+        out of the merged manifest even if a dependency were to declare it.
+    -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:node="remove" />
+
+    <queries>
+        <!-- Resolve launch intents, labels and icons for, and detect, every app that has
+             a launcher entry. Also covers screen-time foreground lookups and the phone/
+             camera/messaging/WhatsApp home favourites, which are all launchable apps. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Detect the current default home app (default-launcher check). -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <!-- Default home favourites resolved via resolveActivity(). -->
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.STILL_IMAGE_CAMERA" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_MESSAGING" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="true"
