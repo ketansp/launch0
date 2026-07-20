@@ -11,6 +11,7 @@ import android.text.style.RelativeSizeSpan
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -48,6 +49,9 @@ class CalendarWidgetView @JvmOverloads constructor(
 
     private var fg = Color.WHITE
     private var shadowColor = Color.BLACK
+
+    // The day's events currently rendered; kept so a periodic tick can re-render their countdowns.
+    private var events: List<CalendarEvent> = emptyList()
 
     private var onEventClick: ((CalendarEvent) -> Unit)? = null
     private var onHeaderClick: (() -> Unit)? = null
@@ -107,32 +111,39 @@ class CalendarWidgetView @JvmOverloads constructor(
     }
 
     /**
-     * Renders every event of [events] as agenda rows (the list scrolls through the whole day) and
-     * shows the count in the header. Opens scrolled to the current/next event, so finished events
-     * sit above the fold — a scroll up away — while the rest of the day is a scroll down.
+     * Renders every event of [newEvents] as agenda rows. The box grows to fit the whole day and only
+     * starts to scroll once it would get too tall (see [BoundedScrollView]). [autoScrollToNow] lands
+     * the view on the current/next event — finished events then sit a scroll up away — so pass false
+     * on a periodic refresh to keep the reader's current scroll position.
      */
-    fun showEvents(events: List<CalendarEvent>) {
+    fun showEvents(newEvents: List<CalendarEvent>, autoScrollToNow: Boolean = true) {
+        events = newEvents
         val now = System.currentTimeMillis()
         countLabel.visibility = View.VISIBLE
         countLabel.text = resources.getQuantityString(R.plurals.calendar_events, events.size, events.size)
+        val previousScrollY = scroll.scrollY
         list.removeAllViews()
-        // Roughly two rows before it starts to scroll; grows with the user's font-size setting.
-        scroll.maxHeightPx = (dp(108) * resources.configuration.fontScale).toInt()
+        // Grow to fit the day, but never taller than a chunk of the screen — beyond that it scrolls.
+        scroll.maxHeightPx = (resources.displayMetrics.heightPixels * MAX_HEIGHT_FRACTION).toInt()
         var firstAhead = -1
         events.forEachIndexed { index, event ->
             list.addView(buildRow(event, now))
             if (firstAhead < 0 && !event.isPast(now)) firstAhead = index
         }
-        // Land on what's now/next; if the whole day is done, rest at the last event.
-        val target = if (firstAhead >= 0) firstAhead else events.lastIndex
         scroll.post {
-            val child = list.getChildAt(target) ?: return@post
-            scroll.scrollTo(0, child.top)
+            if (autoScrollToNow) {
+                // Land on what's now/next; if the whole day is done, rest at the last event.
+                val target = if (firstAhead >= 0) firstAhead else events.lastIndex
+                scroll.scrollTo(0, list.getChildAt(target)?.top ?: 0)
+            } else {
+                scroll.scrollTo(0, previousScrollY)
+            }
         }
     }
 
     /** Shows a single centred line instead of the list — e.g. "grant access" or "nothing left". */
     fun showMessage(message: CharSequence) {
+        events = emptyList()
         countLabel.visibility = View.GONE
         list.removeAllViews()
         scroll.maxHeightPx = 0
@@ -280,7 +291,17 @@ class CalendarWidgetView @JvmOverloads constructor(
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
     private fun dp(value: Float): Int = (value * resources.displayMetrics.density).toInt()
 
-    /** A [ScrollView] that never grows past [maxHeightPx] (0 = unbounded), so it peeks and scrolls. */
+    private companion object {
+        // The box may take up to this fraction of the screen height before its list starts scrolling.
+        const val MAX_HEIGHT_FRACTION = 0.42f
+    }
+
+    /**
+     * A [ScrollView] that never grows past [maxHeightPx] (0 = unbounded), so it fits the day and
+     * scrolls only when it would get too tall. On touch-down it tells the launcher's home-screen
+     * gesture handler to keep its hands off, so a drag scrolls the list instead of being read as a
+     * swipe.
+     */
     private class BoundedScrollView(context: Context) : ScrollView(context) {
         var maxHeightPx = 0
 
@@ -290,6 +311,15 @@ class CalendarWidgetView @JvmOverloads constructor(
             else
                 heightMeasureSpec
             super.onMeasure(widthMeasureSpec, spec)
+        }
+
+        override fun onTouchEvent(ev: MotionEvent): Boolean {
+            if (ev.actionMasked == MotionEvent.ACTION_DOWN &&
+                (canScrollVertically(1) || canScrollVertically(-1))
+            ) {
+                parent?.requestDisallowInterceptTouchEvent(true)
+            }
+            return super.onTouchEvent(ev)
         }
     }
 }

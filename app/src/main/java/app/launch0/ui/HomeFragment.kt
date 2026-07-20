@@ -10,6 +10,8 @@ import android.provider.CalendarContract
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -80,6 +82,21 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
     // Today's foreground time per package (millis); drives the per-app usage capsules on home apps.
     private var appScreenTimes: Map<String, Long> = emptyMap()
+
+    // Whether the next calendar-events render should jump to the current/next event. True for a fresh
+    // show (resume/toggle), false for the minute ticker so it doesn't yank the user's scroll position.
+    private var calendarAutoScroll = true
+
+    // Ticks the calendar widget once a minute while the home screen is showing so countdowns stay
+    // live and events roll from upcoming → now → past on their own.
+    private val calendarTickHandler = Handler(Looper.getMainLooper())
+    private val calendarTicker = object : Runnable {
+        override fun run() {
+            if (_binding == null || !prefs.showCalendarWidget) return
+            refreshCalendarWidget(autoScroll = false)
+            calendarTickHandler.postDelayed(this, Constants.ONE_MINUTE_IN_MILLIS)
+        }
+    }
 
     // Requests READ_CALENDAR when the user taps the widget's "grant access" prompt. On grant we keep
     // the widget on and repopulate; on denial the widget quietly falls back to the prompt.
@@ -169,6 +186,12 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         viewModel.isLaunch0Default()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
+        startCalendarTicker()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopCalendarTicker()
     }
 
     override fun onClick(view: View) {
@@ -418,12 +441,22 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         if (!show) return
         binding.calendarWidget.refresh()
         if (requireContext().hasCalendarPermission()) {
-            // Events arrive asynchronously via bindCalendarEvents(); load them off the main thread.
+            // A fresh show jumps to the current/next event; events load off the main thread and
+            // arrive via bindCalendarEvents().
+            calendarAutoScroll = true
             viewModel.loadCalendarEvents()
         } else {
             binding.calendarWidget.showMessage(getString(R.string.calendar_grant_access))
         }
         positionCalendarWidgetBelowHeader()
+    }
+
+    /** Re-reads events (used by the minute ticker); [autoScroll] false keeps the current scroll. */
+    private fun refreshCalendarWidget(autoScroll: Boolean) {
+        if (_binding == null) return
+        if (!prefs.showCalendarWidget || !requireContext().hasCalendarPermission()) return
+        calendarAutoScroll = autoScroll
+        viewModel.loadCalendarEvents()
     }
 
     private fun bindCalendarEvents(events: List<CalendarEvent>) {
@@ -435,9 +468,20 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             events.isEmpty() ->
                 binding.calendarWidget.showMessage(getString(R.string.calendar_no_events))
             else ->
-                binding.calendarWidget.showEvents(events)
+                binding.calendarWidget.showEvents(events, autoScrollToNow = calendarAutoScroll)
         }
         positionCalendarWidgetBelowHeader()
+    }
+
+    /** Runs the minute ticker while the home screen is visible; only when the widget is actually on. */
+    private fun startCalendarTicker() {
+        calendarTickHandler.removeCallbacks(calendarTicker)
+        if (prefs.showCalendarWidget)
+            calendarTickHandler.postDelayed(calendarTicker, Constants.ONE_MINUTE_IN_MILLIS)
+    }
+
+    private fun stopCalendarTicker() {
+        calendarTickHandler.removeCallbacks(calendarTicker)
     }
 
     /**
@@ -1031,6 +1075,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
     override fun onDestroyView() {
         super.onDestroyView()
+        stopCalendarTicker()
         _binding = null
     }
 }
