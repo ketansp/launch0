@@ -15,10 +15,10 @@ fun Context.hasCalendarPermission(): Boolean =
         PackageManager.PERMISSION_GRANTED
 
 /**
- * Reads today's events straight from the device's calendar provider — entirely on-device, no
- * network. Recurring events are expanded via [CalendarContract.Instances]. Only events that
- * haven't finished yet (plus any all-day events) are returned, sorted so all-day events lead and
- * the rest follow in start order — i.e. "the rest of today", which is what the widget shows.
+ * Reads the whole of today's events straight from the device's calendar provider — entirely
+ * on-device, no network. Recurring events are expanded via [CalendarContract.Instances]. Every
+ * event for the day is returned (the widget's list scrolls through them), sorted so all-day events
+ * lead and the rest follow in start order.
  *
  * Returns an empty list when the permission is missing or the query fails, so callers can treat an
  * empty result as "nothing to show" without special-casing errors.
@@ -33,7 +33,6 @@ fun Context.getTodaysCalendarEvents(): List<CalendarEvent> {
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis
     val dayEnd = dayStart + ONE_DAY_MILLIS
-    val now = System.currentTimeMillis()
 
     val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().apply {
         ContentUris.appendId(this, dayStart)
@@ -66,18 +65,13 @@ fun Context.getTodaysCalendarEvents(): List<CalendarEvent> {
             val locationIdx = cursor.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_LOCATION)
 
             while (cursor.moveToNext()) {
-                val allDay = cursor.getInt(allDayIdx) == 1
-                val begin = cursor.getLong(beginIdx)
-                val end = cursor.getLong(endIdx)
-                // Keep only what's still ahead today; all-day events stay for the whole day.
-                if (!allDay && end <= now) continue
                 events.add(
                     CalendarEvent(
                         id = cursor.getLong(idIdx),
                         title = cursor.getString(titleIdx)?.trim().orEmpty(),
-                        begin = begin,
-                        end = end,
-                        allDay = allDay,
+                        begin = cursor.getLong(beginIdx),
+                        end = cursor.getLong(endIdx),
+                        allDay = cursor.getInt(allDayIdx) == 1,
                         location = cursor.getString(locationIdx)?.trim()?.takeIf { it.isNotEmpty() },
                     )
                 )

@@ -106,7 +106,11 @@ class CalendarWidgetView @JvmOverloads constructor(
         background = boxBackground()
     }
 
-    /** Renders [events] as agenda rows and shows the count in the header. */
+    /**
+     * Renders every event of [events] as agenda rows (the list scrolls through the whole day) and
+     * shows the count in the header. Opens scrolled to the current/next event, so finished events
+     * sit above the fold — a scroll up away — while the rest of the day is a scroll down.
+     */
     fun showEvents(events: List<CalendarEvent>) {
         val now = System.currentTimeMillis()
         countLabel.visibility = View.VISIBLE
@@ -114,7 +118,17 @@ class CalendarWidgetView @JvmOverloads constructor(
         list.removeAllViews()
         // Roughly two rows before it starts to scroll; grows with the user's font-size setting.
         scroll.maxHeightPx = (dp(108) * resources.configuration.fontScale).toInt()
-        events.forEach { list.addView(buildRow(it, now)) }
+        var firstAhead = -1
+        events.forEachIndexed { index, event ->
+            list.addView(buildRow(event, now))
+            if (firstAhead < 0 && !event.isPast(now)) firstAhead = index
+        }
+        // Land on what's now/next; if the whole day is done, rest at the last event.
+        val target = if (firstAhead >= 0) firstAhead else events.lastIndex
+        scroll.post {
+            val child = list.getChildAt(target) ?: return@post
+            scroll.scrollTo(0, child.top)
+        }
     }
 
     /** Shows a single centred line instead of the list — e.g. "grant access" or "nothing left". */
@@ -135,12 +149,16 @@ class CalendarWidgetView @JvmOverloads constructor(
     }
 
     private fun buildRow(event: CalendarEvent, now: Long): View {
+        val past = event.isPast(now)
+        val whenNow = event.isNow(now)
         val row = LinearLayout(context).apply {
             orientation = HORIZONTAL
             gravity = Gravity.TOP
             setPadding(dp(2), dp(8), dp(2), dp(8))
             isClickable = true
             isFocusable = true
+            // Finished events recede so the eye still lands on what's now and next.
+            alpha = if (past) 0.5f else 1f
             setOnClickListener { onEventClick?.invoke(event) }
         }
 
@@ -154,8 +172,8 @@ class CalendarWidgetView @JvmOverloads constructor(
             text = if (event.allDay) context.getString(R.string.calendar_all_day) else formatTime(event.begin)
         }
         timeCol.addView(time, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
-        if (!event.allDay) {
-            val whenNow = event.isNow(now)
+        // A countdown only makes sense ahead of the event, "now" while it's live, nothing once it's done.
+        if (!event.allDay && !past) {
             val whenLabel = TextView(context).apply {
                 applyBody(11.5f, alpha(if (whenNow) 0.85f else 0.5f), light = false)
                 maxLines = 1
