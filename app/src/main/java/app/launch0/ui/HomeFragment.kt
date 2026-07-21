@@ -30,6 +30,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import app.launch0.BuildConfig
 import app.launch0.MainViewModel
 import app.launch0.R
 import app.launch0.data.AppModel
@@ -38,6 +39,7 @@ import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentHomeBinding
 import app.launch0.helper.DistractionTimer
+import app.launch0.helper.calendarDiagnostics
 import app.launch0.helper.hasCalendarPermission
 import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
@@ -445,6 +447,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             // arrive via bindCalendarEvents().
             calendarAutoScroll = true
             viewModel.loadCalendarEvents()
+            if (BuildConfig.DEBUG)
+                requireContext().showToast(requireContext().calendarDiagnostics(), Toast.LENGTH_LONG)
         } else {
             binding.calendarWidget.showMessage(getString(R.string.calendar_grant_access))
         }
