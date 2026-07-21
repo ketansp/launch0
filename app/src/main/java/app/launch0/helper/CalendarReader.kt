@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.provider.CalendarContract
 import androidx.core.content.ContextCompat
 import app.launch0.data.CalendarEvent
@@ -20,6 +22,11 @@ fun Context.hasCalendarPermission(): Boolean =
  * event for the day is returned (the widget's list scrolls through them), sorted so all-day events
  * lead and the rest follow in start order.
  *
+ * Both the personal profile and — where a work profile shares its calendar — the managed profile
+ * are queried, since corporate meetings often live in the work profile the launcher can't otherwise
+ * see. Identical instances (same title, time and all-day flag) are collapsed so an event synced into
+ * two calendars or both profiles shows once.
+ *
  * Returns an empty list when the permission is missing or the query fails, so callers can treat an
  * empty result as "nothing to show" without special-casing errors.
  */
@@ -34,7 +41,20 @@ fun Context.getTodaysCalendarEvents(): List<CalendarEvent> {
     }.timeInMillis
     val dayEnd = dayStart + ONE_DAY_MILLIS
 
-    val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().apply {
+    val events = mutableListOf<CalendarEvent>()
+    events += queryDayInstances(CalendarContract.Instances.CONTENT_URI, dayStart, dayEnd)
+    // Work-profile events, when the managed profile is set to share its calendar across profiles.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        events += queryDayInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, dayStart, dayEnd)
+
+    return events
+        .distinctBy { listOf(it.title, it.begin, it.end, it.allDay) }
+        .sortedWith(compareByDescending<CalendarEvent> { it.allDay }.thenBy { it.begin })
+}
+
+/** Queries one instances URI (personal or work profile) for the [dayStart]..[dayEnd] window. */
+private fun Context.queryDayInstances(base: Uri, dayStart: Long, dayEnd: Long): List<CalendarEvent> {
+    val uri = base.buildUpon().apply {
         ContentUris.appendId(this, dayStart)
         ContentUris.appendId(this, dayEnd)
     }.build()
@@ -78,11 +98,10 @@ fun Context.getTodaysCalendarEvents(): List<CalendarEvent> {
             }
         }
     } catch (e: Exception) {
+        // A missing provider or a work profile that doesn't share its calendar just yields nothing.
         e.printStackTrace()
-        return emptyList()
     }
-
-    return events.sortedWith(compareByDescending<CalendarEvent> { it.allDay }.thenBy { it.begin })
+    return events
 }
 
 private const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L
