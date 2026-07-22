@@ -32,6 +32,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import app.launch0.MainViewModel
 import app.launch0.R
@@ -174,6 +175,8 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             addView(yearView, FrameLayout.LayoutParams(fill, fill))
         }
         binding.widgetPager.registerOnPageChangeCallback(pageChangeCallback)
+        // A gap of wallpaper between cards as they slide, so adjacent widgets read as separate.
+        binding.widgetPager.setPageTransformer(MarginPageTransformer(20.dpToPx()))
     }
 
     /**
