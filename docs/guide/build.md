@@ -6,7 +6,7 @@ Launch0 is open source. You can build it yourself from the source code.
 
 - [Android Studio](https://developer.android.com/studio) (latest stable)
 - JDK 17
-- Android SDK 35
+- Android SDK 36
 
 ## Steps
 
