@@ -17,15 +17,16 @@ fun Context.hasCalendarPermission(): Boolean =
         PackageManager.PERMISSION_GRANTED
 
 /**
- * Reads the whole of today's events straight from the device's calendar provider — entirely
- * on-device, no network. Recurring events are expanded via [CalendarContract.Instances]. Every
- * event for the day is returned (the widget's list scrolls through them), sorted so all-day events
- * lead and the rest follow in start order.
+ * Reads today's timed events straight from the device's calendar provider — entirely on-device, no
+ * network. Recurring events are expanded via [CalendarContract.Instances]. All-day events are left
+ * out: Google "Working location" entries (Office/Home/etc.) sync as all-day events, and neither they
+ * nor holidays/birthdays belong in the timed "what's next" schedule the widget shows. The rest of
+ * the day is returned in start order (the widget's list scrolls through it).
  *
  * Both the personal profile and — where a work profile shares its calendar — the managed profile
  * are queried, since corporate meetings often live in the work profile the launcher can't otherwise
- * see. Identical instances (same title, time and all-day flag) are collapsed so an event synced into
- * two calendars or both profiles shows once.
+ * see. Identical instances (same title and time) are collapsed so an event synced into two calendars
+ * or both profiles shows once.
  *
  * Returns an empty list when the permission is missing or the query fails, so callers can treat an
  * empty result as "nothing to show" without special-casing errors.
@@ -43,8 +44,9 @@ fun Context.getTodaysCalendarEvents(): List<CalendarEvent> {
         events += queryDayInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, dayStart, dayEnd)
 
     return events
-        .distinctBy { listOf(it.title, it.begin, it.end, it.allDay) }
-        .sortedWith(compareByDescending<CalendarEvent> { it.allDay }.thenBy { it.begin })
+        .filterNot { it.allDay } // Drop working-location & other all-day items — not a timed schedule.
+        .distinctBy { listOf(it.title, it.begin, it.end) }
+        .sortedBy { it.begin }
 }
 
 /** Queries one instances URI (personal or work profile) for the [dayStart]..[dayEnd] window. */

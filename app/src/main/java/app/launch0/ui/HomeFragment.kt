@@ -447,8 +447,6 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             // arrive via bindCalendarEvents().
             calendarAutoScroll = true
             viewModel.loadCalendarEvents()
-            if (BuildConfig.DEBUG)
-                requireContext().showToast(requireContext().calendarDiagnostics(), Toast.LENGTH_LONG)
         } else {
             binding.calendarWidget.showMessage(getString(R.string.calendar_grant_access))
         }
@@ -465,6 +463,12 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
     private fun bindCalendarEvents(events: List<CalendarEvent>) {
         if (_binding == null || !prefs.showCalendarWidget) return
+        if (BuildConfig.DEBUG) {
+            // Diagnostic build: render the calendar breakdown in the box so it can be screenshotted.
+            binding.calendarWidget.showMessage(requireContext().calendarDiagnostics())
+            positionCalendarWidgetBelowHeader()
+            return
+        }
         when {
             // Access revoked since the events were loaded — fall back to the prompt, not "no events".
             !requireContext().hasCalendarPermission() ->
