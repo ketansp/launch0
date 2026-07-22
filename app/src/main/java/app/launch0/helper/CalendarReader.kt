@@ -9,7 +9,10 @@ import android.os.Build
 import android.provider.CalendarContract
 import androidx.core.content.ContextCompat
 import app.launch0.data.CalendarEvent
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 /** Whether the user has granted read access to the device calendar. */
 fun Context.hasCalendarPermission(): Boolean =
@@ -114,5 +117,55 @@ private fun todayStartMillis(): Long = Calendar.getInstance().apply {
     set(Calendar.SECOND, 0)
     set(Calendar.MILLISECOND, 0)
 }.timeInMillis
+
+// ---- Debug-only diagnostic (not shipped): dump today's raw events with their flags ----
+
+/** Lists every event in today's window with time, busy/free/tentative status and title. */
+fun Context.calendarDiagnostics(): String {
+    if (!hasCalendarPermission()) return "calendar: no permission"
+    val dayStart = todayStartMillis()
+    val dayEnd = dayStart + ONE_DAY_MILLIS
+    val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().apply {
+        ContentUris.appendId(this, dayStart)
+        ContentUris.appendId(this, dayEnd)
+    }.build()
+    val projection = arrayOf(
+        CalendarContract.Instances.TITLE,
+        CalendarContract.Instances.BEGIN,
+        CalendarContract.Instances.END,
+        CalendarContract.Instances.ALL_DAY,
+        CalendarContract.Instances.AVAILABILITY,
+        CalendarContract.Instances.STATUS,
+    )
+    val fmt = SimpleDateFormat("HH:mm", Locale.US)
+    val lines = mutableListOf<String>()
+    try {
+        contentResolver.query(uri, projection, null, null, "${CalendarContract.Instances.BEGIN} ASC")
+            ?.use { c ->
+                val tIdx = c.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
+                val bIdx = c.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
+                val eIdx = c.getColumnIndexOrThrow(CalendarContract.Instances.END)
+                val adIdx = c.getColumnIndexOrThrow(CalendarContract.Instances.ALL_DAY)
+                val avIdx = c.getColumnIndexOrThrow(CalendarContract.Instances.AVAILABILITY)
+                val stIdx = c.getColumnIndexOrThrow(CalendarContract.Instances.STATUS)
+                while (c.moveToNext()) {
+                    val allDay = c.getInt(adIdx) == 1
+                    val time = if (allDay) "all-day"
+                    else "${fmt.format(Date(c.getLong(bIdx)))}-${fmt.format(Date(c.getLong(eIdx)))}"
+                    val avail = when (c.getInt(avIdx)) {
+                        0 -> "busy"; 1 -> "free"; 2 -> "tentative"; else -> "?"
+                    }
+                    val status = when (c.getInt(stIdx)) {
+                        0 -> "tentative"; 1 -> "confirmed"; 2 -> "canceled"; else -> "-"
+                    }
+                    lines.add("$time [$avail/$status] ${c.getString(tIdx) ?: "(no title)"}")
+                }
+            }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return "diag error: ${e.message}"
+    }
+    return "today's raw events (${lines.size}):\n" + lines.joinToString("\n")
+}
 
 private const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000L

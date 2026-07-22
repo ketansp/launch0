@@ -30,6 +30,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import app.launch0.BuildConfig
 import app.launch0.MainViewModel
 import app.launch0.R
 import app.launch0.data.AppModel
@@ -38,6 +39,7 @@ import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentHomeBinding
 import app.launch0.helper.DistractionTimer
+import app.launch0.helper.calendarDiagnostics
 import app.launch0.helper.hasCalendarPermission
 import app.launch0.helper.NotificationDndService
 import app.launch0.helper.appUsagePermissionGranted
@@ -461,6 +463,12 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
     private fun bindCalendarEvents(events: List<CalendarEvent>) {
         if (_binding == null || !prefs.showCalendarWidget) return
+        if (BuildConfig.DEBUG) {
+            // Diagnostic build: render today's raw events in the box so they can be screenshotted.
+            binding.calendarWidget.showMessage(requireContext().calendarDiagnostics())
+            positionCalendarWidgetBelowHeader()
+            return
+        }
         when {
             // Access revoked since the events were loaded — fall back to the prompt, not "no events".
             !requireContext().hasCalendarPermission() ->
