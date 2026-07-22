@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shorter widget cards in landscape, where vertical space is tight -->
+    <dimen name="widget_pager_height">132dp</dimen>
+</resources>

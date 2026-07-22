@@ -1,5 +1,6 @@
 package app.launch0.ui
 
+import android.Manifest
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
@@ -14,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
@@ -29,6 +31,7 @@ import app.launch0.databinding.FragmentSettingsBinding
 import app.launch0.helper.animateAlpha
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.getColorFromAttr
+import app.launch0.helper.hasCalendarPermission
 import app.launch0.helper.isAccessServiceEnabled
 import app.launch0.helper.isDarkThemeOn
 import app.launch0.helper.isEinkDisplay
@@ -50,6 +53,14 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
+
+    // Turning the calendar widget on needs READ_CALENDAR; we only flip the pref once it's granted.
+    private val calendarPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (_binding == null) return@registerForActivityResult
+            if (granted) enableCalendarWidget()
+            else requireContext().showToast(getString(R.string.calendar_permission_denied))
+        }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
@@ -79,6 +90,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         populateStatusBar()
         populateDateTime()
         populateYearWidget()
+        populateCalendarWidget()
         populateAppIcons()
         populateAppNames()
         populateIconSize()
@@ -145,6 +157,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.statusBar -> toggleStatusBar()
             R.id.dateTime -> binding.dateTimeSelectLayout.visibility = View.VISIBLE
             R.id.daysLeftWidget -> toggleYearWidget()
+            R.id.calendarWidgetToggle -> toggleCalendarWidget()
             R.id.showAppIcons -> toggleAppIcons()
             R.id.showAppNames -> toggleAppNames()
             R.id.iconSizeValue -> binding.iconSizeLayout.visibility = View.VISIBLE
@@ -248,6 +261,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
         binding.daysLeftWidget.setOnClickListener(this)
+        binding.calendarWidgetToggle.setOnClickListener(this)
         binding.showAppIcons.setOnClickListener(this)
         binding.showAppNames.setOnClickListener(this)
         binding.iconSizeValue.setOnClickListener(this)
@@ -382,6 +396,30 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     private fun populateYearWidget() {
         binding.daysLeftWidget.text = getString(
             if (prefs.showYearWidget) R.string.on else R.string.off
+        )
+    }
+
+    private fun toggleCalendarWidget() {
+        if (prefs.showCalendarWidget) {
+            prefs.showCalendarWidget = false
+            populateCalendarWidget()
+            viewModel.toggleCalendarWidget()
+            return
+        }
+        // Turning on: request calendar access first if we don't already have it.
+        if (requireContext().hasCalendarPermission()) enableCalendarWidget()
+        else calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+    }
+
+    private fun enableCalendarWidget() {
+        prefs.showCalendarWidget = true
+        populateCalendarWidget()
+        viewModel.toggleCalendarWidget()
+    }
+
+    private fun populateCalendarWidget() {
+        binding.calendarWidgetToggle.text = getString(
+            if (prefs.showCalendarWidget) R.string.on else R.string.off
         )
     }
 

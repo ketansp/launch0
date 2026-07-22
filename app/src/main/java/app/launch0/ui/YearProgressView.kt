@@ -48,6 +48,7 @@ class YearProgressView @JvmOverloads constructor(
     private var cols = 0
     private var rows = 0
     private var boxPx = 0f
+    private var vTop = 0f // top offset that vertically centres the grid in the measured height
     private val drawRect = RectF()
     private val ringRect = RectF()
 
@@ -93,24 +94,44 @@ class YearProgressView @JvmOverloads constructor(
             Color.argb(178, 255, 255, 255)  // dark foreground → light ring (~0.70)
     }
 
-    private fun computeGrid(width: Int) {
+    /**
+     * Fits the year grid into [width], and — when [maxHeight] is > 0 — shrinks the boxes (by using
+     * more, smaller columns) until the grid also fits that height. Lets the widget sit in a
+     * fixed-height card alongside the others without overflowing.
+     */
+    private fun computeGrid(width: Int, maxHeight: Int) {
         val avail = width - paddingLeft - paddingRight
         if (avail <= 0) {
             cols = 0; rows = 0; boxPx = 0f
             return
         }
-        cols = ((avail + gapPx) / (targetBoxPx + gapPx)).toInt().coerceAtLeast(7)
-        boxPx = (avail - (cols - 1) * gapPx) / cols
-        rows = ceil(totalDays / cols.toDouble()).toInt()
+        val minBox = dp(3f)
+        var target = targetBoxPx
+        while (true) {
+            val c = ((avail + gapPx) / (target + gapPx)).toInt().coerceAtLeast(7)
+            val b = (avail - (c - 1) * gapPx) / c
+            val r = ceil(totalDays / c.toDouble()).toInt()
+            val gridHeight = r * b + (r - 1) * gapPx
+            if (maxHeight <= 0 || gridHeight <= maxHeight || target <= minBox) {
+                cols = c; boxPx = b; rows = r
+                return
+            }
+            target -= dp(0.5f)
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        computeGrid(width)
-        val height = if (rows > 0)
-            ceil(rows * boxPx + (rows - 1) * gapPx).toInt() + paddingTop + paddingBottom
-        else
-            paddingTop + paddingBottom
+        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
+        val bounded = heightMode == MeasureSpec.EXACTLY || heightMode == MeasureSpec.AT_MOST
+        val maxHeight = if (bounded) heightSize - paddingTop - paddingBottom else 0
+        computeGrid(width, maxHeight)
+
+        val gridHeight = if (rows > 0) ceil(rows * boxPx + (rows - 1) * gapPx).toInt() else 0
+        val height = if (heightMode == MeasureSpec.EXACTLY) heightSize else gridHeight + paddingTop + paddingBottom
+        // Centre the grid vertically in whatever height we end up with (e.g. a taller shared card).
+        vTop = paddingTop + ((height - paddingTop - paddingBottom - gridHeight) / 2f).coerceAtLeast(0f)
         setMeasuredDimension(width, height)
     }
 
@@ -120,7 +141,7 @@ class YearProgressView @JvmOverloads constructor(
         val step = boxPx + gapPx
         for (i in 0 until totalDays) {
             val left = paddingLeft + (i / rows) * step
-            val top = paddingTop + (i % rows) * step
+            val top = vTop + (i % rows) * step
             drawRect.set(left, top, left + boxPx, top + boxPx)
             when {
                 i < todayIndex -> {

@@ -64,6 +64,22 @@
     <string name="rename">Rename</string>
     <string name="show_date_time">Show date time</string>
     <string name="days_left_widget">Days left widget</string>
+    <string name="calendar_widget">Calendar widget</string>
+    <string name="calendar_today">Today</string>
+    <string name="calendar_all_day">All day</string>
+    <string name="calendar_now">now</string>
+    <string name="calendar_untitled_event">(No title)</string>
+    <string name="calendar_no_events">No more events today</string>
+    <string name="calendar_grant_access">Tap to show today\'s schedule</string>
+    <string name="calendar_permission_denied">Allow calendar access to use this widget</string>
+    <!-- Countdown to an upcoming event, e.g. "in 45m", "in 2h", "in 1h 15m" -->
+    <string name="calendar_in_minutes">in %1$dm</string>
+    <string name="calendar_in_hours">in %1$dh</string>
+    <string name="calendar_in_hours_minutes">in %1$dh %2$dm</string>
+    <plurals name="calendar_events">
+        <item quantity="one">%d event</item>
+        <item quantity="other">%d events</item>
+    </plurals>
     <string name="show_app_icons">Show app icons</string>
     <string name="show_app_names">Show app names</string>
     <string name="icon_size">Icon size</string>
