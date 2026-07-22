@@ -17,11 +17,13 @@ fun Context.hasCalendarPermission(): Boolean =
         PackageManager.PERMISSION_GRANTED
 
 /**
- * Reads today's timed events straight from the device's calendar provider — entirely on-device, no
- * network. Recurring events are expanded via [CalendarContract.Instances]. All-day events are left
- * out: Google "Working location" entries (Office/Home/etc.) sync as all-day events, and neither they
- * nor holidays/birthdays belong in the timed "what's next" schedule the widget shows. The rest of
- * the day is returned in start order (the widget's list scrolls through it).
+ * Reads the rest of today's timed events straight from the device's calendar provider — entirely
+ * on-device, no network. Recurring events are expanded via [CalendarContract.Instances]. Events
+ * whose end time has already passed are dropped (paired with the widget's minute refresh, an event
+ * leaves the list shortly after it finishes). All-day events are left out too: Google "Working
+ * location" entries (Office/Home/etc.) sync as all-day events, and neither they nor holidays/
+ * birthdays belong in the timed "what's next" schedule. What remains — ongoing and upcoming events —
+ * is returned in start order (the widget's list scrolls through it).
  *
  * Both the personal profile and — where a work profile shares its calendar — the managed profile
  * are queried, since corporate meetings sometimes live in the work profile the launcher can't
@@ -46,8 +48,10 @@ fun Context.getTodaysCalendarEvents(): List<CalendarEvent> {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
         events += queryDayInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, dayStart, dayEnd)
 
+    val now = System.currentTimeMillis()
     return events
         .filterNot { it.allDay } // Drop working-location & other all-day items — not a timed schedule.
+        .filter { it.end > now } // Drop events that have already finished.
         .distinctBy { listOf(it.title, it.begin, it.end) }
         .sortedBy { it.begin }
 }

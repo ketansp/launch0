@@ -111,10 +111,10 @@ class CalendarWidgetView @JvmOverloads constructor(
     }
 
     /**
-     * Renders every event of [newEvents] as agenda rows. The box grows to fit the whole day and only
-     * starts to scroll once it would get too tall (see [BoundedScrollView]). [autoScrollToNow] lands
-     * the view on the current/next event — finished events then sit a scroll up away — so pass false
-     * on a periodic refresh to keep the reader's current scroll position.
+     * Renders [newEvents] as agenda rows. The list is already trimmed to ongoing and upcoming events
+     * in start order, so the box grows to fit the rest of the day and only starts to scroll once it
+     * would get too tall (see [BoundedScrollView]). [autoScrollToNow] starts at the top — the most
+     * imminent event — while false (a periodic refresh) keeps the reader's current scroll position.
      */
     fun showEvents(newEvents: List<CalendarEvent>, autoScrollToNow: Boolean = true) {
         events = newEvents
@@ -125,20 +125,8 @@ class CalendarWidgetView @JvmOverloads constructor(
         list.removeAllViews()
         // Grow to fit the day, but never taller than a chunk of the screen — beyond that it scrolls.
         scroll.maxHeightPx = (resources.displayMetrics.heightPixels * MAX_HEIGHT_FRACTION).toInt()
-        var firstAhead = -1
-        events.forEachIndexed { index, event ->
-            list.addView(buildRow(event, now))
-            if (firstAhead < 0 && !event.isPast(now)) firstAhead = index
-        }
-        scroll.post {
-            if (autoScrollToNow) {
-                // Land on what's now/next; if the whole day is done, rest at the last event.
-                val target = if (firstAhead >= 0) firstAhead else events.lastIndex
-                scroll.scrollTo(0, list.getChildAt(target)?.top ?: 0)
-            } else {
-                scroll.scrollTo(0, previousScrollY)
-            }
-        }
+        events.forEach { list.addView(buildRow(it, now)) }
+        scroll.post { scroll.scrollTo(0, if (autoScrollToNow) 0 else previousScrollY) }
     }
 
     /** Shows a single centred line instead of the list — e.g. "grant access" or "nothing left". */
@@ -160,7 +148,6 @@ class CalendarWidgetView @JvmOverloads constructor(
     }
 
     private fun buildRow(event: CalendarEvent, now: Long): View {
-        val past = event.isPast(now)
         val whenNow = event.isNow(now)
         val row = LinearLayout(context).apply {
             orientation = HORIZONTAL
@@ -168,8 +155,6 @@ class CalendarWidgetView @JvmOverloads constructor(
             setPadding(dp(2), dp(8), dp(2), dp(8))
             isClickable = true
             isFocusable = true
-            // Finished events recede so the eye still lands on what's now and next.
-            alpha = if (past) 0.5f else 1f
             setOnClickListener { onEventClick?.invoke(event) }
         }
 
@@ -183,8 +168,8 @@ class CalendarWidgetView @JvmOverloads constructor(
             text = if (event.allDay) context.getString(R.string.calendar_all_day) else formatTime(event.begin)
         }
         timeCol.addView(time, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
-        // A countdown only makes sense ahead of the event, "now" while it's live, nothing once it's done.
-        if (!event.allDay && !past) {
+        // "now" while the event is live, otherwise a countdown until it starts.
+        if (!event.allDay) {
             val whenLabel = TextView(context).apply {
                 applyBody(11.5f, alpha(if (whenNow) 0.85f else 0.5f), light = false)
                 maxLines = 1

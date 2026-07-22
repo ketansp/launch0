@@ -16,7 +16,4 @@ data class CalendarEvent(
 ) {
     /** True while the event is currently happening. */
     fun isNow(now: Long): Boolean = now in begin until end
-
-    /** True once a timed event has finished. All-day events are never treated as past. */
-    fun isPast(now: Long): Boolean = !allDay && end <= now
 }
