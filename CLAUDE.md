@@ -6,7 +6,7 @@ Launch0 is a minimal, open-source Android launcher (home screen replacement) bui
 
 - **Package**: `app.launch0`
 - **Min SDK**: 24 (Android 7.0)
-- **Target/Compile SDK**: 35
+- **Target/Compile SDK**: 36
 - **Language**: Kotlin
 - **Build System**: Gradle (Groovy DSL) with version catalog (`gradle/libs.versions.toml`)
 
@@ -24,7 +24,7 @@ Launch0 is a minimal, open-source Android launcher (home screen replacement) bui
 ./gradlew clean
 ```
 
-**Requirements**: JDK 17, Android SDK 35, Gradle 8.9.1, Kotlin 2.1.20.
+**Requirements**: JDK 17, Android SDK 36, Gradle 8.9.1, Kotlin 2.1.20.
 
 The debug build uses application ID `app.launch0.debug` (via `applicationIdSuffix`), while release uses `app.launch0`.
 
