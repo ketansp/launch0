@@ -77,7 +77,7 @@
         android:visibility="gone"
         tools:visibility="visible">
 
-        <app.launch0.ui.WidgetPager
+        <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/widgetPager"
             android:layout_width="match_parent"
             android:layout_height="@dimen/widget_pager_height" />

@@ -32,6 +32,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.viewpager2.widget.ViewPager2
 import app.launch0.MainViewModel
 import app.launch0.R
 import app.launch0.data.AppModel
@@ -91,6 +92,16 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     private var yearView: YearProgressView? = null
     private var calendarCard: WidgetCard? = null
     private var yearCard: WidgetCard? = null
+
+    // The cards currently in the pager, so the adapter is only rebuilt when the enabled set changes.
+    private var widgetPages: List<View> = emptyList()
+
+    private val pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
+        override fun onPageSelected(position: Int) {
+            if (_binding == null) return
+            updateWidgetDots(position, binding.widgetPager.adapter?.itemCount ?: 0)
+        }
+    }
 
     // Whether the next calendar-events render should jump to the current/next event. True for a fresh
     // show (resume/toggle), false for the minute ticker so it doesn't yank the user's scroll position.
@@ -162,7 +173,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         yearCard = WidgetCard(ctx).apply {
             addView(yearView, FrameLayout.LayoutParams(fill, fill))
         }
-        binding.widgetPager.onPageChanged = { index, count -> updateWidgetDots(index, count) }
+        binding.widgetPager.registerOnPageChangeCallback(pageChangeCallback)
     }
 
     /**
@@ -463,24 +474,22 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
         binding.widgetPagerLayout.isVisible = desired.isNotEmpty()
         if (desired.isEmpty()) {
-            pager.removeAllViews()
+            widgetPages = emptyList()
+            pager.adapter = null
             buildWidgetDots(0)
             stopCalendarTicker()
             return
         }
 
-        val current = (0 until pager.childCount).map { pager.getChildAt(it) }
-        if (current != desired) {
-            val previousPage = pager.displayedChild
-            pager.inAnimation = null
-            pager.outAnimation = null
-            pager.removeAllViews()
-            val fill = ViewGroup.LayoutParams.MATCH_PARENT
-            desired.forEach { card ->
-                (card.parent as? ViewGroup)?.removeView(card)
-                pager.addView(card, ViewGroup.LayoutParams(fill, fill))
-            }
-            pager.displayedChild = previousPage.coerceIn(0, desired.size - 1)
+        // Only swap the adapter when the enabled set actually changed, so a plain resume doesn't
+        // reset the current page or flicker.
+        if (desired != widgetPages) {
+            val previousPage = pager.currentItem
+            widgetPages = desired.toList()
+            pager.isUserInputEnabled = desired.size > 1 // one widget: let home swipes pass through
+            pager.offscreenPageLimit = (desired.size - 1).coerceAtLeast(1) // keep every page laid out
+            pager.adapter = WidgetPagerAdapter(desired)
+            pager.setCurrentItem(previousPage.coerceIn(0, desired.size - 1), false)
             buildWidgetDots(desired.size)
         }
 
@@ -581,7 +590,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             }
             dots.addView(dot)
         }
-        updateWidgetDots(binding.widgetPager.displayedChild, count)
+        updateWidgetDots(binding.widgetPager.currentItem, count)
     }
 
     /** Brightens the dot for the current page and dims the rest. */
@@ -1137,6 +1146,9 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     override fun onDestroyView() {
         super.onDestroyView()
         stopCalendarTicker()
+        binding.widgetPager.unregisterOnPageChangeCallback(pageChangeCallback)
+        binding.widgetPager.adapter = null
+        widgetPages = emptyList()
         calendarView = null
         yearView = null
         calendarCard = null
