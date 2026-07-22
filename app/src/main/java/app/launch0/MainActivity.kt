@@ -16,6 +16,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.IntentCompat
+import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -115,6 +116,7 @@ class MainActivity : AppCompatActivity() {
         window.addFlags(FLAG_LAYOUT_NO_LIMITS)
 
         handleShareIntent(intent)
+        handleDistractionIntent(intent)
     }
 
     override fun onStart() {
@@ -150,14 +152,48 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (isShareIntent(intent))
-            handleShareIntent(intent)
-        else
-            backToHomeScreen()
+        when {
+            isShareIntent(intent) -> handleShareIntent(intent)
+            isDistractionIntent(intent) -> handleDistractionIntent(intent)
+            else -> backToHomeScreen()
+        }
     }
 
     private fun isShareIntent(intent: Intent?): Boolean =
         intent?.action == Intent.ACTION_SEND || intent?.action == Intent.ACTION_SEND_MULTIPLE
+
+    private fun isDistractionIntent(intent: Intent?): Boolean =
+        intent?.getBooleanExtra(Constants.Key.SHOW_DISTRACTION_WAIT, false) == true
+
+    /**
+     * The accessibility service raises this screen when a flagged app reaches the foreground outside
+     * the launcher (a notification, an app switch, a deep link). Navigate to the wait screen, which
+     * covers the app until the user clears the timer or turns back.
+     */
+    private fun handleDistractionIntent(intent: Intent?) {
+        if (!isDistractionIntent(intent) || intent == null) return
+        // Consume it so a later onNewIntent/recreate doesn't re-raise the wait screen.
+        intent.removeExtra(Constants.Key.SHOW_DISTRACTION_WAIT)
+        val pkg = intent.getStringExtra(Constants.Key.APP_PACKAGE) ?: return
+        val name = intent.getStringExtra(Constants.Key.APP_NAME) ?: pkg
+        try {
+            if (navController.currentDestination?.id != R.id.mainFragment)
+                navController.popBackStack(R.id.mainFragment, false)
+            navController.navigate(
+                R.id.action_mainFragment_to_distractionWaitFragment,
+                bundleOf(
+                    Constants.Key.APP_NAME to name,
+                    Constants.Key.APP_PACKAGE to pkg,
+                    Constants.Key.APP_ACTIVITY_CLASS to null,
+                    Constants.Key.SHORTCUT_ID to null,
+                    Constants.Key.IS_SHORTCUT to false,
+                    Constants.Key.APP_USER to "",
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     /**
      * Captures content shared into Launch0 via Android's share sheet and drops it onto the personal

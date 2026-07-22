@@ -133,6 +133,18 @@ class Prefs(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILENAME, 0)
 
+    companion object {
+        // Public mirror of DISTRACTION_APPS so listeners can filter change events by key.
+        const val KEY_DISTRACTION_APPS = "DISTRACTION_APPS"
+    }
+
+    /** Register a change listener on the backing preferences (held weakly — keep a strong ref). */
+    fun registerOnChange(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+
+    fun unregisterOnChange(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+
     var firstOpen: Boolean
         get() = prefs.getBoolean(FIRST_OPEN, true)
         set(value) = prefs.edit { putBoolean(FIRST_OPEN, value).apply() }

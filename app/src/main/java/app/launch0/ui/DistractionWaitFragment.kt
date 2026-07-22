@@ -16,6 +16,7 @@ import app.launch0.data.AppModel
 import app.launch0.data.Constants
 import app.launch0.data.Prefs
 import app.launch0.databinding.FragmentDistractionWaitBinding
+import app.launch0.helper.DistractionGuard
 import app.launch0.helper.DistractionTimer
 import app.launch0.helper.appUsagePermissionGranted
 import app.launch0.helper.formattedTimeSpent
@@ -144,6 +145,9 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
 
     private fun openApp() {
         DistractionTimer.recordOpen(prefs, appPackage)
+        // Let the accessibility service know this app was cleared, so it doesn't immediately raise
+        // the wait screen again when the app returns to the foreground.
+        DistractionGuard.allow(appPackage)
         val user = getUserHandleFromString(requireContext(), appUser)
         val appModel = if (isShortcut && shortcutId.isNotEmpty())
             AppModel.PinnedShortcut(

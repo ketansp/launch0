@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    typeWindowStateChanged lets the service notice when a flagged "distracting" app reaches the
+    foreground (from a notification, Recents, a deep link, an app switch) so it can raise the wait
+    screen; typeViewClicked drives the double-tap-to-lock gesture. packageNames is deliberately
+    omitted here and set at runtime (MyAccessibilityService.refreshWatchedPackages) to just the
+    flagged apps plus Launch0 itself, so the service is notified about nothing else.
+-->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:accessibilityEventTypes="typeViewClicked"
+    android:accessibilityEventTypes="typeViewClicked|typeWindowStateChanged"
     android:accessibilityFeedbackType="feedbackVisual"
     android:accessibilityFlags="flagDefault"
     android:canRetrieveWindowContent="true"
     android:description="@string/accessibility_service_description"
     android:isAccessibilityTool="true"
     android:notificationTimeout="10"
-    android:packageNames="app.launch0.debug, app.launch0"
     tools:targetApi="30" />

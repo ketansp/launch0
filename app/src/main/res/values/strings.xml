@@ -93,7 +93,7 @@
     <string name="pro_message">Launch0 is a fork of Olauncher. Check out the original Olauncher and its pro version for extra features like weather, widgets, fonts, folders, AMOLED wallpapers, and so on.</string>
     <string name="wallpaper_message">Launch0 offers beautiful new wallpapers every hour. Give your homescreen a fresh new look throughout the day, for free!
         \n\nWant to try it?</string>
-    <string name="accessibility_service_description">The accessibility permission is required to enable double tap to lock. Any data acquired by Launch0 via this service will not leave your device.</string>
+    <string name="accessibility_service_description">The accessibility permission powers double tap to lock and the distraction timer (showing the wait screen when you open an app you\'ve marked as distracting). Any data acquired by Launch0 via this service will not leave your device.</string>
     <string name="support_olauncher_for_free">Support Launch0 for free by using our Amazon affiliate link.</string>
     <string name="support_olauncher_message">Every time you buy something using our link, we get a small commission. Please save the link and use it whenever you shop online.\nThank you!</string>
     <string name="open">Open link</string>
@@ -115,8 +115,8 @@
     <string name="swipe_down_for">Swipe down for</string>
     <string name="search">Search</string>
     <string name="notifications">Notifications</string>
-    <string name="accessibility_disclosure">Please turn on or off Launch0\'s accessibility service in your device\'s settings to enable or disable this feature.
-    \n\nPlease note that this service is only used to let you turn off your device\'s screen using the double tap gesture. Our accessibility service does not collect or share any data.</string>
+    <string name="accessibility_disclosure">Please turn on or off Launch0\'s accessibility service in your device\'s settings to enable or disable these features.
+    \n\nThis service is used only to (1) turn off your screen when you double tap the home screen, and (2) notice when you open an app you\'ve marked as distracting, so Launch0 can show its wait screen. It reads only which app is in the foreground — never your screen\'s contents — and it does not collect or share any data.</string>
     <string name="accept">Accept</string>
     <string name="permission">Permission</string>
     <string name="double_tap_lock">Double tap to lock</string>

@@ -71,7 +71,7 @@ Launch0 requests only the permissions its features need, and nearly all of them 
 | Request delete packages | Uninstalling an app from the drawer | Only when you uninstall |
 | Microphone (`RECORD_AUDIO`) | Recording voice notes in Notes | Only if you record a voice note |
 | Usage access (`PACKAGE_USAGE_STATS`) | Showing screen time next to your apps | Optional |
-| Accessibility service | Double-tap-to-lock gesture (Android 9+) | Optional, off by default |
+| Accessibility service | Double-tap-to-lock gesture (Android 9+) and the distraction timer | Optional, off by default |
 | Notification access | Holding notifications for Do Not Disturb | Optional |
 | Device admin | Double-tap-to-lock gesture (older Android) | Optional, off by default |
 
@@ -81,12 +81,17 @@ To be a launcher, Launch0 needs to know which apps are installed so it can show 
 
 ### Accessibility service
 
-Google requires apps to explain their use of accessibility services clearly, so to be explicit: Launch0's accessibility service exists for **one purpose only — to lock your screen when you double-tap the home screen.** It is:
+Google requires apps to explain their use of accessibility services clearly, so to be explicit: Launch0's accessibility service is used for **two purposes only:**
 
-- **Off by default** and entirely optional; Launch0 works fully without it.
-- **Not used to read, collect, log, or transmit anything.** It does not inspect screen contents, capture what you type, or observe other apps. It only invokes Android's "lock screen" action.
+1. **Double-tap-to-lock** — locking your screen when you double-tap the home screen.
+2. **The distraction timer** — noticing when an app you have marked as distracting comes to the foreground (whether you open it from the launcher, a notification, Recents, or an app switch) so Launch0 can show its wait screen over it.
 
-On Android versions older than 9, the same double-tap-to-lock gesture uses the **device administrator** API instead. Launch0 requests only the lock-screen capability; it cannot wipe your device, change your password, or enforce any other policy.
+It is:
+
+- **Off by default** and entirely optional; Launch0 works fully without it, and the distraction timer still works for launches started from the launcher itself even when the service is off.
+- **Not used to read, collect, log, or transmit anything.** It does not inspect screen contents, capture what you type, or record your activity. For the distraction timer it reads only the package name of the app currently in the foreground, and it acts only on the apps you have flagged; that information stays on your device and is never stored or sent anywhere.
+
+On Android versions older than 9, the double-tap-to-lock gesture uses the **device administrator** API instead. Launch0 requests only the lock-screen capability; it cannot wipe your device, change your password, or enforce any other policy.
 
 ### Notification access (Do Not Disturb)
 

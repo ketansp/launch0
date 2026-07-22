@@ -11,6 +11,10 @@ object Constants {
         const val APP_USER = "appUser"
         const val IS_SHORTCUT = "isShortcut"
         const val SHORTCUT_ID = "shortcutId"
+
+        // Set by MyAccessibilityService when it starts MainActivity to raise the distraction wait
+        // screen over an app the user opened outside the launcher (notification, app switch, etc.).
+        const val SHOW_DISTRACTION_WAIT = "showDistractionWait"
     }
 
     object Dialog {
