@@ -3,4 +3,6 @@
     <dimen name="alphabet_recycler_margin_bottom">16dp</dimen>
     <dimen name="alphabet_recycler_margin_end">10dp</dimen>
     <dimen name="alphabet_recycler_margin_start">320dp</dimen>
+    <!-- Uniform height of every widget card in the home-screen carousel -->
+    <dimen name="widget_pager_height">176dp</dimen>
 </resources>

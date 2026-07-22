@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
+import android.graphics.drawable.GradientDrawable
 import android.provider.CalendarContract
 import android.os.BatteryManager
 import android.os.Build
@@ -19,6 +20,7 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -46,6 +48,7 @@ import app.launch0.helper.dpToPx
 import app.launch0.helper.getWaitCapsuleDrawable
 import app.launch0.helper.expandNotificationDrawer
 import app.launch0.helper.getChangedAppTheme
+import app.launch0.helper.getColorFromAttr
 import app.launch0.helper.getNotificationCountDrawable
 import app.launch0.helper.getScreenTimeCapsuleDrawable
 import app.launch0.helper.getShapedAppIcon
@@ -83,6 +86,12 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     // Today's foreground time per package (millis); drives the per-app usage capsules on home apps.
     private var appScreenTimes: Map<String, Long> = emptyMap()
 
+    // Home-screen widgets, each wrapped in a shared card and paged through the swipeable carousel.
+    private var calendarView: CalendarWidgetView? = null
+    private var yearView: YearProgressView? = null
+    private var calendarCard: WidgetCard? = null
+    private var yearCard: WidgetCard? = null
+
     // Whether the next calendar-events render should jump to the current/next event. True for a fresh
     // show (resume/toggle), false for the minute ticker so it doesn't yank the user's scroll position.
     private var calendarAutoScroll = true
@@ -103,7 +112,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     private val calendarPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (_binding == null) return@registerForActivityResult
-            if (granted) populateCalendarWidget()
+            if (granted) setupWidgets()
             else requireContext().showToast(getString(R.string.calendar_permission_denied))
         }
 
@@ -125,19 +134,35 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
         initClickListeners()
-        initCalendarWidget()
+        initWidgets()
         initSwipeUpNudge()
         initSwipeLeftNudge()
     }
 
-    /** Wires the calendar widget's taps: an event opens it in the calendar, the prompt requests access. */
-    private fun initCalendarWidget() {
-        binding.calendarWidget.setOnEventClickListener { openCalendarEvent(it) }
-        binding.calendarWidget.setOnHeaderClickListener { openCalendarApp() }
-        binding.calendarWidget.setOnMessageClickListener {
-            if (requireContext().hasCalendarPermission()) openCalendarApp()
-            else calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR)
+    /**
+     * Builds the home-screen widgets once — each in a shared [WidgetCard] — and wires the calendar's
+     * taps (an event opens it in the calendar, the prompt requests access) and the pager's dots.
+     * Which cards are actually shown, and in what order, is decided later by [setupWidgets].
+     */
+    private fun initWidgets() {
+        val ctx = requireContext()
+        calendarView = CalendarWidgetView(ctx).also { cv ->
+            cv.setOnEventClickListener { openCalendarEvent(it) }
+            cv.setOnHeaderClickListener { openCalendarApp() }
+            cv.setOnMessageClickListener {
+                if (requireContext().hasCalendarPermission()) openCalendarApp()
+                else calendarPermissionLauncher.launch(android.Manifest.permission.READ_CALENDAR)
+            }
         }
+        val fill = FrameLayout.LayoutParams.MATCH_PARENT
+        calendarCard = WidgetCard(ctx).apply {
+            addView(calendarView, FrameLayout.LayoutParams(fill, fill))
+        }
+        yearView = YearProgressView(ctx)
+        yearCard = WidgetCard(ctx).apply {
+            addView(yearView, FrameLayout.LayoutParams(fill, fill))
+        }
+        binding.widgetPager.onPageChanged = { index, count -> updateWidgetDots(index, count) }
     }
 
     /**
@@ -299,10 +324,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             populateDateTime()
         }
         viewModel.toggleWidget.observe(viewLifecycleOwner) {
-            populateWidget()
+            setupWidgets()
         }
         viewModel.toggleCalendarWidget.observe(viewLifecycleOwner) {
-            populateCalendarWidget()
+            setupWidgets()
         }
         viewModel.calendarEvents.observe(viewLifecycleOwner) {
             bindCalendarEvents(it)
@@ -422,33 +447,58 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.tvScreenTime.setPadding(10.dpToPx())
     }
 
-    private fun populateWidget() {
-        val show = prefs.showYearWidget
-        binding.widgetLayout.isVisible = show
-        if (!show) return
-        binding.yearWidget.refresh()
-        positionWidgetBelowHeader()
-    }
-
     /**
-     * Shows the boxed agenda widget when it's enabled. With calendar access granted it loads today's
-     * events off the main thread (the result arrives via [bindCalendarEvents]); otherwise it shows a
-     * tap-to-grant prompt in the same box.
+     * (Re)builds the widget carousel from the enabled widgets. Each enabled widget's card becomes a
+     * page in a stable order (calendar, then days-left); the pager and its dots hide entirely when
+     * none are on. Called on resume and whenever a widget is toggled. It only re-populates the pager
+     * when the enabled set actually changed — so a plain resume doesn't flicker — then refreshes
+     * contents.
      */
-    private fun populateCalendarWidget() {
-        val show = prefs.showCalendarWidget
-        binding.calendarWidgetLayout.isVisible = show
-        if (!show) return
-        binding.calendarWidget.refresh()
-        if (requireContext().hasCalendarPermission()) {
-            // A fresh show jumps to the current/next event; events load off the main thread and
-            // arrive via bindCalendarEvents().
-            calendarAutoScroll = true
-            viewModel.loadCalendarEvents()
-        } else {
-            binding.calendarWidget.showMessage(getString(R.string.calendar_grant_access))
+    private fun setupWidgets() {
+        if (_binding == null) return
+        val pager = binding.widgetPager
+        val desired = mutableListOf<View>()
+        if (prefs.showCalendarWidget) calendarCard?.let { desired += it }
+        if (prefs.showYearWidget) yearCard?.let { desired += it }
+
+        binding.widgetPagerLayout.isVisible = desired.isNotEmpty()
+        if (desired.isEmpty()) {
+            pager.removeAllViews()
+            buildWidgetDots(0)
+            stopCalendarTicker()
+            return
         }
-        positionCalendarWidgetBelowHeader()
+
+        val current = (0 until pager.childCount).map { pager.getChildAt(it) }
+        if (current != desired) {
+            val previousPage = pager.displayedChild
+            pager.inAnimation = null
+            pager.outAnimation = null
+            pager.removeAllViews()
+            val fill = ViewGroup.LayoutParams.MATCH_PARENT
+            desired.forEach { card ->
+                (card.parent as? ViewGroup)?.removeView(card)
+                pager.addView(card, ViewGroup.LayoutParams(fill, fill))
+            }
+            pager.displayedChild = previousPage.coerceIn(0, desired.size - 1)
+            buildWidgetDots(desired.size)
+        }
+
+        // Refresh theme + contents of whatever is enabled.
+        yearCard?.refresh()
+        yearView?.refresh()
+        if (prefs.showCalendarWidget) {
+            calendarCard?.refresh()
+            calendarView?.refresh()
+            if (requireContext().hasCalendarPermission()) {
+                // A fresh show jumps to the current/next event; events arrive via bindCalendarEvents().
+                calendarAutoScroll = true
+                viewModel.loadCalendarEvents()
+            } else {
+                calendarView?.showMessage(getString(R.string.calendar_grant_access))
+            }
+        }
+        positionWidgetPagerBelowHeader()
     }
 
     /** Re-reads events (used by the minute ticker); [autoScroll] false keeps the current scroll. */
@@ -461,19 +511,19 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
     private fun bindCalendarEvents(events: List<CalendarEvent>) {
         if (_binding == null || !prefs.showCalendarWidget) return
+        val cv = calendarView ?: return
         when {
             // Access revoked since the events were loaded — fall back to the prompt, not "no events".
             !requireContext().hasCalendarPermission() ->
-                binding.calendarWidget.showMessage(getString(R.string.calendar_grant_access))
+                cv.showMessage(getString(R.string.calendar_grant_access))
             events.isEmpty() ->
-                binding.calendarWidget.showMessage(getString(R.string.calendar_no_events))
+                cv.showMessage(getString(R.string.calendar_no_events))
             else ->
-                binding.calendarWidget.showEvents(events, autoScrollToNow = calendarAutoScroll)
+                cv.showEvents(events, autoScrollToNow = calendarAutoScroll)
         }
-        positionCalendarWidgetBelowHeader()
     }
 
-    /** Runs the minute ticker while the home screen is visible; only when the widget is actually on. */
+    /** Runs the minute ticker while the home screen is visible; only when the calendar widget is on. */
     private fun startCalendarTicker() {
         calendarTickHandler.removeCallbacks(calendarTicker)
         if (prefs.showCalendarWidget)
@@ -485,53 +535,65 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     /**
-     * Anchors the days-left widget just below whichever header is currently showing — the
-     * clock/date block and/or the screen-time label — so the grid never overlaps them,
-     * regardless of font size, density or which headers are enabled. Falls back to a fixed
-     * top margin when no header is visible. Posted so the headers are measured first.
+     * Anchors the widget carousel just below whichever header is currently showing — the clock/date
+     * block and/or the screen-time label — so it never overlaps them, regardless of font size,
+     * density or which headers are enabled. Falls back to a fixed top margin when no header is
+     * visible. Posted so the headers are measured first.
      */
-    private fun positionWidgetBelowHeader() {
-        binding.widgetLayout.post {
+    private fun positionWidgetPagerBelowHeader() {
+        binding.widgetPagerLayout.post {
             if (_binding == null) return@post
             var top = 56.dpToPx()
             if (binding.dateTimeLayout.isVisible)
                 top = maxOf(top, binding.dateTimeLayout.bottom)
             if (binding.tvScreenTime.isVisible)
                 top = maxOf(top, binding.tvScreenTime.bottom)
-            // When the calendar widget is also showing, the days-left grid stacks below it.
-            if (binding.calendarWidgetLayout.isVisible)
-                top = maxOf(top, binding.calendarWidgetLayout.bottom)
-            val params = binding.widgetLayout.layoutParams as FrameLayout.LayoutParams
+            val params = binding.widgetPagerLayout.layoutParams as FrameLayout.LayoutParams
             val target = top + 16.dpToPx()
             if (params.topMargin != target) {
                 params.topMargin = target
-                binding.widgetLayout.layoutParams = params
+                binding.widgetPagerLayout.layoutParams = params
             }
         }
     }
 
-    /**
-     * Anchors the calendar widget just below whichever header is showing — clock/date and/or the
-     * screen-time label — mirroring [positionWidgetBelowHeader]. Re-runs the year-widget positioning
-     * afterwards so, when both are on, the days-left grid ends up below this box.
-     */
-    private fun positionCalendarWidgetBelowHeader() {
-        binding.calendarWidgetLayout.post {
-            if (_binding == null) return@post
-            var top = 56.dpToPx()
-            if (binding.dateTimeLayout.isVisible)
-                top = maxOf(top, binding.dateTimeLayout.bottom)
-            if (binding.tvScreenTime.isVisible)
-                top = maxOf(top, binding.tvScreenTime.bottom)
-            val params = binding.calendarWidgetLayout.layoutParams as FrameLayout.LayoutParams
-            val target = top + 16.dpToPx()
-            if (params.topMargin != target) {
-                params.topMargin = target
-                binding.calendarWidgetLayout.layoutParams = params
-            }
-            if (binding.widgetLayout.isVisible)
-                positionWidgetBelowHeader()
+    /** Rebuilds the row of page dots for [count] widgets (hidden when there are 0 or 1). */
+    private fun buildWidgetDots(count: Int) {
+        val dots = binding.widgetDots
+        dots.removeAllViews()
+        if (count <= 1) {
+            dots.isVisible = false
+            return
         }
+        dots.isVisible = true
+        val color = requireContext().getColorFromAttr(R.attr.primaryColor)
+        val size = 6.dpToPx()
+        repeat(count) {
+            val dot = View(requireContext()).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(color)
+                }
+                layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                    marginStart = 4.dpToPx()
+                    marginEnd = 4.dpToPx()
+                }
+            }
+            dots.addView(dot)
+        }
+        updateWidgetDots(binding.widgetPager.displayedChild, count)
+    }
+
+    /** Brightens the dot for the current page and dims the rest. */
+    private fun updateWidgetDots(index: Int, count: Int) {
+        if (_binding == null) return
+        val dots = binding.widgetDots
+        if (count <= 1) {
+            dots.isVisible = false
+            return
+        }
+        for (i in 0 until dots.childCount)
+            dots.getChildAt(i).alpha = if (i == index) 0.9f else 0.3f
     }
 
     /** Opens the tapped event in the calendar app, falling back to the calendar's day view. */
@@ -547,8 +609,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     private fun populateHomeScreen(appCountUpdated: Boolean) {
         if (appCountUpdated) hideHomeApps()
         populateDateTime()
-        populateWidget()
-        populateCalendarWidget()
+        setupWidgets()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             populateScreenTime()
@@ -1076,6 +1137,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     override fun onDestroyView() {
         super.onDestroyView()
         stopCalendarTicker()
+        calendarView = null
+        yearView = null
+        calendarCard = null
+        yearCard = null
         _binding = null
     }
 }

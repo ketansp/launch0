@@ -66,9 +66,9 @@
         tools:text="2h 11m"
         tools:visibility="visible" />
 
-    <!-- Days left in year widget -->
+    <!-- Home-screen widgets: a swipeable carousel of same-sized widget cards, plus page dots -->
     <LinearLayout
-        android:id="@+id/widgetLayout"
+        android:id="@+id/widgetPagerLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="74dp"
@@ -77,27 +77,19 @@
         android:visibility="gone"
         tools:visibility="visible">
 
-        <app.launch0.ui.YearProgressView
-            android:id="@+id/yearWidget"
+        <app.launch0.ui.WidgetPager
+            android:id="@+id/widgetPager"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="@dimen/widget_pager_height" />
+
+        <LinearLayout
+            android:id="@+id/widgetDots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal" />
     </LinearLayout>
-
-    <!-- Today's calendar widget -->
-    <FrameLayout
-        android:id="@+id/calendarWidgetLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="74dp"
-        android:layout_marginTop="150dp"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <app.launch0.ui.CalendarWidgetView
-            android:id="@+id/calendarWidget"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </FrameLayout>
 
     <!-- Home apps-->
     <LinearLayout

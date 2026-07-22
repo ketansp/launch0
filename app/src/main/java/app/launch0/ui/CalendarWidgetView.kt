@@ -3,7 +3,6 @@ package app.launch0.ui
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.format.DateFormat
@@ -11,9 +10,7 @@ import android.text.style.RelativeSizeSpan
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -44,7 +41,7 @@ class CalendarWidgetView @JvmOverloads constructor(
     private val header = LinearLayout(context)
     private val todayLabel = TextView(context)
     private val countLabel = TextView(context)
-    private val scroll = BoundedScrollView(context)
+    private val scroll = ScrollView(context)
     private val list = LinearLayout(context)
 
     private var fg = Color.WHITE
@@ -60,8 +57,6 @@ class CalendarWidgetView @JvmOverloads constructor(
     init {
         orientation = VERTICAL
         resolveColors()
-        setPadding(dp(14), dp(12), dp(14), dp(12))
-        background = boxBackground()
 
         // Header: "TODAY" on the start edge, the event count on the end edge.
         header.orientation = HORIZONTAL
@@ -89,7 +84,8 @@ class CalendarWidgetView @JvmOverloads constructor(
         scroll.addView(list, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
 
         addView(header, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        addView(scroll, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        // The list fills whatever height the card gives us and scrolls when the day overflows.
+        addView(scroll, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
     }
 
     fun setOnEventClickListener(listener: (CalendarEvent) -> Unit) {
@@ -107,14 +103,13 @@ class CalendarWidgetView @JvmOverloads constructor(
     /** Re-reads theme colours (foreground flips with the light/dark theme). */
     fun refresh() {
         resolveColors()
-        background = boxBackground()
     }
 
     /**
      * Renders [newEvents] as agenda rows. The list is already trimmed to ongoing and upcoming events
-     * in start order, so the box grows to fit the rest of the day and only starts to scroll once it
-     * would get too tall (see [BoundedScrollView]). [autoScrollToNow] starts at the top — the most
-     * imminent event — while false (a periodic refresh) keeps the reader's current scroll position.
+     * in start order; it fills the card and scrolls once the day overflows. [autoScrollToNow] starts
+     * at the top — the most imminent event — while false (a periodic refresh) keeps the reader's
+     * current scroll position.
      */
     fun showEvents(newEvents: List<CalendarEvent>, autoScrollToNow: Boolean = true) {
         events = newEvents
@@ -123,8 +118,6 @@ class CalendarWidgetView @JvmOverloads constructor(
         countLabel.text = resources.getQuantityString(R.plurals.calendar_events, events.size, events.size)
         val previousScrollY = scroll.scrollY
         list.removeAllViews()
-        // Grow to fit the day, but never taller than a chunk of the screen — beyond that it scrolls.
-        scroll.maxHeightPx = (resources.displayMetrics.heightPixels * MAX_HEIGHT_FRACTION).toInt()
         events.forEach { list.addView(buildRow(it, now)) }
         scroll.post { scroll.scrollTo(0, if (autoScrollToNow) 0 else previousScrollY) }
     }
@@ -134,7 +127,6 @@ class CalendarWidgetView @JvmOverloads constructor(
         events = emptyList()
         countLabel.visibility = View.GONE
         list.removeAllViews()
-        scroll.maxHeightPx = 0
         val text = TextView(context).apply {
             applyLabel(13.5f, alpha(0.6f))
             isAllCaps = false
@@ -241,13 +233,6 @@ class CalendarWidgetView @JvmOverloads constructor(
         countLabel.setLabelColors(alpha(0.42f))
     }
 
-    private fun boxBackground(): GradientDrawable = GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = dp(18).toFloat()
-        setColor(alpha(0.10f))
-        setStroke(Math.max(1, dp(1) / 2), alpha(0.10f))
-    }
-
     private fun alpha(fraction: Float): Int =
         Color.argb((fraction * 255).toInt(), Color.red(fg), Color.green(fg), Color.blue(fg))
 
@@ -274,37 +259,4 @@ class CalendarWidgetView @JvmOverloads constructor(
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-    private fun dp(value: Float): Int = (value * resources.displayMetrics.density).toInt()
-
-    private companion object {
-        // The box may take up to this fraction of the screen height before its list starts scrolling.
-        const val MAX_HEIGHT_FRACTION = 0.42f
-    }
-
-    /**
-     * A [ScrollView] that never grows past [maxHeightPx] (0 = unbounded), so it fits the day and
-     * scrolls only when it would get too tall. On touch-down it tells the launcher's home-screen
-     * gesture handler to keep its hands off, so a drag scrolls the list instead of being read as a
-     * swipe.
-     */
-    private class BoundedScrollView(context: Context) : ScrollView(context) {
-        var maxHeightPx = 0
-
-        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-            val spec = if (maxHeightPx > 0)
-                MeasureSpec.makeMeasureSpec(maxHeightPx, MeasureSpec.AT_MOST)
-            else
-                heightMeasureSpec
-            super.onMeasure(widthMeasureSpec, spec)
-        }
-
-        override fun onTouchEvent(ev: MotionEvent): Boolean {
-            if (ev.actionMasked == MotionEvent.ACTION_DOWN &&
-                (canScrollVertically(1) || canScrollVertically(-1))
-            ) {
-                parent?.requestDisallowInterceptTouchEvent(true)
-            }
-            return super.onTouchEvent(ev)
-        }
-    }
 }
