@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.UserManager
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -562,12 +563,30 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                     .thenBy { it.label.lowercase() }
             )
 
-    /** Best display name for [packageName]: the user's rename if set, else the app's label, else the package. */
+    /**
+     * Best display name for [packageName]: the user's rename if set, else the app's launcher label,
+     * else the raw package. Held counts are keyed by bare package (the notification key's user id is
+     * stripped), so the label is resolved across every profile via [LauncherApps] — otherwise a
+     * work-profile-only app, absent for the personal user, would fall back to its raw package name.
+     */
     private fun appLabelForPackage(packageName: String): String {
         val rename = prefs.getAppRenameLabel(packageName)
         if (rename.isNotBlank()) return rename
+        val ctx = requireContext()
+        try {
+            val launcherApps = ctx.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+            val userManager = ctx.getSystemService(Context.USER_SERVICE) as UserManager
+            for (profile in userManager.userProfiles) {
+                val label = launcherApps.getActivityList(packageName, profile)
+                    .firstOrNull()?.label?.toString()
+                if (!label.isNullOrBlank()) return label
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        // Last resorts: the personal-user PackageManager label, then the raw package name.
         return try {
-            val pm = requireContext().packageManager
+            val pm = ctx.packageManager
             pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
         } catch (e: Exception) {
             packageName
@@ -679,10 +698,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         }
     }
 
-    private fun populateHomeScreen(appCountUpdated: Boolean) {
+    private fun populateHomeScreen(appCountUpdated: Boolean, reloadCalendar: Boolean = true) {
         if (appCountUpdated) hideHomeApps()
         populateDateTime()
-        setupWidgets()
+        setupWidgets(reloadCalendar)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             populateScreenTime()
@@ -868,7 +887,9 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         if (packageName.isBlank()) return
         if (NotificationDndService.parkedCount(prefs, packageName) == 0) return
         NotificationDndService.releaseForPackage(prefs, packageName)
-        populateHomeScreen(false)
+        // Refresh the held card and home-app pills, but leave the calendar as-is: releasing is a
+        // notification-set change, so it shouldn't reload the calendar and snap its scroll to top.
+        populateHomeScreen(false, reloadCalendar = false)
         requireContext().showToast(getString(R.string.dnd_released))
     }
 
