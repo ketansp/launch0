@@ -62,6 +62,7 @@ import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.openAlarmApp
 import app.launch0.helper.pillTouchListener
+import app.launch0.helper.playNotificationSound
 import app.launch0.helper.openCalendar
 import app.launch0.helper.openCameraApp
 import app.launch0.helper.openDialerApp
@@ -911,6 +912,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         if (packageName.isBlank()) return
         if (NotificationDndService.parkedCount(prefs, packageName) == 0) return
         NotificationDndService.releaseForPackage(prefs, packageName)
+        requireContext().playNotificationSound()
         // Refresh the held card and home-app pills, but leave the calendar as-is: releasing is a
         // notification-set change, so it shouldn't reload the calendar and snap its scroll to top.
         populateHomeScreen(false, reloadCalendar = false)

@@ -38,6 +38,7 @@ import app.launch0.helper.isSystemApp
 import app.launch0.helper.openAppInfo
 import app.launch0.helper.openSearch
 import app.launch0.helper.openUrl
+import app.launch0.helper.playNotificationSound
 import app.launch0.helper.showKeyboard
 import app.launch0.helper.showToast
 import app.launch0.helper.uninstall
@@ -250,6 +251,7 @@ class AppDrawerFragment : Fragment() {
             },
             onReleaseNotifications = { appModel ->
                 NotificationDndService.releaseForPackage(prefs, appModel.appPackage)
+                requireContext().playNotificationSound()
                 val position = adapter.appFilteredList.indexOf(appModel)
                 if (position >= 0) adapter.notifyItemChanged(position)
                 requireContext().showToast(getString(R.string.dnd_released))

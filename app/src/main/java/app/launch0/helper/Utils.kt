@@ -14,6 +14,7 @@ import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.Point
 import android.graphics.drawable.Drawable
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.UserHandle
@@ -464,6 +465,22 @@ fun Context.openUrl(url: String) {
     val intent = Intent(Intent.ACTION_VIEW)
     intent.data = Uri.parse(url)
     startActivity(intent)
+}
+
+/**
+ * Plays the system's default notification sound once — an audible cue when the user releases held
+ * notifications. Honours the notification stream volume (inaudible when the phone is silenced) and
+ * never throws; a missing ringtone is simply skipped.
+ */
+fun Context.playNotificationSound() {
+    try {
+        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            ?: return
+        RingtoneManager.getRingtone(this, uri)?.play()
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
 }
 
 fun Context.isSystemApp(packageName: String): Boolean {
