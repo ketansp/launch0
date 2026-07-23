@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.provider.CalendarContract
 import android.os.BatteryManager
@@ -55,6 +56,7 @@ import app.launch0.helper.getColorFromAttr
 import app.launch0.helper.getNotificationCountDrawable
 import app.launch0.helper.getScreenTimeCapsuleDrawable
 import app.launch0.helper.getShapedAppIcon
+import app.launch0.helper.toShapedIcon
 import app.launch0.helper.getUserHandleFromString
 import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isPackageInstalled
@@ -551,46 +553,68 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
     /**
      * Turns the per-package held counts into display rows for the "on hold" card, ordered most-held
-     * first (then A→Z by label) so the busiest app leads. Labels reuse the app's own name.
+     * first (then A→Z by label) so the busiest app leads. Each row carries the app's own name and,
+     * when the launcher's "show app icons" setting is on, its shaped launcher icon.
      */
-    private fun buildHeldApps(counts: Map<String, Int>): List<HeldNotificationsWidgetView.HeldApp> =
-        counts.entries
+    private fun buildHeldApps(counts: Map<String, Int>): List<HeldNotificationsWidgetView.HeldApp> {
+        val showIcons = prefs.showAppIcons
+        val sizePx = prefs.iconSize.dpToPx()
+        return counts.entries
             .map { (packageName, count) ->
-                HeldNotificationsWidgetView.HeldApp(packageName, appLabelForPackage(packageName), count)
+                val (label, icon) = resolveLabelAndIcon(packageName, showIcons, sizePx)
+                HeldNotificationsWidgetView.HeldApp(packageName, label, count, icon)
             }
             .sortedWith(
                 compareByDescending<HeldNotificationsWidgetView.HeldApp> { it.count }
                     .thenBy { it.label.lowercase() }
             )
+    }
 
     /**
-     * Best display name for [packageName]: the user's rename if set, else the app's launcher label,
-     * else the raw package. Held counts are keyed by bare package (the notification key's user id is
-     * stripped), so the label is resolved across every profile via [LauncherApps] — otherwise a
-     * work-profile-only app, absent for the personal user, would fall back to its raw package name.
+     * Resolves [packageName] to its display label and (when [showIcons]) a shaped launcher icon in a
+     * single profile-aware pass. Held counts are keyed by bare package (the notification key's user
+     * id is stripped), so the app is looked up across every profile via [LauncherApps] — otherwise a
+     * work-profile-only app, absent for the personal user, would show its raw package name and no
+     * icon. Falls back to the user's rename, then the personal-user PackageManager, then the package.
      */
-    private fun appLabelForPackage(packageName: String): String {
+    private fun resolveLabelAndIcon(
+        packageName: String,
+        showIcons: Boolean,
+        sizePx: Int,
+    ): Pair<String, Drawable?> {
         val rename = prefs.getAppRenameLabel(packageName)
-        if (rename.isNotBlank()) return rename
         val ctx = requireContext()
         try {
             val launcherApps = ctx.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
             val userManager = ctx.getSystemService(Context.USER_SERVICE) as UserManager
             for (profile in userManager.userProfiles) {
-                val label = launcherApps.getActivityList(packageName, profile)
-                    .firstOrNull()?.label?.toString()
-                if (!label.isNullOrBlank()) return label
+                val info = launcherApps.getActivityList(packageName, profile).firstOrNull() ?: continue
+                val label = rename.ifBlank { info.label?.toString().orEmpty() }.ifBlank { packageName }
+                val icon = if (showIcons)
+                    info.getBadgedIcon(0)?.toShapedIcon(ctx.resources, sizePx, prefs.iconShape) else null
+                return label to icon
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        // Last resorts: the personal-user PackageManager label, then the raw package name.
-        return try {
-            val pm = ctx.packageManager
-            pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
-        } catch (e: Exception) {
-            packageName
+        // Last resorts: rename or the personal-user PackageManager label, then the raw package.
+        val label = rename.ifBlank {
+            try {
+                val pm = ctx.packageManager
+                pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+            } catch (e: Exception) {
+                packageName
+            }
         }
+        val icon = if (showIcons) {
+            try {
+                ctx.packageManager.getApplicationIcon(packageName)
+                    .toShapedIcon(ctx.resources, sizePx, prefs.iconShape)
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+        return label to icon
     }
 
     /** Re-reads events (used by the minute ticker); [autoScroll] false keeps the current scroll. */

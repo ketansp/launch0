@@ -3,6 +3,7 @@ package app.launch0.ui
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
@@ -31,8 +32,17 @@ class HeldNotificationsWidgetView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
-    /** One app with parked notifications: its package, display label, and how many are held. */
-    data class HeldApp(val packageName: String, val label: String, val count: Int)
+    /**
+     * One app with parked notifications: its package, display label, how many are held, and an
+     * optional pre-shaped launcher icon (null when the launcher's "show app icons" setting is off,
+     * or the icon can't be resolved).
+     */
+    data class HeldApp(
+        val packageName: String,
+        val label: String,
+        val count: Int,
+        val icon: Drawable? = null,
+    )
 
     private val header = LinearLayout(context)
     private val titleLabel = TextView(context)
@@ -107,6 +117,17 @@ class HeldNotificationsWidgetView @JvmOverloads constructor(
             isClickable = true
             isFocusable = true
             setOnClickListener { onReleaseClick?.invoke(app.packageName) }
+        }
+
+        // The app icon leads the row (when enabled) so one-letter-named apps (e.g. "X") are
+        // recognisable at a glance. The drawable is already sized and shaped by the fragment.
+        app.icon?.let { icon ->
+            val iconView = ImageView(context).apply { setImageDrawable(icon) }
+            val size = icon.intrinsicWidth.takeIf { it > 0 } ?: dp(24)
+            row.addView(
+                iconView,
+                LayoutParams(size, size).apply { marginEnd = dp(12) },
+            )
         }
 
         val name = TextView(context).apply {
