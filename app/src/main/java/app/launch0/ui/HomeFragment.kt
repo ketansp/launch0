@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.provider.CalendarContract
 import android.os.BatteryManager
@@ -13,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.UserManager
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -54,11 +56,13 @@ import app.launch0.helper.getColorFromAttr
 import app.launch0.helper.getNotificationCountDrawable
 import app.launch0.helper.getScreenTimeCapsuleDrawable
 import app.launch0.helper.getShapedAppIcon
+import app.launch0.helper.toShapedIcon
 import app.launch0.helper.getUserHandleFromString
 import app.launch0.helper.isEinkDisplay
 import app.launch0.helper.isPackageInstalled
 import app.launch0.helper.openAlarmApp
 import app.launch0.helper.pillTouchListener
+import app.launch0.helper.playNotificationSound
 import app.launch0.helper.openCalendar
 import app.launch0.helper.openCameraApp
 import app.launch0.helper.openDialerApp
@@ -91,8 +95,16 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     // Home-screen widgets, each wrapped in a shared card and paged through the swipeable carousel.
     private var calendarView: CalendarWidgetView? = null
     private var yearView: YearProgressView? = null
+    private var heldNotifView: HeldNotificationsWidgetView? = null
     private var calendarCard: WidgetCard? = null
     private var yearCard: WidgetCard? = null
+    private var heldNotifCard: WidgetCard? = null
+
+    // Coalesces the flurry of listener callbacks (each posted/removed notification fires one) into a
+    // single widget refresh, so the "on hold" card updates live without rebuilding on every event.
+    // Doesn't reload the calendar, so an arriving notification never yanks its scroll position.
+    private val notifChangeHandler = Handler(Looper.getMainLooper())
+    private val notifChangeRunnable = Runnable { if (_binding != null) setupWidgets(reloadCalendar = false) }
 
     // The cards currently in the pager, so the adapter is only rebuilt when the enabled set changes.
     private var widgetPages: List<View> = emptyList()
@@ -174,6 +186,12 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         yearCard = WidgetCard(ctx).apply {
             addView(yearView, FrameLayout.LayoutParams(fill, fill))
         }
+        heldNotifView = HeldNotificationsWidgetView(ctx).also { hv ->
+            hv.setOnReleaseClickListener { packageName -> releaseNotificationsForApp(packageName) }
+        }
+        heldNotifCard = WidgetCard(ctx).apply {
+            addView(heldNotifView, FrameLayout.LayoutParams(fill, fill))
+        }
         binding.widgetPager.registerOnPageChangeCallback(pageChangeCallback)
         // A gap of wallpaper between cards as they slide, so adjacent widgets read as separate.
         binding.widgetPager.setPageTransformer(MarginPageTransformer(20.dpToPx()))
@@ -226,11 +244,19 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
         startCalendarTicker()
+        // Keep the "on hold" card live while home is showing: refresh (debounced) whenever the
+        // held-notification set changes. The callback can fire on a binder thread, so hop to main.
+        NotificationDndService.onNotificationsChanged = {
+            notifChangeHandler.removeCallbacks(notifChangeRunnable)
+            notifChangeHandler.postDelayed(notifChangeRunnable, 250L)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         stopCalendarTicker()
+        NotificationDndService.onNotificationsChanged = null
+        notifChangeHandler.removeCallbacks(notifChangeRunnable)
     }
 
     override fun onClick(view: View) {
@@ -463,17 +489,22 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
     /**
      * (Re)builds the widget carousel from the enabled widgets. Each enabled widget's card becomes a
-     * page in a stable order (calendar, then days-left); the pager and its dots hide entirely when
-     * none are on. Called on resume and whenever a widget is toggled. It only re-populates the pager
-     * when the enabled set actually changed — so a plain resume doesn't flicker — then refreshes
-     * contents.
+     * page in a stable order (calendar, then days-left, then the "on hold" card); the pager and its
+     * dots hide entirely when none are on. The "on hold" card only joins the carousel while Hold
+     * Notifications is enabled and at least one notification is currently being held, and drops out
+     * again once everything is released. Called on resume, whenever a widget is toggled, and when
+     * held notifications change. It only re-populates the pager when the enabled set actually changed
+     * — so a plain resume doesn't flicker — then refreshes contents.
      */
-    private fun setupWidgets() {
+    private fun setupWidgets(reloadCalendar: Boolean = true) {
         if (_binding == null) return
         val pager = binding.widgetPager
+        val heldByPackage =
+            if (prefs.dndEnabled) NotificationDndService.parkedCountsByPackage(prefs) else emptyMap()
         val desired = mutableListOf<View>()
         if (prefs.showCalendarWidget) calendarCard?.let { desired += it }
         if (prefs.showYearWidget) yearCard?.let { desired += it }
+        if (heldByPackage.isNotEmpty()) heldNotifCard?.let { desired += it }
 
         binding.widgetPagerLayout.isVisible = desired.isNotEmpty()
         if (desired.isEmpty()) {
@@ -504,13 +535,87 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
             calendarView?.refresh()
             if (requireContext().hasCalendarPermission()) {
                 // A fresh show jumps to the current/next event; events arrive via bindCalendarEvents().
-                calendarAutoScroll = true
-                viewModel.loadCalendarEvents()
+                // Skipped on a held-notification refresh so it never yanks the reader's scroll.
+                if (reloadCalendar) {
+                    calendarAutoScroll = true
+                    viewModel.loadCalendarEvents()
+                }
             } else {
                 calendarView?.showMessage(getString(R.string.calendar_grant_access))
             }
         }
+        if (heldByPackage.isNotEmpty()) {
+            heldNotifCard?.refresh()
+            heldNotifView?.refresh()
+            heldNotifView?.showHeldApps(buildHeldApps(heldByPackage))
+        }
         positionWidgetPagerBelowHeader()
+    }
+
+    /**
+     * Turns the per-package held counts into display rows for the "on hold" card, ordered most-held
+     * first (then A→Z by label) so the busiest app leads. Each row carries the app's own name and,
+     * when the launcher's "show app icons" setting is on, its shaped launcher icon.
+     */
+    private fun buildHeldApps(counts: Map<String, Int>): List<HeldNotificationsWidgetView.HeldApp> {
+        val showIcons = prefs.showAppIcons
+        val sizePx = prefs.iconSize.dpToPx()
+        return counts.entries
+            .map { (packageName, count) ->
+                val (label, icon) = resolveLabelAndIcon(packageName, showIcons, sizePx)
+                HeldNotificationsWidgetView.HeldApp(packageName, label, count, icon)
+            }
+            .sortedWith(
+                compareByDescending<HeldNotificationsWidgetView.HeldApp> { it.count }
+                    .thenBy { it.label.lowercase() }
+            )
+    }
+
+    /**
+     * Resolves [packageName] to its display label and (when [showIcons]) a shaped launcher icon in a
+     * single profile-aware pass. Held counts are keyed by bare package (the notification key's user
+     * id is stripped), so the app is looked up across every profile via [LauncherApps] — otherwise a
+     * work-profile-only app, absent for the personal user, would show its raw package name and no
+     * icon. Falls back to the user's rename, then the personal-user PackageManager, then the package.
+     */
+    private fun resolveLabelAndIcon(
+        packageName: String,
+        showIcons: Boolean,
+        sizePx: Int,
+    ): Pair<String, Drawable?> {
+        val rename = prefs.getAppRenameLabel(packageName)
+        val ctx = requireContext()
+        try {
+            val launcherApps = ctx.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+            val userManager = ctx.getSystemService(Context.USER_SERVICE) as UserManager
+            for (profile in userManager.userProfiles) {
+                val info = launcherApps.getActivityList(packageName, profile).firstOrNull() ?: continue
+                val label = rename.ifBlank { info.label?.toString().orEmpty() }.ifBlank { packageName }
+                val icon = if (showIcons)
+                    info.getBadgedIcon(0)?.toShapedIcon(ctx.resources, sizePx, prefs.iconShape) else null
+                return label to icon
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        // Last resorts: rename or the personal-user PackageManager label, then the raw package.
+        val label = rename.ifBlank {
+            try {
+                val pm = ctx.packageManager
+                pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+            } catch (e: Exception) {
+                packageName
+            }
+        }
+        val icon = if (showIcons) {
+            try {
+                ctx.packageManager.getApplicationIcon(packageName)
+                    .toShapedIcon(ctx.resources, sizePx, prefs.iconShape)
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+        return label to icon
     }
 
     /** Re-reads events (used by the minute ticker); [autoScroll] false keeps the current scroll. */
@@ -618,10 +723,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         }
     }
 
-    private fun populateHomeScreen(appCountUpdated: Boolean) {
+    private fun populateHomeScreen(appCountUpdated: Boolean, reloadCalendar: Boolean = true) {
         if (appCountUpdated) hideHomeApps()
         populateDateTime()
-        setupWidgets()
+        setupWidgets(reloadCalendar)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             populateScreenTime()
@@ -795,12 +900,22 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         return Math.round(millis / 60000.0).toInt()
     }
 
-    private fun releaseNotificationsForHomeApp(location: Int) {
-        val packageName = prefs.getAppPackage(location)
+    private fun releaseNotificationsForHomeApp(location: Int) =
+        releaseNotificationsForApp(prefs.getAppPackage(location))
+
+    /**
+     * Releases every notification currently held for [packageName] so the system re-posts them now,
+     * then refreshes the home screen — which drops the "on hold" card once its last app is released.
+     * Shared by the home-app count pill and the "on hold" widget rows.
+     */
+    private fun releaseNotificationsForApp(packageName: String) {
         if (packageName.isBlank()) return
         if (NotificationDndService.parkedCount(prefs, packageName) == 0) return
         NotificationDndService.releaseForPackage(prefs, packageName)
-        populateHomeScreen(false)
+        requireContext().playNotificationSound()
+        // Refresh the held card and home-app pills, but leave the calendar as-is: releasing is a
+        // notification-set change, so it shouldn't reload the calendar and snap its scroll to top.
+        populateHomeScreen(false, reloadCalendar = false)
         requireContext().showToast(getString(R.string.dnd_released))
     }
 
@@ -1149,13 +1264,17 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     override fun onDestroyView() {
         super.onDestroyView()
         stopCalendarTicker()
+        NotificationDndService.onNotificationsChanged = null
+        notifChangeHandler.removeCallbacks(notifChangeRunnable)
         binding.widgetPager.unregisterOnPageChangeCallback(pageChangeCallback)
         binding.widgetPager.adapter = null
         widgetPages = emptyList()
         calendarView = null
         yearView = null
+        heldNotifView = null
         calendarCard = null
         yearCard = null
+        heldNotifCard = null
         _binding = null
     }
 }
