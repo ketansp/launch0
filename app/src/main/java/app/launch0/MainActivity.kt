@@ -188,6 +188,7 @@ class MainActivity : AppCompatActivity() {
                     Constants.Key.SHORTCUT_ID to null,
                     Constants.Key.IS_SHORTCUT to false,
                     Constants.Key.APP_USER to "",
+                    Constants.Key.FROM_BACKGROUND to true,
                 )
             )
         } catch (e: Exception) {

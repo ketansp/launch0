@@ -47,6 +47,10 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
     private var isShortcut = false
     private var shortcutId = ""
 
+    // True when this screen was raised over an already-running app (from a notification, an app
+    // switch), rather than reached by launching the app from within Launch0.
+    private var isBackgroundIntercept = false
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentDistractionWaitBinding.inflate(inflater, container, false)
         return binding.root
@@ -63,6 +67,7 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
             appUser = it.getString(Constants.Key.APP_USER, "")
             isShortcut = it.getBoolean(Constants.Key.IS_SHORTCUT, false)
             shortcutId = it.getString(Constants.Key.SHORTCUT_ID, "")
+            isBackgroundIntercept = it.getBoolean(Constants.Key.FROM_BACKGROUND, false)
         }
         if (appPackage.isEmpty()) {
             findNavController().popBackStack()
@@ -148,6 +153,13 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
         // Let the accessibility service know this app was cleared, so it doesn't immediately raise
         // the wait screen again when the app returns to the foreground.
         DistractionGuard.allow(appPackage)
+
+        // If we intercepted an app that was already running (opened from a notification, an app
+        // switch, a deep link), it is still behind us at exactly the screen the user wanted. Step
+        // aside so it resumes with that state intact, rather than relaunching its main activity and
+        // dropping the user somewhere else. Only the launcher path needs to launch the app itself.
+        if (isBackgroundIntercept && stepAsideToRunningApp()) return
+
         val user = getUserHandleFromString(requireContext(), appUser)
         val appModel = if (isShortcut && shortcutId.isNotEmpty())
             AppModel.PinnedShortcut(
@@ -169,6 +181,17 @@ class DistractionWaitFragment : Fragment(), View.OnClickListener {
             )
         viewModel.selectedApp(appModel, Constants.FLAG_LAUNCH_APP)
         findNavController().popBackStack(R.id.mainFragment, false)
+    }
+
+    /**
+     * Sends Launch0's task to the back so the app we covered — still running in its own task right
+     * behind us — resumes untouched. Returns false if the move didn't happen, so the caller can fall
+     * back to launching the app. onStop() then resets our own navigation to the home screen.
+     */
+    private fun stepAsideToRunningApp(): Boolean = try {
+        requireActivity().moveTaskToBack(true)
+    } catch (e: Exception) {
+        false
     }
 
     private fun turnBack() {

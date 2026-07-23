@@ -15,6 +15,10 @@ object Constants {
         // Set by MyAccessibilityService when it starts MainActivity to raise the distraction wait
         // screen over an app the user opened outside the launcher (notification, app switch, etc.).
         const val SHOW_DISTRACTION_WAIT = "showDistractionWait"
+
+        // True when the wait screen was raised over an app that is already running (the accessibility
+        // path), so "Open" resumes it in place instead of relaunching its main activity.
+        const val FROM_BACKGROUND = "fromBackground"
     }
 
     object Dialog {
