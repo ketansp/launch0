@@ -190,6 +190,12 @@
     <string name="dnd_grant_access">Please allow notification access for Launch0</string>
     <string name="dnd_no_apps_selected">Select at least one app to hold</string>
     <string name="dnd_released">Held notifications released</string>
+    <!-- "On hold" home-screen widget (shown while notifications are being held) -->
+    <string name="held_notifications_title">On hold</string>
+    <plurals name="held_notifications_count">
+        <item quantity="one">%d held</item>
+        <item quantity="other">%d held</item>
+    </plurals>
     <string name="minutes_suffix" translatable="false">%1$d min</string>
     <string name="dnd_30" translatable="false">30</string>
     <string name="dnd_45" translatable="false">45</string>
