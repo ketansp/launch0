@@ -154,9 +154,11 @@ class NotesAdapter(
                 }
             }
 
-            // A still-open urgent entry gets the accent-red outline on its box; a completed one relaxes
-            // back to the neutral outline (done takes precedence) and the whole box dims to signal it.
-            activeBox.isActivated = entry.urgent && !entry.done
+            // An urgent entry keeps its accent-red outline whether it's still open or completed, so the
+            // "important" highlight survives into the done state instead of vanishing. A completed box
+            // dims as a whole (its red border included) to half opacity, which softens the accent to
+            // signal done while still reading as coloured.
+            activeBox.isActivated = entry.urgent
             activeBox.alpha = if (entry.done) 0.5f else 1f
 
             root.setOnLongClickListener {
