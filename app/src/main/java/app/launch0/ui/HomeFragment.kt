@@ -161,6 +161,27 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         initWidgets()
         initSwipeUpNudge()
         initSwipeLeftNudge()
+        maybeShowWalkthrough()
+    }
+
+    /**
+     * On the very first time the home screen appears, launch the one-time walkthrough. It marks
+     * itself shown as soon as it opens, so returning home (or later launches) won't reopen it; the
+     * user can replay it from Settings. Posted so the fragment is fully added before we navigate, and
+     * guarded so it only fires while home is the current destination.
+     */
+    private fun maybeShowWalkthrough() {
+        if (prefs.walkthroughShown) return
+        binding.root.post {
+            if (_binding == null || !isAdded || prefs.walkthroughShown) return@post
+            val navController = findNavController()
+            if (navController.currentDestination?.id != R.id.mainFragment) return@post
+            try {
+                navController.navigate(R.id.action_mainFragment_to_welcomeFragment)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     /**

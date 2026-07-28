@@ -219,6 +219,14 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
             R.id.distractionWaitMode -> toggleDistractionWaitMode()
             R.id.distractionAppsNum -> showDistractionApps()
 
+            R.id.replayWalkthrough -> {
+                try {
+                    findNavController().navigate(R.id.action_settingsFragment_to_welcomeFragment)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
             R.id.aboutLaunch0 -> {
                 prefs.aboutClicked = true
                 requireContext().openUrl(Constants.URL_ABOUT)
@@ -246,6 +254,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
         binding.scrollLayout.setOnClickListener(this)
         binding.appInfo.setOnClickListener(this)
         binding.setLauncher.setOnClickListener(this)
+        binding.replayWalkthrough.setOnClickListener(this)
         binding.aboutLaunch0.setOnClickListener(this)
         binding.autoShowKeyboard.setOnClickListener(this)
         binding.toggleLock.setOnClickListener(this)

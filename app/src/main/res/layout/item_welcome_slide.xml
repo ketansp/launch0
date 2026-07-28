@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A single walkthrough slide: an optional gesture glyph above a centered title + body. Text-only,
+     rendered over the wallpaper in the launcher's monochrome register. Root fills the pager page. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingHorizontal="44dp"
+    android:paddingVertical="96dp">
+
+    <ImageView
+        android:id="@+id/slideGlyph"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginBottom="32dp"
+        android:alpha="0.85"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        app:tint="?attr/primaryColor"
+        tools:src="@drawable/ic_lucide_chevrons_up"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/slideTitle"
+        style="@style/TextLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="?attr/primaryColor"
+        tools:text="Swipe up for all apps" />
+
+    <TextView
+        android:id="@+id/slideBody"
+        style="@style/TextSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.3"
+        android:textColor="?attr/primaryColorTrans80"
+        tools:text="Your full app list is one swipe up. Start typing to search and open any app instantly." />
+</LinearLayout>

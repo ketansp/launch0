@@ -274,4 +274,26 @@
     <string name="notes_mark_urgent">Mark as urgent</string>
     <string name="notes_play_symbol" translatable="false">▶</string>
     <string name="notes_pause_symbol" translatable="false">⏸</string>
+
+    <!-- First-run walkthrough -->
+    <string name="walkthrough_skip">Skip</string>
+    <string name="walkthrough_back">Back</string>
+    <string name="walkthrough_next">Next</string>
+    <string name="walkthrough_get_started">Get started</string>
+    <string name="walkthrough_replay">Replay walkthrough</string>
+
+    <string name="walkthrough_welcome_title">Welcome to Launch0</string>
+    <string name="walkthrough_welcome_body">A calm, text-only home screen — just the apps you need. No icons, no clutter, no distractions.</string>
+
+    <string name="walkthrough_apps_title">Swipe up for all apps</string>
+    <string name="walkthrough_apps_body">Your full app list is one swipe up. Start typing to search and open any app instantly.</string>
+
+    <string name="walkthrough_gestures_title">Swipe left and right</string>
+    <string name="walkthrough_gestures_body">Swipe left for your notes and swipe right to call. Set your own shortcuts anytime in Settings.</string>
+
+    <string name="walkthrough_customise_title">Long-press to set things up</string>
+    <string name="walkthrough_customise_body">Long-press a home slot to choose its app. Long-press an empty area to open Settings.</string>
+
+    <string name="walkthrough_default_title">Make Launch0 your home</string>
+    <string name="walkthrough_default_body">Set Launch0 as your default launcher so it opens with the home button. You can change this whenever you like.</string>
 </resources>
