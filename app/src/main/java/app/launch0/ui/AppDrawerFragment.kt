@@ -53,6 +53,9 @@ class AppDrawerFragment : Fragment() {
     private var canRename = false
     private var previousSoftInputMode: Int? = null
 
+    /** Edge-to-edge window flags we temporarily clear so the keyboard can resize the window. */
+    private var clearedWindowFlags = 0
+
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentAppDrawerBinding? = null
     private val binding get() = _binding!!
@@ -440,24 +443,53 @@ class AppDrawerFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        // Resize the window for the keyboard so the IME inset is dispatched to
-        // applyWindowInsets(), which lifts the list and search bar above the keyboard.
-        // The previous mode is restored in onStop.
+        // Lift the list and search bar above the keyboard. This needs two things:
+        //  1. ADJUST_RESIZE, so the window shrinks for the IME and applyWindowInsets() receives
+        //     the IME inset.
+        //  2. Clearing the window flags that silently defeat ADJUST_RESIZE. The launcher window is
+        //     laid out edge-to-edge (translucent system bars from the theme + FLAG_LAYOUT_NO_LIMITS
+        //     from MainActivity); while those are set the window never resizes for the keyboard and
+        //     the IME inset is reported as zero, so the bottom search bar stays hidden behind it.
+        // Both are restored in onStop so the rest of the launcher keeps its edge-to-edge,
+        // wallpaper-behind-the-bars look.
         requireActivity().window.let { window ->
             previousSoftInputMode = window.attributes.softInputMode
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
+            clearedWindowFlags = window.attributes.flags and RESIZE_BLOCKING_WINDOW_FLAGS
+            if (clearedWindowFlags != 0) window.clearFlags(clearedWindowFlags)
         }
         binding.search.showKeyboard(prefs.autoShowKeyboard)
     }
 
     override fun onStop() {
         binding.search.hideKeyboard()
-        previousSoftInputMode?.let { requireActivity().window.setSoftInputMode(it) }
+        requireActivity().window.let { window ->
+            previousSoftInputMode?.let { window.setSoftInputMode(it) }
+            // Restore exactly the edge-to-edge flags we cleared in onStart.
+            if (clearedWindowFlags != 0) {
+                window.addFlags(clearedWindowFlags)
+                clearedWindowFlags = 0
+            }
+        }
         super.onStop()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    companion object {
+        /**
+         * Window flags that put the window into an "extend behind the system bars" mode in which
+         * SOFT_INPUT_ADJUST_RESIZE is ignored and the IME inset is never reported. They are cleared
+         * while the drawer is visible (see onStart) so the search bar can sit above the keyboard,
+         * then restored in onStop.
+         */
+        private val RESIZE_BLOCKING_WINDOW_FLAGS =
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
     }
 }
