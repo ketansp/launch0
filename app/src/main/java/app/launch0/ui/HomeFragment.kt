@@ -30,6 +30,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -92,6 +93,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     // Today's foreground time per package (millis); drives the per-app usage capsules on home apps.
     private var appScreenTimes: Map<String, Long> = emptyMap()
 
+    // The home-apps column's resting bottom inset (from the layout). Grown to make room for the
+    // "Set as default launcher" prompt so bottom-aligned apps clear it, then restored once it's gone.
+    private var homeAppsBasePaddingBottom = 0
+
     // Home-screen widgets, each wrapped in a shared card and paged through the swipeable carousel.
     private var calendarView: CalendarWidgetView? = null
     private var yearView: YearProgressView? = null
@@ -153,6 +158,11 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         } ?: throw Exception("Invalid Activity")
 
         deviceManager = context?.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+
+        // Remember the column's resting bottom inset before anything grows it, so the "Set as
+        // default" prompt can reserve space below the apps and later hand it back (see
+        // showDefaultLauncherPrompt). Captured before initObservers, which may show the prompt.
+        homeAppsBasePaddingBottom = binding.homeAppsLayout.paddingBottom
 
         initObservers()
         setHomeAlignment(prefs.homeAlignment)
@@ -328,7 +338,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
 
             R.id.setDefaultLauncher -> {
                 prefs.hideSetDefaultLauncher = true
-                binding.setDefaultLauncher.visibility = View.GONE
+                showDefaultLauncherPrompt(false)
                 if (viewModel.isLaunch0Default.value != true) {
                     requireContext().showToast(R.string.set_as_default_launcher)
                     findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
@@ -349,13 +359,10 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                     viewModel.cancelWallpaperWorker()
                 }
             }
-            // Re-align whenever default-launcher status changes. While Launch0 isn't the
-            // default launcher we render apps centered (so they don't collide with the
-            // "Set as default" prompt at the bottom) without touching the saved preference.
-            setHomeAlignment()
-            binding.setDefaultLauncher.isVisible = it.not() && prefs.hideSetDefaultLauncher.not()
-//            if (it) binding.setDefaultLauncher.visibility = View.GONE
-//            else binding.setDefaultLauncher.visibility = View.VISIBLE
+            // Show the "Set as default" prompt while Launch0 isn't the default launcher. The prompt
+            // reserves its own space at the bottom of the column, so the home apps keep the user's
+            // chosen alignment throughout instead of jumping to the centre while it's up.
+            showDefaultLauncherPrompt(it.not() && prefs.hideSetDefaultLauncher.not())
         })
         viewModel.homeAppAlignment.observe(viewLifecycleOwner) {
             setHomeAlignment(it)
@@ -419,8 +426,7 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
     }
 
     private fun setHomeAlignment(horizontalGravity: Int = prefs.homeAlignment) {
-        val bottomAligned = prefs.homeBottomAlignment && viewModel.isLaunch0Default.value == true
-        val verticalGravity = if (bottomAligned) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
+        val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
         // Keep the date's (now multi-line, with the battery line) text aligned with the home edge.
@@ -440,6 +446,27 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
                 homeApp.layoutParams = homeApp.layoutParams.apply { width = rowWidth }
             }
         }
+    }
+
+    /**
+     * Shows or hides the "Set as default launcher" prompt and, while it's showing, reserves matching
+     * space at the bottom of the home-apps column so bottom-aligned apps sit just above the prompt
+     * rather than under it. The apps keep whatever vertical alignment the user chose either way — only
+     * the space below them changes — so they no longer jump to the centre while the prompt is up.
+     */
+    private fun showDefaultLauncherPrompt(show: Boolean) {
+        val prompt = binding.setDefaultLauncher
+        prompt.isVisible = show
+        val bottom = if (show) {
+            // Lift the apps clear of the prompt: its height, plus its own bottom margin and a gap.
+            val bottomMargin = (prompt.layoutParams as FrameLayout.LayoutParams).bottomMargin
+            val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            prompt.measure(unspecified, unspecified)
+            maxOf(homeAppsBasePaddingBottom, bottomMargin + prompt.measuredHeight + 12.dpToPx())
+        } else {
+            homeAppsBasePaddingBottom
+        }
+        binding.homeAppsLayout.updatePadding(bottom = bottom)
     }
 
     private fun populateDateTime() {
