@@ -19,7 +19,7 @@ Launch0 includes a built-in **Notes** page — like a private chat with yourself
 - **To-dos** — mark any note as **done** (with a checkbox) or flag it as **urgent** to make it stand out.
 - **Voice notes** — record an audio memo, then play, pause, and resume it inline. Each shows its duration. Requires microphone permission.
 - **Images** — attach an image from the picker, or **share an image into Notes** from any other app via Android's share sheet. Tap an image to view it full-screen.
-- **Clickable links** — URLs and email addresses in your notes become tappable automatically, and note text stays selectable.
+- **Clickable links** — URLs and email addresses in your notes become tappable automatically.
 - **Message actions** — long-press any note to **copy**, **share**, **edit**, or **delete** it.
 - **Date dividers** — notes are grouped by day with Today / Yesterday labels and full dates for older entries.
 - **Search** — a dedicated search page filters your notes as you type, with results anchored next to the keyboard for quick reach.
