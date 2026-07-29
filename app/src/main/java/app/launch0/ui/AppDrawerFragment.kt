@@ -329,6 +329,9 @@ class AppDrawerFragment : Fragment() {
         } else {
             viewModel.appList.observe(viewLifecycleOwner) {
                 it?.let { appModels ->
+                    // Drop any phantom held-notification counts (e.g. already read inside the app)
+                    // before the rows bind, so their pills reflect what's actually still parked.
+                    if (prefs.dndEnabled) NotificationDndService.reconcileHeldKeys(prefs)
                     adapter.setAppList(appModels.toMutableList())
                     adapter.filter.filter(binding.search.query)
                 }
