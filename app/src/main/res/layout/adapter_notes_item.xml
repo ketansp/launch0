@@ -47,7 +47,6 @@
                     android:layout_height="wrap_content"
                     android:lineSpacingMultiplier="1.25"
                     android:textColor="?attr/primaryColor"
-                    android:textIsSelectable="true"
                     android:textSize="16sp"
                     tools:text="Remember to buy milk and call the bank tomorrow." />
 

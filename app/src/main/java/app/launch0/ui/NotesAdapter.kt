@@ -147,7 +147,8 @@ class NotesAdapter(
                     // Urgency reads from the box's red outline (set below), so the note text itself
                     // stays the plain foreground colour.
                     notesText.setTextColor(root.context.getColorFromAttr(R.attr.primaryColor))
-                    // Turn web/email URLs into tappable links while keeping the text selectable.
+                    // Turn web/email URLs into tappable links. A quick tap follows the link; a
+                    // long-press still reaches the row's press-and-hold actions (bound below).
                     LinkifyCompat.addLinks(notesText, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
                     notesText.movementMethod = LinkAndSelectMovementMethod
                     notesTextBubble
@@ -161,10 +162,19 @@ class NotesAdapter(
             activeBox.isActivated = entry.urgent
             activeBox.alpha = if (entry.done) 0.5f else 1f
 
-            root.setOnLongClickListener {
+            // Press-and-hold opens the note's actions (copy/share/edit/delete for text, delete for
+            // media). The handler has to sit on each interactive box, not just the row root: the text
+            // view, the image and the audio chip all consume touches themselves (for link taps or their
+            // own tap action), so a long-press on them never reaches the root. Binding the same handler
+            // to every candidate target keeps press-and-hold working for text, image and voice notes.
+            val onLongPress = View.OnLongClickListener {
                 onItemLongClick(entry)
                 true
             }
+            root.setOnLongClickListener(onLongPress)
+            notesText.setOnLongClickListener(onLongPress)
+            notesImage.setOnLongClickListener(onLongPress)
+            notesAudio.setOnLongClickListener(onLongPress)
         }
 
         private fun bindTodoToggles(
