@@ -17,8 +17,6 @@
         android:layout_weight="1"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:fadingEdgeLength="24dp"
-        android:requiresFadingEdge="vertical"
         tools:listitem="@layout/adapter_notes_item" />
 
     <!-- Borderless search field, styled exactly like the app drawer's. -->
