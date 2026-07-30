@@ -13,6 +13,7 @@ class Prefs(context: Context) {
     private val FIRST_OPEN_TIME = "FIRST_OPEN_TIME"
     private val FIRST_SETTINGS_OPEN = "FIRST_SETTINGS_OPEN"
     private val FIRST_HIDE = "FIRST_HIDE"
+    private val WALKTHROUGH_SHOWN = "WALKTHROUGH_SHOWN"
     private val USER_STATE = "USER_STATE"
     private val LOCK_MODE = "LOCK_MODE"
     private val HOME_APPS_NUM = "HOME_APPS_NUM"
@@ -149,6 +150,12 @@ class Prefs(context: Context) {
     var firstHide: Boolean
         get() = prefs.getBoolean(FIRST_HIDE, true)
         set(value) = prefs.edit { putBoolean(FIRST_HIDE, value).apply() }
+
+    // Whether the first-run walkthrough has been shown. Set true as soon as it appears so it never
+    // auto-reopens; the user can replay it from Settings.
+    var walkthroughShown: Boolean
+        get() = prefs.getBoolean(WALKTHROUGH_SHOWN, false)
+        set(value) = prefs.edit { putBoolean(WALKTHROUGH_SHOWN, value).apply() }
 
     var userState: String
         get() = prefs.getString(USER_STATE, Constants.UserState.START).toString()
