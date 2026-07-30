@@ -145,11 +145,46 @@ class NotificationDndService : NotificationListenerService() {
          */
         private fun packageFromKey(key: String): String? = key.split("|").getOrNull(1)
 
-        /** How many notifications are currently held (parked) for each package. */
-        fun parkedCountsByPackage(prefs: Prefs): Map<String, Int> =
-            prefs.dndHeldKeys.mapNotNull { packageFromKey(it) }
+        /**
+         * Prunes [Prefs.dndHeldKeys] down to the notifications the system is *actually* still
+         * holding. A held notification can vanish without the listener being told: when the user
+         * opens the app and reads the messages, the app cancels its own notifications, and Android
+         * delivers no actionable [onNotificationRemoved] for one cancelled while it is parked
+         * (snoozed). The cached key set would otherwise keep counting phantoms — a stale "on hold"
+         * count that releases nothing when tapped, since there is nothing left in the snooze queue.
+         *
+         * The live listener is the source of truth, so this is a no-op when the service isn't
+         * connected (we keep the cache as-is rather than wrongly clearing it). A held key survives
+         * only if the system still reports it as snoozed or active — the latter covers the brief
+         * window where a freshly held notification is mid-transition between the two sets, so it is
+         * never pruned by mistake.
+         */
+        fun reconcileHeldKeys(prefs: Prefs) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            val service = instance ?: return
+            val held = prefs.dndHeldKeys
+            if (held.isEmpty()) return
+            val live = try {
+                val snoozed = service.snoozedNotifications?.mapNotNull { it.key }.orEmpty()
+                val active = service.activeNotifications?.mapNotNull { it.key }.orEmpty()
+                (snoozed + active).toHashSet()
+            } catch (e: Exception) {
+                return // Can't read the live set (e.g. listener not fully connected) — trust the cache.
+            }
+            if (held.retainAll(live)) prefs.dndHeldKeys = held
+        }
+
+        /**
+         * How many notifications are currently held (parked) for each package. Reconciles the cache
+         * against the system first so packages whose held notifications were already cleared (e.g.
+         * read inside the app) drop out instead of lingering as phantom counts.
+         */
+        fun parkedCountsByPackage(prefs: Prefs): Map<String, Int> {
+            reconcileHeldKeys(prefs)
+            return prefs.dndHeldKeys.mapNotNull { packageFromKey(it) }
                 .groupingBy { it }
                 .eachCount()
+        }
 
         /** How many notifications are currently held (parked) for [packageName]. */
         fun parkedCount(prefs: Prefs, packageName: String): Int {
