@@ -450,9 +450,9 @@ class AppDrawerFragment : Fragment() {
         //  1. ADJUST_RESIZE, so the window shrinks for the IME and applyWindowInsets() receives
         //     the IME inset.
         //  2. Clearing the window flags that silently defeat ADJUST_RESIZE. The launcher window is
-        //     laid out edge-to-edge (translucent system bars from the theme + FLAG_LAYOUT_NO_LIMITS
-        //     from MainActivity); while those are set the window never resizes for the keyboard and
-        //     the IME inset is reported as zero, so the bottom search bar stays hidden behind it.
+        //     laid out edge-to-edge via FLAG_LAYOUT_NO_LIMITS (MainActivity); while it is set the
+        //     window never resizes for the keyboard and the IME inset is reported as zero, so the
+        //     bottom search bar stays hidden behind it.
         // Both are restored in onStop so the rest of the launcher keeps its edge-to-edge,
         // wallpaper-behind-the-bars look.
         requireActivity().window.let { window ->
@@ -488,7 +488,9 @@ class AppDrawerFragment : Fragment() {
          * Window flags that put the window into an "extend behind the system bars" mode in which
          * SOFT_INPUT_ADJUST_RESIZE is ignored and the IME inset is never reported. They are cleared
          * while the drawer is visible (see onStart) so the search bar can sit above the keyboard,
-         * then restored in onStop.
+         * then restored in onStop. Only flags actually set on the window are cleared/restored, so
+         * this may safely list flags the theme no longer sets (e.g. the translucent-bar flags,
+         * dropped to avoid the system status-bar scrim).
          */
         private val RESIZE_BLOCKING_WINDOW_FLAGS =
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
