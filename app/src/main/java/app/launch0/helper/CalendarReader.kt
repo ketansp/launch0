@@ -22,8 +22,20 @@ fun Context.hasCalendarPermission(): Boolean =
  * whose end time has already passed are dropped (paired with the widget's minute refresh, an event
  * leaves the list shortly after it finishes). All-day events are left out too: Google "Working
  * location" entries (Office/Home/etc.) sync as all-day events, and neither they nor holidays/
- * birthdays belong in the timed "what's next" schedule. What remains — ongoing and upcoming events —
- * is returned in start order (the widget's list scrolls through it).
+ * birthdays belong in the timed "what's next" schedule.
+ *
+ * Cancelled and declined instances are dropped so the launcher matches what the Google Calendar app
+ * shows. The provider keeps these rows around even though the app hides them: a cancelled event (or
+ * a recurring occurrence that was moved, which the provider records as a cancelled "ghost" at the
+ * original time plus a fresh instance at the new time) stays with [CalendarContract.Instances.STATUS]
+ * set to [CalendarContract.Instances.STATUS_CANCELED], and an event the user declined stays with
+ * [CalendarContract.Instances.SELF_ATTENDEE_STATUS] set to
+ * [CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED]. Without filtering these out, a rescheduled
+ * or declined meeting would linger on the home screen after it's gone from the calendar. (A truly
+ * deleted event is pruned from the instances table by the provider, so it needs no handling here.)
+ *
+ * What remains — ongoing and upcoming events — is returned in start order (the widget's list scrolls
+ * through it).
  *
  * Both the personal profile and — where a work profile shares its calendar — the managed profile
  * are queried, since corporate meetings sometimes live in the work profile the launcher can't
@@ -50,6 +62,8 @@ fun Context.getTodaysCalendarEvents(): List<CalendarEvent> {
 
     val now = System.currentTimeMillis()
     return events
+        .filterNot { it.status == CalendarContract.Instances.STATUS_CANCELED } // Cancelled / rescheduled ghosts.
+        .filterNot { it.selfAttendeeStatus == CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED } // Declined.
         .filterNot { it.allDay } // Drop working-location & other all-day items — not a timed schedule.
         .filter { it.end > now } // Drop events that have already finished.
         .distinctBy { listOf(it.title, it.begin, it.end) }
@@ -70,6 +84,8 @@ private fun Context.queryDayInstances(base: Uri, dayStart: Long, dayEnd: Long): 
         CalendarContract.Instances.END,
         CalendarContract.Instances.ALL_DAY,
         CalendarContract.Instances.EVENT_LOCATION,
+        CalendarContract.Instances.STATUS,
+        CalendarContract.Instances.SELF_ATTENDEE_STATUS,
     )
 
     val events = mutableListOf<CalendarEvent>()
@@ -87,6 +103,8 @@ private fun Context.queryDayInstances(base: Uri, dayStart: Long, dayEnd: Long): 
             val endIdx = cursor.getColumnIndexOrThrow(CalendarContract.Instances.END)
             val allDayIdx = cursor.getColumnIndexOrThrow(CalendarContract.Instances.ALL_DAY)
             val locationIdx = cursor.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_LOCATION)
+            val statusIdx = cursor.getColumnIndexOrThrow(CalendarContract.Instances.STATUS)
+            val selfStatusIdx = cursor.getColumnIndexOrThrow(CalendarContract.Instances.SELF_ATTENDEE_STATUS)
 
             while (cursor.moveToNext()) {
                 events.add(
@@ -97,6 +115,9 @@ private fun Context.queryDayInstances(base: Uri, dayStart: Long, dayEnd: Long): 
                         end = cursor.getLong(endIdx),
                         allDay = cursor.getInt(allDayIdx) == 1,
                         location = cursor.getString(locationIdx)?.trim()?.takeIf { it.isNotEmpty() },
+                        // STATUS / SELF_ATTENDEE_STATUS can be NULL; treat that as "no objection" (not cancelled/declined).
+                        status = if (cursor.isNull(statusIdx)) null else cursor.getInt(statusIdx),
+                        selfAttendeeStatus = cursor.getInt(selfStatusIdx),
                     )
                 )
             }
