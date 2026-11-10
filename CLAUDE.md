@@ -173,7 +173,7 @@ The project intentionally keeps dependencies minimal. Do not add unnecessary dep
 
 1. **This is a launcher app** — it registers as a home screen replacement via `CATEGORY_HOME` intent filters. The `MainActivity` has `launchMode="singleTask"` and `excludeFromRecents="true"`.
 
-2. **Privacy is paramount** — the app collects zero data. Never introduce analytics, tracking, or network calls beyond the existing wallpaper feature. The only internet usage is downloading daily wallpapers from Unsplash.
+2. **Privacy is paramount** — the app collects zero data and declares no `INTERNET` permission, so it cannot open a network connection at all. Never introduce analytics, tracking, network calls, or the `INTERNET` permission. Daily wallpapers are generated locally on-device by `WallpaperGenerator.kt`; the original Unsplash download inherited from Olauncher was removed in February 2026. The manifest also strips `ACCESS_NETWORK_STATE` (merged in by WorkManager) with `tools:node="remove"` so the shipped bundle carries no network-related permission.
 
 3. **Minimal design + productivity is the philosophy** — the app pairs a clean, distraction-free interface with productivity features (instant search, gestures, screen time tracking). The text-only aesthetic keeps things minimal; the features make you faster. Resist adding unnecessary UI elements or dependencies.
 
