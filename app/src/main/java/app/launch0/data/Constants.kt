@@ -11,6 +11,14 @@ object Constants {
         const val APP_USER = "appUser"
         const val IS_SHORTCUT = "isShortcut"
         const val SHORTCUT_ID = "shortcutId"
+
+        // Set by MyAccessibilityService when it starts MainActivity to raise the distraction wait
+        // screen over an app that came to the foreground outside the launcher.
+        const val SHOW_DISTRACTION_WAIT = "showDistractionWait"
+
+        // True when the wait screen was raised over an app that is already running, so "Open"
+        // resumes it in place instead of relaunching its main activity.
+        const val FROM_BACKGROUND = "fromBackground"
     }
 
     object Dialog {
@@ -60,6 +68,10 @@ object Constants {
         const val BASE_WAIT_SECONDS = 10
         const val MAX_WAIT_SECONDS = 60
         const val FIXED_WAIT_SECONDS = 30
+
+        // An app fires a burst of window events while it opens; a second wait screen for the same
+        // app within this window is suppressed. Bounded so a lost launch can never wedge the timer.
+        const val PROMPT_DEDUPE_MS = 1500L
     }
 
     object SwipeLeftAction {

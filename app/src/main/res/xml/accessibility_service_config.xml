@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    typeViewClicked drives the double-tap-to-lock gesture. typeWindowStateChanged lets the
+    service notice which app is in the foreground, so the distraction timer can raise its wait
+    screen over a flagged app however it was opened, and can tell when the user has left it.
+    No packageNames filter: detecting that the user left a flagged app means seeing the app that
+    took its place, whichever that is. The service only ever reads the package name of the window
+    in front and acts only on the apps the user flagged.
+-->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:accessibilityEventTypes="typeViewClicked"
+    android:accessibilityEventTypes="typeViewClicked|typeWindowStateChanged"
     android:accessibilityFeedbackType="feedbackVisual"
     android:accessibilityFlags="flagDefault"
     android:canRetrieveWindowContent="true"
     android:description="@string/accessibility_service_description"
     android:isAccessibilityTool="true"
     android:notificationTimeout="10"
-    android:packageNames="app.launch0.debug, app.launch0"
     tools:targetApi="30" />
