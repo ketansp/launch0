@@ -67,6 +67,12 @@ jobs:
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           track: ${{ inputs.track }}
           releaseName: "Launch0 ${{ inputs.version_name }}"
+          # Commit the release as an unsubmitted change instead of auto-sending it
+          # for review. Play refuses automatic submission when the app has changes
+          # that must be sent for review from the Console (for example after a
+          # policy enforcement), which fails the run after a successful upload.
+          # Send the release for review from Publishing overview after the run.
+          changesNotSentForReview: true
 
       - name: Build signed release APK for GitHub Release
         run: |
