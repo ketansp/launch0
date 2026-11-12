@@ -289,7 +289,7 @@
     <string name="walkthrough_apps_body">Your full app list is one swipe up. Start typing to search and open any app instantly.</string>
 
     <string name="walkthrough_gestures_title">Swipe left and right</string>
-    <string name="walkthrough_gestures_body">Swipe left for your notes and swipe right to call. Set your own shortcuts anytime in Settings.</string>
+    <string name="walkthrough_gestures_body">Swipe left for your notes and swipe right for your quick-launch app. Set your own shortcuts anytime in Settings.</string>
 
     <string name="walkthrough_customise_title">Long-press to set things up</string>
     <string name="walkthrough_customise_body">Long-press a home slot to choose its app. Long-press an empty area to open Settings.</string>

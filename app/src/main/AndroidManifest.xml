@@ -27,6 +27,18 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:node="remove" />
 
+    <!--
+        Launch0 declares no INTERNET permission and cannot open a network
+        connection. WorkManager (androidx.work) merges in ACCESS_NETWORK_STATE
+        to support network-constrained jobs, but the wallpaper worker uses no
+        network constraints, so the permission is unused. Removing it keeps the
+        shipped bundle free of every network-related permission, matching the
+        app's "no data leaves the device" guarantee.
+    -->
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
+
     <queries>
         <!-- Resolve launch intents, labels and icons for, and detect, every app that has
              a launcher entry. Also covers screen-time foreground lookups and the phone/
