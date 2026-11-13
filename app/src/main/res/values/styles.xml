@@ -6,8 +6,12 @@
 
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges
         </item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
+        <!-- Kept false so the system doesn't paint its legacy scrim gradient behind the status/nav
+             bars. Edge-to-edge layout comes from FLAG_LAYOUT_NO_LIMITS (MainActivity) plus the
+             transparent statusBarColor/navigationBarColor below, letting the wallpaper run seamlessly
+             under the bars. -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
         <item name="android:colorEdgeEffect">@android:color/transparent</item>
 
         <item name="android:fitsSystemWindows">false</item>
