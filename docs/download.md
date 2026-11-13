@@ -1,18 +1,35 @@
+<script setup>
+import { VPButton } from 'vitepress/theme'
+</script>
+
 # Download
 
 Get Launch0 for your Android device.
 
-## Latest Release
+## Google Play <Badge type="tip" text="Recommended" /> {#google-play}
 
-Download the latest APK directly from GitHub:
+The easiest way to install Launch0. You get automatic updates, and there's no need to allow installs from unknown sources.
+
+<VPButton
+  class="download-button"
+  size="big"
+  text="Download on Google Play"
+  href="https://play.google.com/store/apps/details?id=app.launch0"
+/>
+
+Once installed, press the Home button and select **Launch0** as your launcher.
+
+## APK from GitHub {#apk}
+
+No Play Store on your phone, or prefer not to use it? Download the APK directly from GitHub:
 
 **[Download Launch0 APK](https://github.com/ketansp/launch0/releases/latest/download/app-release.apk)**
 
-You can also browse all releases on the [GitHub Releases page](https://github.com/ketansp/launch0/releases).
+You can also browse all releases on the [GitHub Releases page](https://github.com/ketansp/launch0/releases). The APK doesn't update itself — download each new release by hand.
 
-## Installation
+### Installing the APK
 
-Since the APK is not installed from the Play Store, you'll need to allow installation from unknown sources:
+Android blocks apps from outside the Play Store by default, so you'll need to allow installation from unknown sources:
 
 1. Download the APK file using the link above.
 2. Open the downloaded file on your Android device.
@@ -21,7 +38,11 @@ Since the APK is not installed from the Play Store, you'll need to allow install
 5. Once installed, press the Home button and select **Launch0** as your launcher.
 
 ::: tip
-Since this APK is not from the Play Store, Android will warn you about installing from an unknown source. This is normal for open-source apps. You can verify the source code on [GitHub](https://github.com/ketansp/launch0).
+Android warns you about installing from an unknown source. This is normal for open-source apps distributed outside a store. You can verify the source code on [GitHub](https://github.com/ketansp/launch0).
+:::
+
+::: warning Pick one source and stick with it
+The Google Play and GitHub builds are signed with different keys, so one can't update the other. To switch from the APK to Google Play (or back), you have to uninstall Launch0 first — and uninstalling deletes everything it stores on your device, including your notes, to-dos, voice memos, and settings.
 :::
 
 ## Requirements
@@ -31,3 +52,10 @@ Since this APK is not from the Play Store, Android will warn you about installin
 ## Build from Source
 
 If you prefer to build the app yourself, follow the [Build from Source](/guide/build) guide.
+
+<style scoped>
+.download-button {
+  margin: 8px 0 16px;
+  text-decoration: none;
+}
+</style>

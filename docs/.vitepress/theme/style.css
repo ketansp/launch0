@@ -184,3 +184,20 @@ div[class*="language-"] {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ─── APK fallback link under the hero buttons ─── */
+.hero-apk-note {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+}
+
+.hero-apk-note a {
+  color: var(--vp-c-brand-1);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hero-apk-note a:hover {
+  color: var(--vp-c-brand-2);
+}

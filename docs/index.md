@@ -7,6 +7,9 @@ hero:
   tagline: A fast, text-only home screen that becomes the command layer for your phone — launch apps, capture notes, hold distractions, and track your time. No ads, no data collection.
   actions:
     - theme: brand
+      text: Download now
+      link: https://play.google.com/store/apps/details?id=app.launch0
+    - theme: alt
       text: Get Started
       link: /guide/
     - theme: alt
@@ -58,7 +61,7 @@ import HomePage from "./.vitepress/components/HomePage/HomePage.vue";
 <HomePage>
 <template v-slot:setup-steps>
 
-1. **Install** Launch0 from the Play Store or [build from source](/guide/build)
+1. **Install** Launch0 from [Google Play](https://play.google.com/store/apps/details?id=app.launch0) — or grab the [APK](/download#apk)
 2. **Set as default** — tap "Set as default launcher" in settings
 3. **Swipe up** for all apps, **swipe left** for Notes, **long press** for settings
 4. **Start typing** an app name in the drawer to auto-launch it

@@ -17,7 +17,7 @@ The average person checks their phone 96 times a day. Launch0 turns that home sc
 
 ## Quick Start
 
-1. Install Launch0 from the Play Store or build from source
+1. Install Launch0 from [Google Play](https://play.google.com/store/apps/details?id=app.launch0) (or use the [APK](/download#apk), or [build from source](/guide/build))
 2. Set it as your default launcher
 3. Swipe up to see all apps
 4. Swipe left for Notes
