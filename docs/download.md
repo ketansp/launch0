@@ -51,7 +51,7 @@ The Google Play and GitHub builds are signed with different keys, so one can't u
 
 ## Build from Source
 
-If you prefer to build the app yourself, follow the [Build from Source](/guide/build) guide.
+If you prefer to build the app yourself, follow the [Build from Source](/build) guide.
 
 <style scoped>
 .download-button {

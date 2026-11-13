@@ -46,12 +46,23 @@
         <div class="container other-color">
             <div class="panels vp-doc">
                 <div class="panel">
+                    <h2>Pause Before the Pull</h2>
+                    <p>A few seconds to choose on purpose</p>
+                    <div class="steps">
+                        <slot name="distraction-timer" />
+                    </div>
+                </div>
+                <div class="panel">
                     <h2>Screen Time Awareness</h2>
                     <p>Stay informed about your phone usage — right on your home screen</p>
                     <div class="steps">
                         <slot name="screen-time" />
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="panels vp-doc">
                 <div class="panel">
                     <h2>Auto-Generated Wallpapers</h2>
                     <p>A fresh look every hour, generated right on your device</p>
@@ -59,11 +70,7 @@
                         <slot name="wallpapers" />
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="container">
-            <div class="panels vp-doc">
-                <div class="panel center-panel">
+                <div class="panel">
                     <h2>Privacy as a Feature</h2>
                     <p>Launch0 is fully open source and collects zero data. No analytics, no tracking, no ads — ever.</p>
                     <div class="steps">

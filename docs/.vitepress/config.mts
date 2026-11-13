@@ -18,30 +18,66 @@ export default defineConfig({
 
   themeConfig: {
     nav: [
-      { text: 'Guide', link: '/guide/' },
-      { text: 'Features', link: '/guide/features' },
+      { text: 'Features', link: '/features/', activeMatch: '^/features/' },
+      { text: 'FAQ', link: '/faq' },
       { text: 'Download', link: '/download' },
       { text: 'Privacy', link: '/privacy' },
+      {
+        text: 'Open source',
+        items: [
+          { text: 'Build from Source', link: '/build' },
+          { text: 'Contributing', link: '/contributing' },
+        ],
+      },
     ],
 
     sidebar: {
-      '/guide/': [
+      '/features/': [
         {
-          text: 'Getting Started',
+          text: 'Features',
           items: [
-            { text: 'What is Launch0?', link: '/guide/' },
-            { text: 'Features', link: '/guide/features' },
-            { text: 'FAQs', link: '/guide/faq' },
-          ]
+            { text: 'Overview', link: '/features/' },
+            { text: 'Setup & first run', link: '/features/setup' },
+          ],
         },
         {
-          text: 'Contributing',
+          text: 'Home',
           items: [
-            { text: 'Build from Source', link: '/guide/build' },
-            { text: 'Contributing', link: '/guide/contributing' },
-          ]
-        }
-      ]
+            { text: 'Home screen', link: '/features/home-screen' },
+            { text: 'Home widgets', link: '/features/widgets' },
+            { text: 'Gestures', link: '/features/gestures' },
+          ],
+        },
+        {
+          text: 'Apps',
+          items: [
+            { text: 'Search & launch', link: '/features/search' },
+            { text: 'App drawer', link: '/features/app-drawer' },
+            { text: 'Work profile', link: '/features/work-profile' },
+          ],
+        },
+        {
+          text: 'Capture',
+          items: [
+            { text: 'Notes', link: '/features/notes' },
+          ],
+        },
+        {
+          text: 'Focus',
+          items: [
+            { text: 'Distraction timer', link: '/features/distraction-timer' },
+            { text: 'Do Not Disturb', link: '/features/do-not-disturb' },
+            { text: 'Screen time', link: '/features/screen-time' },
+          ],
+        },
+        {
+          text: 'Make it yours',
+          items: [
+            { text: 'Appearance & wallpapers', link: '/features/appearance' },
+            { text: 'Settings reference', link: '/features/settings' },
+          ],
+        },
+      ],
     },
 
     socialLinks: [

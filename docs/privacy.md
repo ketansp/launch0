@@ -130,7 +130,7 @@ You don't have to take this policy on faith. Because Launch0 is fully open sourc
 
 1. **Read the source.** The complete codebase is public at [github.com/ketansp/launch0](https://github.com/ketansp/launch0).
 2. **Check the permissions.** The full, current list is in the app's [`AndroidManifest.xml`](https://github.com/ketansp/launch0/blob/master/app/src/main/AndroidManifest.xml) — note the absence of the `INTERNET` permission.
-3. **Build it yourself.** You can compile Launch0 from source and run your own build (see the [build guide](/guide/build)).
+3. **Build it yourself.** You can compile Launch0 from source and run your own build (see the [build guide](/build)).
 4. **Watch the network.** Because there is no internet permission, a network monitor will show Launch0 making no connections of its own.
 
 ## Legal compliance
