@@ -1,9 +1,15 @@
 import { h } from 'vue'
 import Theme from 'vitepress/theme'
+import FeatureIntro from '../components/FeatureIntro.vue'
+import FeatureCards from '../components/FeatureCards.vue'
 import './style.css'
 
 export default {
   extends: Theme,
+  enhanceApp({ app }) {
+    app.component('FeatureIntro', FeatureIntro)
+    app.component('FeatureCards', FeatureCards)
+  },
   // Inject a fixed starfield layer behind all page content
   Layout() {
     return h(Theme.Layout, null, {
