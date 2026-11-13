@@ -1,3 +1,8 @@
+---
+title: "Download for Android: Google Play or APK"
+description: "Get Launch0 free on Google Play, or download the APK from GitHub. Android 7.0 or later. No account, no ads, no internet permission."
+---
+
 <script setup>
 import { VPButton } from 'vitepress/theme'
 </script>

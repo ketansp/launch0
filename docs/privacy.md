@@ -1,8 +1,13 @@
+---
+title: "Privacy policy: no internet permission, no data collection"
+description: "Launch0 declares no internet permission and collects no data. See every permission it asks for, what each one does, and how to verify it yourself."
+---
+
 # Privacy Policy
 
-**Last updated: 18 July 2026**
+**Last updated: 13 November 2026**
 
-Launch0 is a text-only home screen for Android. It is built so that privacy is a property of how the app *works*, not a promise you have to trust. There is no telemetry to turn off, because none was ever added. There is no account to create, no profile to build, and no server for your data to travel to — Launch0 doesn't even request permission to use the internet.
+Launch0 is a minimalist, text-only launcher (home screen) for Android. It is built so that privacy is a property of how the app *works*, not a promise you have to trust. There is no telemetry to turn off, because none was ever added. There is no account to create, no profile to build, and no server for your data to travel to — Launch0 doesn't even request permission to use the internet.
 
 This policy explains, in detail, exactly what Launch0 does and does not do with your information. It applies to the Launch0 Android app (package `app.launch0`) distributed through Google Play and as a downloadable APK.
 
@@ -41,6 +46,10 @@ All of your Launch0 data is stored **locally, in the app's private sandbox** on 
 | Notes text & to-dos (with their done/urgent flags and timestamps) | JSON in a private `SharedPreferences` file | App-private storage |
 | Note images (attached or shared in) | Copied into a private folder | App-private internal storage |
 | Voice memos | Recorded audio files (`.m4a`) | App-private internal storage |
+| Distraction timer (apps you flagged, today's open counts, last-open times) | `SharedPreferences` | App-private storage |
+| Hold notifications (apps you chose, hold duration, when the current window ends, and identifiers of held notifications) | `SharedPreferences` | App-private storage |
+
+Calendar events are **not** stored: the calendar widget reads them from your device's calendar each time it refreshes and keeps them only in memory while they're on screen.
 
 Because this data lives inside Launch0's private storage, it is removed when you uninstall the app or clear its data from Android's app settings. Launch0 keeps no copy anywhere else.
 
@@ -64,12 +73,13 @@ Launch0 requests only the permissions its features need, and nearly all of them 
 | Permission | Used for | Required? |
 |-----------|----------|-----------|
 | Default home app (launcher role) | Acting as your home screen | Yes — to work as a launcher |
-| Query installed apps (`QUERY_ALL_PACKAGES`) | Listing and launching your apps in the drawer and home screen | Yes — core function |
+| Installed app list (Android's `LauncherApps` API — Launch0 does **not** request `QUERY_ALL_PACKAGES`) | Listing and launching your apps in the drawer and home screen | Yes — core function |
 | Expand status bar | The "swipe down for notifications" gesture | Only if you use it |
 | Set wallpaper | Applying the auto-generated wallpaper | Only if you enable wallpapers |
 | Set alarm | Opening your clock/alarm app | Only if you use it |
 | Request delete packages | Uninstalling an app from the drawer | Only when you uninstall |
 | Microphone (`RECORD_AUDIO`) | Recording voice notes in Notes | Only if you record a voice note |
+| Calendar (`READ_CALENDAR`) | Showing today's events in the calendar widget | Only if you turn on the calendar widget |
 | Usage access (`PACKAGE_USAGE_STATS`) | Showing screen time next to your apps | Optional |
 | Accessibility service | Double-tap-to-lock gesture (Android 9+) | Optional, off by default |
 | Notification access | Holding notifications for Do Not Disturb | Optional |
@@ -77,7 +87,7 @@ Launch0 requests only the permissions its features need, and nearly all of them 
 
 ### The app list
 
-To be a launcher, Launch0 needs to know which apps are installed so it can show and open them. It reads this list from the Android system on your device. The list is used only to display and launch your apps (including work-profile and dual-app entries) and to let you rename or hide them. It is never uploaded, and any customizations you make — hidden apps, renamed apps, home-screen picks — are stored only in Launch0's private storage.
+To be a launcher, Launch0 needs to know which apps are installed so it can show and open them. It reads this list from the Android system on your device through the `LauncherApps` API, which covers apps that appear in a launcher. It does not request the broader `QUERY_ALL_PACKAGES` permission. The list is used only to display and launch your apps (including work-profile and dual-app entries) and to let you rename or hide them. It is never uploaded, and any customizations you make — hidden apps, renamed apps, home-screen picks — are stored only in Launch0's private storage.
 
 ### Accessibility service
 
@@ -91,6 +101,10 @@ On Android versions older than 9, the same double-tap-to-lock gesture uses the *
 ### Notification access (Do Not Disturb)
 
 If you turn on Do Not Disturb, Launch0 uses Android's notification access to **hold** notifications from the apps you choose and **release** them later — either when you tap the count beside the app, or automatically when the time window ends. Notification contents are handled on your device to display the held count and are never stored off-device or sent anywhere. Ongoing notifications such as calls and music are never held. This permission is optional and is used for nothing but this feature.
+
+### Calendar (calendar widget)
+
+If you turn on the calendar widget, Launch0 reads today's events from your device's calendar to show them on the home screen: each event's title, time, location and status (so cancelled or declined events can be hidden). If your work profile shares its calendar, its events are read the same way. Events are read and shown on your device only and are not saved by Launch0; with no internet permission, Launch0 can't send them anywhere. The permission is optional and requested only when you tap the widget to show your schedule.
 
 ### Screen time (usage access)
 

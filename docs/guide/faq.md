@@ -1,4 +1,13 @@
+---
+title: "FAQ: setup, gestures, notes and privacy"
+description: "Answers to common Launch0 questions: is it an OS, setting it as your launcher, hidden apps, gestures, Notes, Do Not Disturb and privacy."
+---
+
 # Frequently Asked Questions
+
+## Is Launch0 an actual operating system?
+
+No. Launch0 is a launcher: an app that replaces your home screen. "OS for the busy" describes what it does for your day, not what it installs. There's nothing to root or flash. Install it from [Google Play](https://play.google.com/store/apps/details?id=app.launch0), then choose Launch0 as your home app.
 
 ## How do I find hidden apps?
 
@@ -26,7 +35,15 @@ You can also share an image from another app straight into Notes using Android's
 
 ## What is "Hold notifications" / Do Not Disturb?
 
-Do Not Disturb lets you park notifications from distracting apps so they don't interrupt you. In **Settings**, turn on **Hold notifications**, choose how long to hold them (30 minutes to 3 hours), and pick which apps to hold. Held notifications show up as a small count next to the app on your home screen and in the app drawer — tap it to release them, or they'll arrive automatically when the window ends. This requires granting notification access, and ongoing notifications like calls and music are never held.
+Do Not Disturb lets you park notifications from distracting apps so they don't interrupt you. In **Settings**, turn on **Hold notifications**, choose how long to hold them (30 minutes to 3 hours), and pick which apps to hold. Held notifications show up as a small count next to the app on your home screen and in the app drawer — tap it to release them, or they'll arrive automatically when the window ends. The first held notification starts the window, and everything that arrives during it is released together when it ends. This requires granting notification access and Android 8.0 or later, and ongoing notifications like calls and music are never held. See [Hold notifications](/features/hold-notifications).
+
+## How does the distraction timer work?
+
+In **Settings → Distraction timer**, tap the number beside **Distracting apps** and pick the apps that pull you in. Opening one of them from Launch0 shows a countdown first. Waits start at 10 seconds and double with every open that day, up to 60 seconds. Tap the **Wait** value to switch to a fixed 30 seconds instead. Tap **Turn back** and the open isn't counted. See [Distraction timer](/features/distraction-timer).
+
+## Why doesn't the calendar widget show my event?
+
+The widget shows only timed events left today. All-day entries, events that have already ended, and cancelled or declined events are left out. It also shows only calendars that sync to your phone: a calendar you can see in your calendar app but haven't set to sync won't appear. See [Calendar widget](/features/calendar-widget).
 
 ## Can I show app icons?
 
@@ -50,6 +67,6 @@ Open the app drawer (swipe up), then start typing. You'll see a rename option ap
 
 No. System apps cannot be uninstalled. Launch0 will show a message if you try to uninstall a system app. You can hide them instead.
 
-## Is this the same as Olauncher?
+## How is Launch0 different from Olauncher?
 
-Launch0 is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher). It shares the same foundation but is developed independently, positioned as an OS for the busy. If you want extra features like weather, widgets, fonts, and folders, check out [Olauncher Pro](https://play.google.com/store/apps/details?id=app.prolauncher).
+Launch0 is a fork of [Olauncher](https://github.com/tanujnotes/Olauncher) and keeps its text-only home screen. It adds built-in Notes and to-dos, a distraction timer, held notifications and a calendar widget. It declares no internet permission, so its wallpapers are generated on your device. See [Launch0 vs Olauncher](/compare/olauncher) for the full comparison.

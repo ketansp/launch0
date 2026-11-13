@@ -1,3 +1,8 @@
+---
+title: "Contributing"
+description: "How to report bugs, suggest features and contribute to Launch0, the open-source minimalist launcher for Android."
+---
+
 # Contributing
 
 Launch0 is open source and contributions are welcome.
@@ -19,7 +24,7 @@ Launch0 is open source and contributions are welcome.
 
 ## Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/ketansp/Olauncher/issues) on GitHub.
+Found a bug or have a feature request? [Open an issue](https://github.com/ketansp/launch0/issues) on GitHub.
 
 ## License
 

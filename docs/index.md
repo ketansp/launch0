@@ -1,10 +1,13 @@
 ---
 layout: home
+title: "Launch0 — OS for the busy | Minimalist Launcher for Android"
+titleTemplate: false
+description: "An OS for the busy: a free, open-source minimalist launcher for Android with notes, to-dos, a distraction timer and screen time. No ads, no tracking."
 
 hero:
   name: Launch0
   text: OS for the busy
-  tagline: A fast, text-only home screen that becomes the command layer for your phone — launch apps, capture notes, hold distractions, and track your time. No ads, no data collection.
+  tagline: A minimalist launcher for Android that becomes the command layer for your phone — launch apps, capture notes, hold distractions and track your time. No ads, no data collection.
   actions:
     - theme: brand
       text: Download now
@@ -14,7 +17,7 @@ hero:
       link: /guide/
     - theme: alt
       text: View on GitHub
-      link: https://github.com/ketansp/Olauncher
+      link: https://github.com/ketansp/launch0
   image:
     src: /hero.svg
     alt: Launch0 Logo
@@ -41,6 +44,16 @@ features:
     title: Do Not Disturb
     details: Hold notifications from distracting apps and release them when you're ready to focus.
     link: /guide/features#do-not-disturb
+    linkText: Learn more
+  - icon: ⏳
+    title: Distraction Timer
+    details: Flag the apps that pull you in. Opening one starts a short countdown first, so every open is a choice.
+    link: /features/distraction-timer
+    linkText: Learn more
+  - icon: 📅
+    title: Today at a Glance
+    details: Your remaining events for today sit on the home screen, with a countdown to the next one.
+    link: /features/calendar-widget
     linkText: Learn more
   - icon: 🔒
     title: Privacy-First
@@ -89,6 +102,8 @@ import HomePage from "./.vitepress/components/HomePage/HomePage.vue";
 * [Gesture shortcuts](/guide/features#gestures)
 * [Screen time tracking](/guide/features#home-screen)
 * [Do Not Disturb](/guide/features#do-not-disturb)
+* [Distraction timer](/features/distraction-timer)
+* [Calendar widget](/features/calendar-widget)
 * [Days-left widget](/guide/features#home-screen)
 * [Dark & light themes](/guide/features#appearance)
 * [Auto-generated wallpapers](/guide/features#appearance)
@@ -111,14 +126,14 @@ import HomePage from "./.vitepress/components/HomePage/HomePage.vue";
 
 Swipe left from home to open Notes — a private, chat-like space for text, to-dos, voice memos, and images. Mark items done or urgent, tap links, and search everything you've saved. It all stays on your device.
 
-[Learn more about Notes →](/guide/features#notes)
+[Learn more about Notes →](/features/notes)
 
 </template>
 <template v-slot:do-not-disturb>
 
 Pick the apps that pull you away and Launch0 will hold their notifications for 30 minutes to 3 hours. A count appears on the home screen — release them with a tap, or let them arrive when your focus window ends.
 
-[Learn more about Do Not Disturb →](/guide/features#do-not-disturb)
+[Learn more about holding notifications →](/features/hold-notifications)
 
 </template>
 <template v-slot:screen-time>

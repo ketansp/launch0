@@ -1,3 +1,8 @@
+---
+title: "Build from source"
+description: "Build the Launch0 Android launcher from source with Gradle."
+---
+
 # Build from Source
 
 Launch0 is open source. You can build it yourself from the source code.
@@ -13,8 +18,8 @@ Launch0 is open source. You can build it yourself from the source code.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/ketansp/Olauncher.git
-cd Olauncher
+git clone https://github.com/ketansp/launch0.git
+cd launch0
 ```
 
 2. Open the project in Android Studio.
@@ -41,7 +46,7 @@ app/src/main/java/app/launch0/
 │   └── Prefs.kt             # SharedPreferences wrapper
 ├── helper/
 │   ├── Utils.kt             # Utility functions
-│   ├── WallpaperWorker.kt   # Daily wallpaper background worker
+│   ├── WallpaperWorker.kt   # Hourly on-device wallpaper worker
 │   └── ...
 ├── listener/
 │   └── ...                  # Touch and gesture listeners
