@@ -85,14 +85,25 @@ jobs:
           LAUNCH0_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           LAUNCH0_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+      # Release notes come from the F-Droid/IzzyOnDroid changelog for this version
+      # code when one is committed, otherwise GitHub generates them from the merged
+      # pull requests since the previous release.
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
         run: |
-          gh release create "${{ inputs.version_name }}" \
+          CHANGELOG="fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          if [ -f "$CHANGELOG" ]; then
+            NOTES=(--notes-file "$CHANGELOG")
+          else
+            NOTES=(--generate-notes)
+          fi
+          gh release create "$VERSION_NAME" \
             app/build/outputs/apk/release/app-release.apk \
-            --title "Launch0 ${{ inputs.version_name }}" \
-            --notes "Release ${{ inputs.version_name }} (version code ${{ inputs.version_code }})"
+            --title "Launch0 $VERSION_NAME" \
+            "${NOTES[@]}"
 
       - name: Clean up keystore
         if: always()

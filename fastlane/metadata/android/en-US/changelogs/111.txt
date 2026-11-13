@@ -1,0 +1,3 @@
+• Calendar widget: cancelled, rescheduled and declined events no longer show.
+• The app now ships with no network-related permission at all: a network-state permission added by a library is removed.
+• Clearer gesture tips in the welcome walkthrough.
