@@ -67,7 +67,7 @@
         \n\nC\'est aussi le meilleur moyen de soutenir les développeurs d\'Launch0. Jetez-y un œil !</string>
     <string name="wallpaper_message">Launch0 propose de superbes fonds d\'écran nouveaux toutes les heures. Donne un nouveau look à ton écran d\'accueil tout au long de la journée, gratuitement!
         \n\nTu veux essayer?</string>
-    <string name="accessibility_service_description">L\'autorisation d\'accessibilité est requise pour activer le double appui pour verrouiller. Toutes les données acquises par Launch0 via ce service ne quitteront pas votre appareil.</string>
+    <string name="accessibility_service_description">Verrouille votre écran lorsque vous appuyez deux fois sur l\'écran d\'accueil de Launch0. Ce service ne peut pas lire le contenu de l\'écran, n\'observe pas les autres applications et ne collecte ni ne partage aucune donnée.</string>
     <string name="support_olauncher_for_free">Soutenez Launch0 gratuitement en utilisant notre lien d\'affiliation Amazon.</string>
     <string name="support_olauncher_message">Chaque fois que vous achetez quelque chose en utilisant notre lien, nous recevons une petite commission. Enregistrez le lien et utilisez le chaque fois que vous commandez en ligne. Merci!</string>
     <string name="open">Ouvrir le lien</string>
@@ -89,9 +89,7 @@
     <string name="swipe_down_for">Balayer vers le bas pour</string>
     <string name="search">Rechercher</string>
     <string name="notifications">Notifications</string>
-    <string name="accessibility_disclosure">Veuillez activer ou désactiver le service d\'accessibilité d\'Launch0 dans les paramètres de votre téléphone pour utiliser ou non cette fonctionnalité.
-        \n\nVeuillez noter que ce service n\'est utilisé que pour vous permettre d\'éteindre l\'écran de votre téléphone avec le geste du double appui.
-        Notre service d\'accessibilité ne collecte ni ne partage aucune donnée.</string>
+    <string name="accessibility_disclosure">Launch0 utilise l\'API Accessibility Service d\'Android dans un seul but : verrouiller votre écran lorsque vous appuyez deux fois sur l\'écran d\'accueil.\n\nCe service ne peut ni voir ni lire le contenu de votre écran, n\'observe pas les autres applications ni ce que vous saisissez, et ne collecte ni ne partage aucune donnée. Il peut uniquement déclencher l\'action de verrouillage d\'Android.\n\nPour utiliser cette fonctionnalité, activez Launch0 dans les paramètres d\'accessibilité de votre appareil. Vous pouvez la désactiver à tout moment au même endroit.</string>
     <string name="accept">Accepter</string>
     <string name="permission">Autorisation</string>
     <string name="double_tap_lock">Appuyer deux fois pour verrouiller</string>

@@ -26,8 +26,7 @@
     <string name="swipe_down_for">Wischen Sie nach unten für</string>
     <string name="search">Suchen</string>
     <string name="notifications">Benachrichtigungen</string>
-    <string name="accessibility_disclosure">Bitte schalten Sie den Barrierefreiheitsdienst von Launch0 in den Einstellungen Ihres Geräts ein oder aus, um diese Funktion zu aktivieren oder zu deaktivieren.
-        \n\nBitte beachten Sie, dass dieser Dienst nur dazu dient, den Bildschirm Ihres Geräts mit der Doppeltipp-Geste auszuschalten. Unser Barrierefreiheitsdienst erfasst oder gibt keine Daten weiter.</string>
+    <string name="accessibility_disclosure">Launch0 nutzt die Accessibility Service API (Bedienungshilfen) von Android nur für einen einzigen Zweck: um Ihren Bildschirm zu sperren, wenn Sie doppelt auf den Startbildschirm tippen.\n\nDieser Dienst kann nichts auf Ihrem Bildschirm sehen oder lesen, beobachtet weder andere Apps noch Ihre Eingaben und erfasst oder teilt keinerlei Daten. Er kann ausschließlich die Sperraktion von Android auslösen.\n\nUm diese Funktion zu nutzen, aktivieren Sie Launch0 in den Bedienungshilfe-Einstellungen Ihres Geräts. Dort können Sie sie jederzeit wieder deaktivieren.</string>
     <string name="accept">Akzeptieren</string>
     <string name="permission">Erlaubnis</string>
     <string name="double_tap_lock">Zum Sperren zweimal tippen</string>
@@ -101,7 +100,7 @@
         \n\nEs ist auch der beste Weg, die Entwickler von Launch0 zu unterstützen. Schau es dir an!</string>
     <string name="wallpaper_message">Launch0 bietet stündlich wunderschöne neue Wallpapers. Verleihe deinem Homescreen den ganzen Tag über ein frisches Aussehen – kostenlos!
         \n\nMöchtest du es ausprobieren?</string>
-    <string name="accessibility_service_description">Die Zugriffsberechtigung ist erforderlich, um das Sperren durch Doppeltippen zu ermöglichen. Die von Launch0 über diesen Dienst erfassten Daten verlassen Ihr Gerät nicht.</string>
+    <string name="accessibility_service_description">Sperrt Ihren Bildschirm, wenn Sie doppelt auf den Startbildschirm von Launch0 tippen. Dieser Dienst kann keine Bildschirminhalte lesen, beobachtet keine anderen Apps und erfasst oder teilt keinerlei Daten.</string>
     <string name="support_olauncher_for_free">Unterstützen Sie Launch0 kostenlos, indem Sie unseren Amazon-Partnerlink verwenden.</string>
     <string name="support_olauncher_message">Jedes Mal, wenn Sie über unseren Link etwas kaufen, erhalten wir eine kleine Provision. Bitte speichern Sie den Link und verwenden Sie ihn bei jedem Online-Einkauf. Dan­ke­schön!</string>
     <string name="open">Verbindung öffnen</string>

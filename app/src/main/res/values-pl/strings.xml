@@ -26,8 +26,7 @@
     <string name="swipe_down_for">Przesuń w dół, aby</string>
     <string name="search">Szukaj</string>
     <string name="notifications">Powiadomienia</string>
-    <string name="accessibility_disclosure">Włącz lub wyłącz usługę ułatwień dostępu Launch0 w ustawieniach swojego urządzenia, aby włączyć lub wyłączyć tę funkcję.
-        \n\nNależy pamiętać, że ta usługa służy wyłącznie do wyłączania ekranu urządzenia za pomocą gestu dwukrotnego dotknięcia. Nasza usługa ułatwień dostępu nie gromadzi ani nie udostępnia żadnych danych.</string>
+    <string name="accessibility_disclosure">Launch0 korzysta z interfejsu Accessibility Service API systemu Android wyłącznie w jednym celu: aby zablokować ekran, gdy dwukrotnie dotkniesz ekranu głównego.\n\nTa usługa nie może widzieć ani odczytywać niczego na Twoim ekranie, nie obserwuje innych aplikacji ani tego, co wpisujesz, i nie zbiera ani nie udostępnia żadnych danych. Może jedynie wywołać systemową akcję blokady ekranu.\n\nAby korzystać z tej funkcji, włącz Launch0 w ustawieniach ułatwień dostępu na urządzeniu. W każdej chwili możesz ją tam wyłączyć.</string>
     <string name="accept">Akceptuj</string>
     <string name="permission">Uprawnienie</string>
     <string name="double_tap_lock">Kliknij dwukrotnie, aby zablokować</string>
@@ -99,7 +98,7 @@
         \n\nTo także najlepszy sposób na wsparcie deweloperów Launch0. Sprawdź to!</string>
     <string name="wallpaper_message">Launch0 oferuje piękne nowe tapety co godzinę. Nadaj swojemu ekranowi głównemu świeży wygląd przez cały dzień, za darmo!
         \n\nChcesz spróbować?</string>
-    <string name="accessibility_service_description">Uprawnienia dostępu są wymagane, aby włączyć podwójne dotknięcie, aby zablokować. Wszelkie dane pozyskane przez Launch0 za pośrednictwem tej usługi nie opuszczą Twojego urządzenia.</string>
+    <string name="accessibility_service_description">Blokuje ekran, gdy dwukrotnie dotkniesz ekranu głównego Launch0. Ta usługa nie może odczytywać zawartości ekranu, nie obserwuje innych aplikacji i nie zbiera ani nie udostępnia żadnych danych.</string>
     <string name="support_olauncher_for_free">Wesprzyj Launch0 za darmo, korzystając z naszego linku afiliacyjnego Amazon.</string>
     <string name="support_olauncher_message">Za każdym razem, gdy kupujesz coś za pomocą naszego linku, otrzymujemy niewielką prowizję. Zapisz link i używaj go podczas zakupów online. Dziękuję!</string>
     <string name="open">Otwórz łącze</string>

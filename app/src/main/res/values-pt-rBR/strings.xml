@@ -67,7 +67,7 @@
         \n\nÉ também a melhor maneira de apoiar os desenvolvedores do Launch0. Confira!</string>
     <string name="wallpaper_message">Launch0 oferece lindos papéis de parede novos a cada hora. Dê uma nova aparência à sua tela inicial ao longo do dia, gratuitamente!
         \n\nQuer tentar?</string>
-    <string name="accessibility_service_description">A permissão de acessibilidade é necessária para ativar o toque duplo para bloquear. Quaisquer dados adquiridos pelo Launch0 através deste serviço não sairão do seu dispositivo.</string>
+    <string name="accessibility_service_description">Bloqueia a tela quando você toca duas vezes na tela inicial do Launch0. Este serviço não consegue ler o conteúdo da tela, não observa outros apps e não coleta nem compartilha nenhum dado.</string>
     <string name="support_olauncher_for_free">Apoie o Launch0 gratuitamente usando nosso link de afiliado da Amazon.</string>
     <string name="support_olauncher_message">Sempre que você comprar algo usando nosso link, receberemos uma pequena comissão. Salve o link e use-o sempre que fizer compras online. Obrigado!</string>
     <string name="open">Abrir link</string>
@@ -90,8 +90,7 @@
     <string name="swipe_down_for">Deslize para baixo para</string>
     <string name="search">Procurar</string>
     <string name="notifications">Notificações</string>
-    <string name="accessibility_disclosure">Ative ou desative o serviço de acessibilidade do Launch0 nas configurações do seu dispositivo para ativar ou desativar esse recurso.
-        \n\nPor favor, note que este serviço é usado apenas para permitir que você desligue o scree do seu dispositivo</string>
+    <string name="accessibility_disclosure">O Launch0 usa a API Accessibility Service do Android para um único propósito: bloquear a tela quando você toca duas vezes na tela inicial.\n\nEste serviço não consegue ver nem ler nada na sua tela, não observa outros apps nem o que você digita, e não coleta nem compartilha nenhum dado. Ele só pode acionar a ação de bloqueio de tela do Android.\n\nPara usar este recurso, ative o Launch0 nas configurações de acessibilidade do seu dispositivo. Você pode desativá-lo lá a qualquer momento.</string>
     <string name="accept">Aceitar</string>
     <string name="permission">Permissão</string>
     <string name="double_tap_lock">Toque duas vezes para bloquear</string>

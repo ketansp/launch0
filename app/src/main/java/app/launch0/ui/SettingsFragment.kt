@@ -244,7 +244,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
 
             R.id.swipeLeftApp -> toggleSwipeLeft()
             R.id.swipeRightApp -> toggleSwipeRight()
-            R.id.toggleLock -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            // Never open accessibility settings without the disclosure dialog first.
+            R.id.toggleLock -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+                toggleAccessibilityVisibility(true)
         }
         return true
     }
@@ -552,8 +554,11 @@ class SettingsFragment : Fragment(), View.OnClickListener, View.OnLongClickListe
     private fun toggleAccessibilityVisibility(show: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
             binding.notWorking.visibility = View.VISIBLE
-        if (isAccessServiceEnabled(requireContext()))
-            binding.actionAccessibility.text = getString(R.string.disable)
+        // Prominent disclosure (Play User Data policy): when the service is off, enabling
+        // needs an explicit "Accept"; "Not now" declines. When it's on, offer "Disable".
+        val serviceOn = isAccessServiceEnabled(requireContext())
+        binding.actionAccessibility.text = getString(if (serviceOn) R.string.disable else R.string.accept)
+        binding.closeAccessibility.text = getString(if (serviceOn) R.string.close else R.string.not_now)
         binding.accessibilityLayout.isVisible = show
         binding.scrollView.animateAlpha(if (show) 0.5f else 1f)
     }

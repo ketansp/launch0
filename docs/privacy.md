@@ -81,10 +81,11 @@ To be a launcher, Launch0 needs to know which apps are installed so it can show 
 
 ### Accessibility service
 
-Google requires apps to explain their use of accessibility services clearly, so to be explicit: Launch0's accessibility service exists for **one purpose only — to lock your screen when you double-tap the home screen.** It is:
+Google requires apps to explain their use of accessibility services clearly, so to be explicit: Launch0 uses Android's AccessibilityService API for **one purpose only — to lock your screen when you double-tap the home screen.** Launch0 is not an accessibility tool, and the service is:
 
-- **Off by default** and entirely optional; Launch0 works fully without it.
-- **Not used to read, collect, log, or transmit anything.** It does not inspect screen contents, capture what you type, or observe other apps. It only invokes Android's "lock screen" action.
+- **Off by default** and entirely optional; Launch0 works fully without it. Before sending you to Android's settings to turn it on, Launch0 explains what the service does and asks for your consent.
+- **Unable to see anything.** It is configured to receive no accessibility events and has no permission to read window content, so Android never gives it information about what is on your screen, what you type, or which apps you use.
+- **Not used to collect, log, or transmit anything.** When you double-tap the home screen, Launch0 sends the service a private in-app message and the service invokes Android's "lock screen" action. That is all it does.
 
 On Android versions older than 9, the same double-tap-to-lock gesture uses the **device administrator** API instead. Launch0 requests only the lock-screen capability; it cannot wipe your device, change your password, or enforce any other policy.
 

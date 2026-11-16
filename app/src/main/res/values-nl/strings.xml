@@ -69,7 +69,7 @@
         \n\nHet is ook de beste manier om de ontwikkelaars van Launch0 te steunen. Bekijk het eens!</string>
     <string name="wallpaper_message">Launch0 biedt elk uur mooie nieuwe achtergronden. Geef je startscherm de hele dag een frisse nieuwe look, gratis!
         \n\nWil je het proberen?</string>
-    <string name="accessibility_service_description">De toegankelijkheidstoestemming is vereist om dubbel tikken om te vergrendelen mogelijk te maken. Alle gegevens die Launch0 via deze service verkrijgt, verlaten je apparaat niet.</string>
+    <string name="accessibility_service_description">Vergrendelt je scherm wanneer je dubbel tikt op het startscherm van Launch0. Deze dienst kan geen scherminhoud lezen, houdt geen andere apps bij en verzamelt of deelt geen gegevens.</string>
     <string name="support_olauncher_for_free">Steun Launch0 gratis door onze Amazon-affiliatelink te gebruiken.</string>
     <string name="support_olauncher_message">Elke keer dat je iets koopt via onze link, ontvangen wij een kleine commissie. Bewaar de link en gebruik deze wanneer je online winkelt.\nDank je!</string>
     <string name="open">Link openen</string>
@@ -91,8 +91,7 @@
     <string name="swipe_down_for">Veeg omlaag voor</string>
     <string name="search">Zoeken</string>
     <string name="notifications">Meldingen</string>
-    <string name="accessibility_disclosure">Schakel de toegankelijkheidsdienst van Launch0 in of uit in de instellingen van je apparaat om deze functie te activeren of te deactiveren.
-    \n\nLet op: deze dienst wordt alleen gebruikt om je scherm uit te schakelen met het dubbel-tikgebaar. Onze toegankelijkheidsdienst verzamelt of deelt geen gegevens.</string>
+    <string name="accessibility_disclosure">Launch0 gebruikt de Accessibility Service API van Android voor één doel: je scherm vergrendelen wanneer je dubbel tikt op het startscherm.\n\nDeze dienst kan niets op je scherm zien of lezen, houdt geen andere apps of je invoer bij en verzamelt of deelt geen gegevens. Het enige wat hij kan, is de vergrendelactie van Android uitvoeren.\n\nOm deze functie te gebruiken, schakel je Launch0 in bij de toegankelijkheidsinstellingen van je apparaat. Je kunt het daar op elk moment weer uitschakelen.</string>
     <string name="accept">Accepteren</string>
     <string name="permission">Toestemming</string>
     <string name="double_tap_lock">Dubbel tik om te vergrendelen</string>

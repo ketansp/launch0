@@ -59,7 +59,7 @@
     <string name="keyboard_message">היי, יותר מהיר למצוא ולפתוח יישומים ב־Launch0 בעזרת ההקלדה. אולי בכל זאת היית רוצה להשאיר את ההגדרה הזאת ולתת לה עוד הזדמנות?
         \n\nThe choice is always yours.</string>
     <string name="wallpaper_message">Launch0 מציע טפטים חדשים ויפים בכל שעה. תנו למסך הבית שלכם מראה חדש ורענן לאורך כל היום, בחינם! רוצים לנסות?</string>
-    <string name="accessibility_service_description">הרשאת הנגישות נחוצה להפעלת הנעילה בהקשה כפולה. כל הנתונים שייאספו על ידי Launch0 דרך השירות הזה לא יועברו הלאה ממכשירך.</string>
+    <string name="accessibility_service_description">נועל את המסך בהקשה כפולה על מסך הבית של Launch0. השירות לא יכול לקרוא את תוכן המסך, לא עוקב אחרי אפליקציות אחרות ולא אוסף או משתף נתונים כלל.</string>
     <string name="support_olauncher_for_free">אפשר לתמוך ב־Launch0 מבלי לשלם שקל, בעזרת שימוש בקישור ה־Amazon affiliate שלנו.</string>
     <string name="support_olauncher_message">על כל רכישה שתבוצע דרך הקישור שלנו אנחנו נקבל עמלה קטנה. נשמח אם תשמרו את הקישור ותשתמשו בו בקניות מהאינטרנט.\nתודה רבה!</string>
     <string name="open">פתיחת קישור</string>
@@ -81,8 +81,7 @@
     <string name="swipe_down_for">פעולה בעת החלקה למטה</string>
     <string name="search">חיפוש</string>
     <string name="notifications">התראות</string>
-    <string name="accessibility_disclosure">נא להפעיל או לכבות את שירות הנגישות של Launch0 בהגדרות המכשיר שלך בשביל להפעיל או לנטרל אפשרות זו.
-    \n\nלתשומת ליבך, נעשה שימוש בשירות זה אך ורק בשביל לאפשר לך לכבות את המסך בעזרת הקשה לחיצה כפולה. שירות הנגישות שלנו אינו אוסף או משתף נתונים כלל.</string>
+    <string name="accessibility_disclosure">Launch0 משתמשת בממשק Accessibility Service API של Android למטרה אחת בלבד: נעילת המסך כשמקישים פעמיים על מסך הבית.\n\nהשירות הזה לא יכול לראות או לקרוא שום דבר במסך, לא עוקב אחרי אפליקציות אחרות או אחרי מה שמקלידים, ולא אוסף או משתף נתונים כלל. הדבר היחיד שהוא יכול לעשות הוא להפעיל את פעולת נעילת המסך של Android.\n\nכדי להשתמש בתכונה הזו, יש להפעיל את Launch0 בהגדרות הנגישות של המכשיר. אפשר לכבות אותה שם בכל עת.</string>
     <string name="accept">הסכמה</string>
     <string name="permission">הרשאה</string>
     <string name="double_tap_lock">לחיצה כפולה לנעילת המסך</string>
