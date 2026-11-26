@@ -183,4 +183,6 @@ The project intentionally keeps dependencies minimal. Do not add unnecessary dep
 
 6. **The `Prefs` class is verbose by design** — each home app slot (1-8) has its own set of preference keys. This is the existing pattern; follow it for consistency.
 
-7. **Branch workflow**: Create feature branches from `master`. Test on real devices when touching UI code. Keep changes focused and minimal.
+7. **Accessibility service is NOT an accessibility tool** — `MyAccessibilityService` exists only for double-tap-to-lock on Android 9+. Never set `android:isAccessibilityTool="true"`: Google Play rejected the app for that in November 2026. Keep the service unable to observe anything (no `accessibilityEventTypes`, `canRetrieveWindowContent="false"`; the home screen triggers it with a package-private broadcast), and keep the in-app prominent disclosure + Accept/Not now consent in `SettingsFragment` as the only route to the system accessibility settings. If its behavior changes, update the disclosure strings, `docs/privacy.md` and the Play listing's accessibility paragraph together.
+
+8. **Branch workflow**: Create feature branches from `master`. Test on real devices when touching UI code. Keep changes focused and minimal.

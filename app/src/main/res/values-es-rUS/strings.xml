@@ -67,7 +67,7 @@
         \n\nTambién es la mejor manera de apoyar a los desarrolladores de Launch0. ¡Échale un vistazo!</string>
     <string name="wallpaper_message">Launch0 ofrece hermosos fondos de pantalla nuevos cada hora. ¡Dale un nuevo look a tu pantalla de inicio durante todo el día, gratis!
         \n\n¿Quieres probarlo?</string>
-    <string name="accessibility_service_description">Se necesita el permiso de Accesibilidad para activar el bloqueo con doble toque. Cualquier dato recolectado por Launch0 no saldrá de su dispositivo.</string>
+    <string name="accessibility_service_description">Bloquea la pantalla cuando toca dos veces la pantalla de inicio de Launch0. Este servicio no puede leer el contenido de la pantalla, no observa otras aplicaciones y no recopila ni comparte ningún dato.</string>
     <string name="support_olauncher_for_free">Apoye Launch0 de forma gratuita utilizando nuestro enlace de afiliado de Amazon.</string>
     <string name="support_olauncher_message">Cada vez que compre algo usando nuestro enlace, obtenemos una pequeña comisión. Por favor, guarde el enlace y úselo cada vez que compre en línea. ¡Gracias!</string>
     <string name="open">Abrir enlace</string>
@@ -89,7 +89,7 @@
     <string name="swipe_down_for">Deslize el dedo hacia abajo para</string>
     <string name="search">Buscar</string>
     <string name="notifications">Notificaciones</string>
-    <string name="accessibility_disclosure">Active o desactive el servicio de accesibilidad de Launch0 en la configuración de su dispositivo para habilitar o deshabilitar esta función. Tenga en cuenta que este servicio solo se utiliza para permitirle apagar el dispositivo</string>
+    <string name="accessibility_disclosure">Launch0 utiliza la API Accessibility Service de Android con un único fin: bloquear la pantalla cuando toca dos veces la pantalla de inicio.\n\nEste servicio no puede ver ni leer nada de su pantalla, no observa otras aplicaciones ni lo que escribe, y no recopila ni comparte ningún dato. Lo único que puede hacer es activar la acción de bloqueo de pantalla de Android.\n\nPara usar esta función, active Launch0 en la configuración de accesibilidad de su dispositivo. Puede desactivarlo allí en cualquier momento.</string>
     <string name="accept">Aceptar</string>
     <string name="permission">Permiso</string>
     <string name="double_tap_lock">Tocar dos veces para bloquear</string>

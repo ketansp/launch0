@@ -27,7 +27,7 @@
     <string name="swipe_down_for">اسحب لأسفل من أجل</string>
     <string name="search">يبحث</string>
     <string name="notifications">إشعارات</string>
-    <string name="accessibility_disclosure">يرجى تشغيل أو إيقاف تشغيل خدمة الوصول في Launch0 في إعدادات جهازك لتمكين هذه الميزة أو تعطيلها.       يرجى ملاحظة أن هذه الخدمة تُستخدم فقط للسماح لك بإيقاف تشغيل شاشة جهازك باستخدام إيماءة النقر المزدوج. خدمة الوصول لدينا لا تجمع أو تشارك أي بيانات.</string>
+    <string name="accessibility_disclosure">يستخدم Launch0 واجهة برمجة خدمة إمكانية الوصول (Accessibility Service API) في Android لغرض واحد فقط: قفل الشاشة عند النقر مرتين على الشاشة الرئيسية.\n\nلا تستطيع هذه الخدمة رؤية أو قراءة أي شيء على شاشتك، ولا تراقب التطبيقات الأخرى أو ما تكتبه، ولا تجمع أو تشارك أي بيانات. كل ما يمكنها فعله هو تنفيذ إجراء قفل الشاشة في Android.\n\nلاستخدام هذه الميزة، فعّل Launch0 في إعدادات إمكانية الوصول على جهازك. يمكنك إيقافها من هناك في أي وقت.</string>
     <string name="accept">يقبل</string>
     <string name="permission">إذن</string>
     <string name="double_tap_lock">النقر المزدوج للقفل</string>
@@ -98,7 +98,7 @@
         \n\nإنه أيضًا أفضل طريقة لدعم مطوري Launch0. تحقق من ذلك!</string>
     <string name="wallpaper_message">يقدم Launch0 خلفيات جميلة جديدة كل ساعة. امنح شاشتك الرئيسية مظهرًا جديدًا طوال اليوم، مجانًا!
         \n\nهل ترغب في تجربته؟</string>
-    <string name="accessibility_service_description">إذن الوصول مطلوب لتمكين النقر المزدوج للقفل. أي بيانات حصل عليها Launch0 عبر هذه الخدمة لن تترك جهازك.</string>
+    <string name="accessibility_service_description">تقفل الشاشة عند النقر مرتين على الشاشة الرئيسية لـ Launch0. لا تستطيع هذه الخدمة قراءة محتوى الشاشة، ولا تراقب التطبيقات الأخرى، ولا تجمع أو تشارك أي بيانات.</string>
     <string name="support_olauncher_for_free">ادعم Launch0 مجانًا باستخدام رابط الشراكة التابع لشركة Amazon.</string>
     <string name="support_olauncher_message">في كل مرة تشتري شيئًا باستخدام الرابط الخاص بنا ، نحصل على عمولة صغيرة. يرجى حفظ الرابط واستخدامه في أي وقت تتسوق فيه عبر الإنترنت. شكرًا لك!</string>
     <string name="open">افتح الرابط</string>

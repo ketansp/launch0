@@ -27,8 +27,7 @@
     <string name="swipe_down_for">下にスワイプして</string>
     <string name="search">検索</string>
     <string name="notifications">通知</string>
-    <string name="accessibility_disclosure">この機能を有効または無効にするには、デバイスの設定で Launch0 のアクセシビリティ サービスをオンまたはオフにしてください。
-        \n\nこのサービスは、ダブルタップ ジェスチャを使用してデバイスの画面をオフにするためにのみ使用されることに注意してください。 当社のアクセシビリティ サービスは、いかなるデータも収集または共有しません。</string>
+    <string name="accessibility_disclosure">Launch0 は Android のユーザー補助サービス API（Accessibility Service API）を、ホーム画面をダブルタップしたときに画面をロックする目的にのみ使用します。\n\nこのサービスは画面上の内容を見たり読み取ったりすることはできず、他のアプリや入力内容を監視することもなく、データを収集・共有することも一切ありません。実行できるのは Android の画面ロック操作だけです。\n\nこの機能を使うには、端末のユーザー補助設定で Launch0 をオンにしてください。いつでもそこからオフにできます。</string>
     <string name="accept">受け入れる</string>
     <string name="permission">許可</string>
     <string name="double_tap_lock">ダブルタップしてロックします</string>
@@ -100,7 +99,7 @@
         \n\nLaunch0の開発者をサポートするための最良の方法でもあります。チェックしてみてください！</string>
     <string name="wallpaper_message">Launch0は毎時美しい新しい壁紙を提供します。一日中ホーム画面に新しい外観を無料で提供！
         \n\n試してみますか？</string>
-    <string name="accessibility_service_description">ダブルタップしてロックを有効にするには、アクセシビリティ許可が必要です。このサービスを通じて Launch0 が取得したデータは、デバイスから流出することはありません。</string>
+    <string name="accessibility_service_description">Launch0 のホーム画面をダブルタップすると画面をロックします。このサービスは画面の内容を読み取ることができず、他のアプリを監視せず、データを収集・共有することもありません。</string>
     <string name="support_olauncher_for_free">Amazon アフィリエイト リンクを使用して、Launch0 を無料でサポートしてください。</string>
     <string name="support_olauncher_message">あなたが私たちのリンクを使用して何かを購入するたびに、私たちは少額の手数料を受け取ります。リンクを保存し、オンライン ショッピングの際には必ずご利用ください。 ありがとう！</string>
     <string name="open">リンクを開く</string>

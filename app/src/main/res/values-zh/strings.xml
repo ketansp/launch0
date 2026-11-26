@@ -17,8 +17,7 @@
     <string name="swipe_down_for">向下滑动查看</string>
     <string name="search">搜索</string>
     <string name="notifications">通知</string>
-    <string name="accessibility_disclosure">请在您设备的设置中打开或关闭 Launch0 的辅助服务以启用或禁用此功能。
-        \n\n请注意，此服务仅用于让您使用双击手势关闭设备的屏幕。 我们的无障碍服务不收集或共享任何数据。</string>
+    <string name="accessibility_disclosure">Launch0 使用 Android 的无障碍服务 API（Accessibility Service API）仅用于一个目的：在您双击主屏幕时锁定屏幕。\n\n此服务无法查看或读取您屏幕上的任何内容，不会监视其他应用或您输入的内容，也不会收集或共享任何数据。它唯一能做的就是触发 Android 的锁屏操作。\n\n如需使用此功能，请在设备的无障碍设置中开启 Launch0。您可以随时在那里关闭它。</string>
     <string name="accept">接受</string>
     <string name="permission">允许</string>
     <string name="double_tap_lock">双击即可锁定</string>
@@ -101,7 +100,7 @@
         \n\n这也是支持 Launch0 开发者的最佳方式。快来看看吧！</string>
     <string name="wallpaper_message">Launch0每小时提供美丽的新壁纸。让你的主屏幕全天焕然一新，免费！
         \n\n想试试吗？</string>
-    <string name="accessibility_service_description">请在手机设置中搜索数字健康并启用它。</string>
+    <string name="accessibility_service_description">双击 Launch0 主屏幕时锁定屏幕。此服务无法读取屏幕内容，不会监视其他应用，也不会收集或共享任何数据。</string>
     <string name="support_olauncher_for_free">使用我们的亚马逊附属链接免费支持 Launch0。</string>
     <string name="support_olauncher_message">每次您使用我们的链接购买商品时，我们都会获得少量佣金。请保存链接并在网上购物时使用它。 谢谢！</string>
     <string name="open">打开链接</string>

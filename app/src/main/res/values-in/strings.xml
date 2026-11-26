@@ -67,7 +67,7 @@
         \n\nIni juga merupakan cara terbaik untuk mendukung pengembang Launch0. Cek it out!</string>
     <string name="wallpaper_message">Launch0 menawarkan wallpaper baru yang indah setiap jam. Berikan tampilan baru pada layar utama Anda sepanjang hari, secara gratis!
         \n\nIngin mencobanya?</string>
-    <string name="accessibility_service_description">Izin aksesibilitas diperlukan untuk mengaktifkan ketuk dua kali untuk mengunci. Data apa pun yang diperoleh Launch0 melalui layanan ini tidak akan meninggalkan perangkat Anda.</string>
+    <string name="accessibility_service_description">Mengunci layar saat Anda mengetuk dua kali layar utama Launch0. Layanan ini tidak dapat membaca konten layar, tidak memantau aplikasi lain, dan tidak mengumpulkan atau membagikan data apa pun.</string>
     <string name="support_olauncher_for_free">Dukung Launch0 secara gratis dengan menggunakan tautan afiliasi Amazon kami.</string>
     <string name="support_olauncher_message">Setiap kali Anda membeli sesuatu menggunakan tautan kami, kami mendapat komisi kecil. Harap simpan tautan dan gunakan setiap kali Anda berbelanja online.\nTerima kasih!</string>
     <string name="open">Buka tautan</string>
@@ -89,7 +89,7 @@
     <string name="swipe_down_for">Geser ke bawah untuk</string>
     <string name="search">Cari</string>
     <string name="notifications">Notifikasi</string>
-    <string name="accessibility_disclosure">Harap aktifkan atau nonaktifkan layanan aksesibilitas Launch0 di pengaturan perangkat Anda untuk mengaktifkan atau menonaktifkan fitur ini.\n\nHarap perhatikan bahwa layanan ini hanya digunakan untuk memungkinkan Anda mematikan layar perangkat menggunakan gerakan ketuk dua kali. Layanan aksesibilitas kami tidak mengumpulkan atau membagikan data apa pun.</string>
+    <string name="accessibility_disclosure">Launch0 menggunakan Accessibility Service API Android hanya untuk satu tujuan: mengunci layar saat Anda mengetuk dua kali layar utama.\n\nLayanan ini tidak dapat melihat atau membaca apa pun di layar Anda, tidak memantau aplikasi lain atau apa yang Anda ketik, dan tidak mengumpulkan atau membagikan data apa pun. Satu-satunya hal yang dapat dilakukannya adalah memicu tindakan kunci layar Android.\n\nUntuk menggunakan fitur ini, aktifkan Launch0 di pengaturan aksesibilitas perangkat Anda. Anda dapat menonaktifkannya di sana kapan saja.</string>
     <string name="accept">Terima</string>
     <string name="permission">Izin</string>
     <string name="double_tap_lock">Ketuk dua kali untuk mengunci</string>

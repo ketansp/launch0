@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Double-tap-to-lock only (see MyAccessibilityService).
+
+    Scoped so the service can observe nothing: no android:accessibilityEventTypes (it
+    receives no events) and canRetrieveWindowContent="false" (it cannot read any
+    window content). The home screen requests a lock via a package-private broadcast.
+
+    Launch0 is NOT an accessibility tool. Do not add android:isAccessibilityTool="true";
+    Google Play rejected the app for it. Non-tool use requires the in-app prominent
+    disclosure + consent dialog in SettingsFragment, which must stay in place.
+-->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:accessibilityEventTypes="typeViewClicked"
-    android:accessibilityFeedbackType="feedbackVisual"
+    android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagDefault"
-    android:canRetrieveWindowContent="true"
-    android:description="@string/accessibility_service_description"
-    android:isAccessibilityTool="true"
-    android:notificationTimeout="10"
-    android:packageNames="app.launch0.debug, app.launch0"
-    tools:targetApi="30" />
+    android:canRetrieveWindowContent="false"
+    android:description="@string/accessibility_service_description" />

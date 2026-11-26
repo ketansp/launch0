@@ -139,7 +139,7 @@ object Constants {
 
     const val URL_ABOUT = "https://launch0.app"
     const val URL_PRIVACY = "https://launch0.app/privacy"
-    const val URL_DOUBLE_TAP = "https://tanujnotes.notion.site/Double-tap-to-lock-Olauncher-0f7fb103ec1f47d7a90cdfdcd7fb86ef"
+    const val URL_DOUBLE_TAP = "https://launch0.app/guide/faq#double-tap-to-lock-doesn-t-work"
     const val URL_GITHUB = "https://www.github.com/ketansp/Olauncher"
     const val URL_PLAY_STORE = "https://play.google.com/store/apps/details?id=app.launch0"
     const val URL_PLAY_STORE_DEV = "https://play.google.com/store/apps/dev?id=7198807840081074933"
